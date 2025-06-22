@@ -25,7 +25,8 @@ const BlogAdmin = () => {
     metaDescription: '',
     metaKeywords: '',
     isDraft: true,
-    scheduledDate: ''
+    scheduledDate: '',
+    image: ''
   });
 
   const [editingPost, setEditingPost] = useState<any>(null);
@@ -47,7 +48,8 @@ const BlogAdmin = () => {
       category: 'tecnologia',
       tags: 'transformação digital, tecnologia, inovação',
       metaDescription: 'Descubra como a transformação digital pode revolucionar sua empresa e impulsionar o crescimento no mercado atual.',
-      metaKeywords: 'transformação digital, tecnologia empresarial, inovação, digitalização'
+      metaKeywords: 'transformação digital, tecnologia empresarial, inovação, digitalização',
+      image: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=400&fit=crop'
     },
     {
       id: 2,
@@ -61,7 +63,8 @@ const BlogAdmin = () => {
       category: 'seguranca',
       tags: 'segurança, cibernética, proteção',
       metaDescription: 'Aprenda as estratégias essenciais de segurança cibernética para proteger sua empresa contra ameaças digitais.',
-      metaKeywords: 'segurança cibernética, proteção de dados, cybersecurity, segurança digital'
+      metaKeywords: 'segurança cibernética, proteção de dados, cybersecurity, segurança digital',
+      image: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&h=400&fit=crop'
     },
     {
       id: 3,
@@ -75,7 +78,8 @@ const BlogAdmin = () => {
       category: 'cloud',
       tags: 'cloud, infraestrutura, tecnologia',
       metaDescription: 'Entenda como o cloud computing pode transformar sua infraestrutura de TI.',
-      metaKeywords: 'cloud computing, infraestrutura, nuvem, tecnologia'
+      metaKeywords: 'cloud computing, infraestrutura, nuvem, tecnologia',
+      image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&h=400&fit=crop'
     }
   ]);
 
@@ -156,7 +160,8 @@ const BlogAdmin = () => {
       metaDescription: '',
       metaKeywords: '',
       isDraft: true,
-      scheduledDate: ''
+      scheduledDate: '',
+      image: ''
     });
   };
 
@@ -172,7 +177,8 @@ const BlogAdmin = () => {
       metaDescription: post.metaDescription || '',
       metaKeywords: post.metaKeywords || '',
       isDraft: post.status === 'draft',
-      scheduledDate: post.scheduledDate || ''
+      scheduledDate: post.scheduledDate || '',
+      image: post.image || ''
     });
     setIsEditing(true);
     setActiveTab('create');
@@ -191,7 +197,8 @@ const BlogAdmin = () => {
       metaDescription: '',
       metaKeywords: '',
       isDraft: true,
-      scheduledDate: ''
+      scheduledDate: '',
+      image: ''
     });
   };
 
@@ -356,6 +363,33 @@ const BlogAdmin = () => {
                         rows={3}
                         className="mt-2"
                       />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="image" className="text-base font-semibold">Imagem Principal</Label>
+                      <Input
+                        id="image"
+                        type="url"
+                        value={newPost.image}
+                        onChange={(e) => setNewPost({...newPost, image: e.target.value})}
+                        placeholder="URL da imagem principal do post"
+                        className="mt-2"
+                      />
+                      <p className="text-sm text-gray-500 mt-1">
+                        Cole a URL da imagem (recomendado: 800x400px)
+                      </p>
+                      {newPost.image && (
+                        <div className="mt-3">
+                          <img 
+                            src={newPost.image} 
+                            alt="Preview" 
+                            className="w-full h-32 object-cover rounded-lg border"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -547,6 +581,18 @@ const BlogAdmin = () => {
                   <Card key={post.id} className="hover:shadow-md transition-all duration-200 border border-gray-200">
                     <CardContent className="p-6">
                       <div className="flex flex-col lg:flex-row justify-between gap-4">
+                        {post.image && (
+                          <div className="lg:w-32 lg:flex-shrink-0">
+                            <img 
+                              src={post.image} 
+                              alt={post.title}
+                              className="w-full h-24 lg:h-20 object-cover rounded-lg border"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          </div>
+                        )}
                         <div className="flex-1 space-y-3">
                           <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                             <h3 className="font-semibold text-lg text-gray-900 flex-1">{post.title}</h3>
