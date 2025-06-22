@@ -2,8 +2,8 @@
 export const BASEROW_CONFIG = {
   BASE_URL: 'https://master-baserow.219u5p.easypanel.host',
   API_URL: 'https://master-baserow.219u5p.easypanel.host/api',
-  DATABASE_ID: process.env.VITE_BASEROW_DATABASE_ID || '',
-  TOKEN: process.env.VITE_BASEROW_TOKEN || '',
+  DATABASE_ID: import.meta.env.VITE_BASEROW_DATABASE_ID || '',
+  TOKEN: import.meta.env.VITE_BASEROW_TOKEN || '',
 };
 
 // Tipos para autenticação
@@ -46,9 +46,17 @@ export interface BaserowResponse<T> {
   results: T[];
 }
 
+// Função para obter token do localStorage
+export const getAuthToken = (): string | null => {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('celx_token');
+  }
+  return null;
+};
+
 // Função para obter headers da API
 export const getBaserowHeaders = (token?: string) => {
-  const authToken = token || BASEROW_CONFIG.TOKEN;
+  const authToken = token || getAuthToken() || BASEROW_CONFIG.TOKEN;
   
   return {
     'Authorization': `Token ${authToken}`,

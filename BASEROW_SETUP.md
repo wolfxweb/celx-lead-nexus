@@ -212,4 +212,158 @@ DELETE /api/database/rows/table/{categories_table_id}/{row_id}/
 Para dúvidas sobre a configuração do Baserow, consulte:
 - [Documentação do Baserow](https://baserow.io/docs)
 - [API Reference](https://baserow.io/docs/apis/rest-api)
-- [Community Forum](https://community.baserow.io/) 
+- [Community Forum](https://community.baserow.io/)
+
+# Configuração do Baserow para Autenticação
+
+## 1. Configuração da Tabela de Usuários
+
+### Criar Tabela "Users"
+No seu Baserow, crie uma tabela chamada "Users" com os seguintes campos:
+
+| Nome do Campo | Tipo | Configurações |
+|---------------|------|---------------|
+| ID | Number | Auto-incremento |
+| Name | Text | Obrigatório |
+| Email | Text | Obrigatório, Único |
+| Password | Text | Obrigatório |
+| Role | Single select | Opções: "user", "admin" |
+| Avatar | Text | Opcional |
+| Created At | Date | Automático |
+| Updated At | Date | Automático |
+| Last Login | Date | Opcional |
+
+### Configurações Específicas:
+- **Email**: Marcar como "Unique" para evitar duplicatas
+- **Password**: Será armazenado como hash SHA-256 (em produção, use bcrypt)
+- **Role**: Single select com opções "user" e "admin"
+- **Created At** e **Updated At**: Configurar para preenchimento automático
+
+## 2. Configuração das Permissões
+
+### Permissões da Tabela Users:
+- **Criar**: Todos os usuários autenticados
+- **Ver**: Próprio registro + admins
+- **Modificar**: Próprio registro + admins
+- **Excluir**: Apenas admins
+
+## 3. Configuração do Arquivo de Configuração
+
+### Atualizar `src/config/baserowTables.ts`:
+```typescript
+export const BASEROW_TABLES = {
+  USERS: {
+    id: 1, // Substitua pelo ID real da sua tabela
+    fields: {
+      id: 'field_1',
+      name: 'field_2',      // Substitua pelos IDs reais dos campos
+      email: 'field_3',
+      password: 'field_4',
+      role: 'field_5',
+      avatar: 'field_6',
+      created_at: 'field_7',
+      updated_at: 'field_8',
+      last_login: 'field_9',
+    }
+  },
+  // ... outras tabelas
+};
+```
+
+### Como encontrar os IDs dos campos:
+1. Vá para a tabela no Baserow
+2. Clique em "Settings" (Configurações)
+3. Vá para "Fields" (Campos)
+4. Cada campo terá um ID como "field_1", "field_2", etc.
+
+## 4. Variáveis de Ambiente
+
+### Criar arquivo `.env.local`:
+```env
+VITE_BASEROW_BASE_URL=https://seu-baserow.easypanel.host
+VITE_BASEROW_API_URL=https://seu-baserow.easypanel.host/api
+VITE_BASEROW_DATABASE_ID=seu_database_id
+VITE_BASEROW_TOKEN=seu_token_admin
+```
+
+### Como obter essas informações:
+1. **BASE_URL** e **API_URL**: URL do seu Baserow
+2. **DATABASE_ID**: ID do seu banco de dados no Baserow
+3. **TOKEN**: Token de administrador do Baserow
+
+## 5. Testando a Configuração
+
+### Acesse a página de teste:
+```
+http://localhost:8080/auth-test
+```
+
+### Funcionalidades para testar:
+1. **Registro**: Criar novo usuário
+2. **Login**: Fazer login com usuário existente
+3. **Logout**: Sair da aplicação
+4. **Persistência**: Recarregar a página para verificar se o login persiste
+
+## 6. Fluxo de Autenticação
+
+### Registro:
+1. Usuário preenche formulário
+2. Sistema verifica se email já existe
+3. Senha é hasheada (SHA-256)
+4. Usuário é criado com role "user"
+5. Usuário é automaticamente logado
+
+### Login:
+1. Usuário fornece email e senha
+2. Sistema autentica com Baserow API
+3. Se válido, busca dados completos do usuário
+4. Atualiza último login
+5. Salva token e dados no localStorage
+
+### Logout:
+1. Remove dados do localStorage
+2. Limpa estado da aplicação
+
+## 7. Segurança
+
+### Implementações Atuais:
+- Hash de senha (SHA-256)
+- Validação de email único
+- Tokens de autenticação
+- Role-based access control
+
+### Melhorias para Produção:
+- Usar bcrypt para hash de senhas
+- Implementar refresh tokens
+- Adicionar rate limiting
+- Implementar 2FA
+- Usar HTTPS
+- Implementar CORS adequadamente
+
+## 8. Troubleshooting
+
+### Problemas Comuns:
+
+**Erro 401/403:**
+- Verificar se o token está correto
+- Verificar permissões da tabela
+
+**Erro ao criar usuário:**
+- Verificar se todos os campos obrigatórios estão configurados
+- Verificar se o email é único
+
+**Erro de conexão:**
+- Verificar URLs do Baserow
+- Verificar se o Baserow está acessível
+
+**Campo não encontrado:**
+- Verificar IDs dos campos no `baserowTables.ts`
+- Verificar se os nomes dos campos estão corretos
+
+## 9. Próximos Passos
+
+1. Configurar tabelas para produtos, categorias, pedidos
+2. Implementar upload de imagens
+3. Configurar webhooks para sincronização
+4. Implementar cache para melhor performance
+5. Adicionar logs de auditoria 

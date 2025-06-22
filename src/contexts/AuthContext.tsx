@@ -1,36 +1,22 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { AuthContextType, AuthState, LoginCredentials, RegisterData, User } from '@/types/auth';
-
-// Mock users for demonstration - in a real app this would be in a database
-let mockUsers: User[] = [
-  {
-    id: '1',
-    name: 'Admin User',
-    email: 'admin@celx.com',
-    role: 'admin',
-    avatar: '👨‍💼',
-    createdAt: new Date('2024-01-01'),
-    lastLogin: new Date()
-  },
-  {
-    id: '2',
-    name: 'Regular User',
-    email: 'user@celx.com',
-    role: 'user',
-    avatar: '👩‍💻',
-    createdAt: new Date('2024-01-15'),
-    lastLogin: new Date()
-  }
-];
+import { 
+  authenticateUser, 
+  createUser, 
+  getUserById, 
+  updateLastLogin, 
+  convertBaserowUserToUser,
+  BaserowAuthResponse 
+} from '@/services/authService';
 
 type AuthAction =
   | { type: 'LOGIN_START' }
-  | { type: 'LOGIN_SUCCESS'; payload: User }
+  | { type: 'LOGIN_SUCCESS'; payload: { user: User; token: string } }
   | { type: 'LOGIN_FAILURE'; payload: string }
   | { type: 'LOGOUT' }
   | { type: 'CLEAR_ERROR' }
   | { type: 'REGISTER_START' }
-  | { type: 'REGISTER_SUCCESS'; payload: User }
+  | { type: 'REGISTER_SUCCESS'; payload: { user: User; token: string } }
   | { type: 'REGISTER_FAILURE'; payload: string };
 
 const initialState: AuthState = {
@@ -49,7 +35,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
     case 'REGISTER_SUCCESS':
       return {
         ...state,
-        user: action.payload,
+        user: action.payload.user,
         isAuthenticated: true,
         isLoading: false,
         error: null
@@ -95,18 +81,18 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // Check for stored user on mount
+  // Check for stored user and token on mount
   useEffect(() => {
     const storedUser = localStorage.getItem('celx_user');
-    if (storedUser) {
+    const storedToken = localStorage.getItem('celx_token');
+    
+    if (storedUser && storedToken) {
       try {
         const user = JSON.parse(storedUser);
-        // Update last login
-        const updatedUser = { ...user, lastLogin: new Date() };
-        localStorage.setItem('celx_user', JSON.stringify(updatedUser));
-        dispatch({ type: 'LOGIN_SUCCESS', payload: updatedUser });
+        dispatch({ type: 'LOGIN_SUCCESS', payload: { user, token: storedToken } });
       } catch (error) {
         localStorage.removeItem('celx_user');
+        localStorage.removeItem('celx_token');
       }
     }
   }, []);
@@ -114,54 +100,66 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (credentials: LoginCredentials): Promise<void> => {
     dispatch({ type: 'LOGIN_START' });
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      // Autenticar com o Baserow
+      const authResponse: BaserowAuthResponse = await authenticateUser(credentials);
+      
+      // Buscar dados completos do usuário
+      const baserowUser = await getUserById(authResponse.user.id);
+      
+      if (!baserowUser) {
+        throw new Error('Usuário não encontrado');
+      }
 
-    const user = mockUsers.find(u => u.email === credentials.email);
-    
-    if (user && credentials.password === 'password') { // Mock password
-      const updatedUser = { ...user, lastLogin: new Date() };
-      localStorage.setItem('celx_user', JSON.stringify(updatedUser));
-      dispatch({ type: 'LOGIN_SUCCESS', payload: updatedUser });
-    } else {
-      dispatch({ type: 'LOGIN_FAILURE', payload: 'Email ou senha inválidos' });
+      // Atualizar último login
+      await updateLastLogin(baserowUser.id);
+
+      // Converter para o formato da aplicação
+      const user = convertBaserowUserToUser(baserowUser);
+
+      // Salvar no localStorage
+      localStorage.setItem('celx_user', JSON.stringify(user));
+      localStorage.setItem('celx_token', authResponse.token);
+
+      dispatch({ type: 'LOGIN_SUCCESS', payload: { user, token: authResponse.token } });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro no login';
+      dispatch({ type: 'LOGIN_FAILURE', payload: errorMessage });
     }
   };
 
   const register = async (data: RegisterData): Promise<void> => {
     dispatch({ type: 'REGISTER_START' });
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      if (data.password !== data.confirmPassword) {
+        dispatch({ type: 'REGISTER_FAILURE', payload: 'As senhas não coincidem' });
+        return;
+      }
 
-    if (data.password !== data.confirmPassword) {
-      dispatch({ type: 'REGISTER_FAILURE', payload: 'As senhas não coincidem' });
-      return;
+      // Criar usuário no Baserow
+      const baserowUser = await createUser(data);
+
+      // Converter para o formato da aplicação
+      const user = convertBaserowUserToUser(baserowUser);
+
+      // Gerar token (em uma implementação real, você faria login após o registro)
+      const token = 'temp_token_' + Date.now();
+
+      // Salvar no localStorage
+      localStorage.setItem('celx_user', JSON.stringify(user));
+      localStorage.setItem('celx_token', token);
+
+      dispatch({ type: 'REGISTER_SUCCESS', payload: { user, token } });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro no registro';
+      dispatch({ type: 'REGISTER_FAILURE', payload: errorMessage });
     }
-
-    if (mockUsers.some(u => u.email === data.email)) {
-      dispatch({ type: 'REGISTER_FAILURE', payload: 'Este email já está em uso' });
-      return;
-    }
-
-    // New users are always registered as 'user' by default
-    const newUser: User = {
-      id: Date.now().toString(),
-      name: data.name,
-      email: data.email,
-      role: 'user', // Always 'user' by default
-      avatar: '👤',
-      createdAt: new Date(),
-      lastLogin: new Date()
-    };
-
-    mockUsers.push(newUser);
-    localStorage.setItem('celx_user', JSON.stringify(newUser));
-    dispatch({ type: 'REGISTER_SUCCESS', payload: newUser });
   };
 
   const logout = (): void => {
     localStorage.removeItem('celx_user');
+    localStorage.removeItem('celx_token');
     dispatch({ type: 'LOGOUT' });
   };
 
