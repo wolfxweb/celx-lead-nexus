@@ -2,7 +2,7 @@
 export const BASEROW_CONFIG = {
   BASE_URL: 'https://master-baserow.219u5p.easypanel.host',
   API_URL: 'https://master-baserow.219u5p.easypanel.host/api',
-  DATABASE_ID: import.meta.env.VITE_BASEROW_DATABASE_ID || '',
+  DATABASE_ID: import.meta.env.VITE_BASEROW_DATABASE_ID || '134',
   TOKEN: import.meta.env.VITE_BASEROW_TOKEN || '',
 };
 

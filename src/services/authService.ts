@@ -7,7 +7,7 @@ export interface BaserowUser {
   id: number;
   name: string;
   email: string;
-  password: string; // Hash da senha
+  password_hash: string; // Corrigido de 'password' para 'password_hash'
   role: 'admin' | 'user';
   avatar?: string;
   created_at: string;
@@ -92,8 +92,8 @@ export const createUser = async (userData: RegisterData): Promise<BaserowUser> =
         body: JSON.stringify({
           [getFieldId('USERS', 'name')]: userData.name,
           [getFieldId('USERS', 'email')]: userData.email,
-          [getFieldId('USERS', 'password')]: hashedPassword,
-          [getFieldId('USERS', 'role')]: 'user', // Usuários novos sempre começam como 'user'
+          [getFieldId('USERS', 'password_hash')]: hashedPassword,
+          [getFieldId('USERS', 'role')]: 'user',
           [getFieldId('USERS', 'avatar')]: '👤',
         }),
       }
@@ -182,7 +182,7 @@ export const changePassword = async (
     }
 
     // Verificar senha atual
-    const isCurrentPasswordValid = await verifyPassword(currentPassword, user.password);
+    const isCurrentPasswordValid = await verifyPassword(currentPassword, user.password_hash);
     if (!isCurrentPasswordValid) {
       throw new Error('Senha atual incorreta');
     }
@@ -192,7 +192,7 @@ export const changePassword = async (
 
     // Atualizar senha
     const tableId = getTableId('USERS');
-    const passwordField = getFieldId('USERS', 'password');
+    const passwordField = getFieldId('USERS', 'password_hash');
     
     await baserowRequest(
       `/database/rows/table/${tableId}/${userId}/`,

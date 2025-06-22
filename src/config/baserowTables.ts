@@ -1,15 +1,15 @@
 // Configuração das tabelas do Baserow
-// Ajuste os IDs conforme sua configuração no Baserow
+// IDs baseados nas variáveis de ambiente do .env
 
 export const BASEROW_TABLES = {
   // Tabela de usuários
   USERS: {
-    id: 1, // Ajuste conforme sua tabela
+    id: parseInt(import.meta.env.VITE_BASEROW_USERS_TABLE_ID || '629'),
     fields: {
       id: 'field_1',
       name: 'field_2',
       email: 'field_3',
-      password: 'field_4',
+      password_hash: 'field_4',
       role: 'field_5',
       avatar: 'field_6',
       created_at: 'field_7',
@@ -20,7 +20,7 @@ export const BASEROW_TABLES = {
   
   // Tabela de categorias (produtos e blog)
   CATEGORIES: {
-    id: 2, // Ajuste conforme sua tabela
+    id: parseInt(import.meta.env.VITE_BASEROW_CATEGORIES_TABLE_ID || '634'),
     fields: {
       id: 'field_1',
       name: 'field_2',
@@ -35,7 +35,7 @@ export const BASEROW_TABLES = {
   
   // Tabela de produtos
   PRODUCTS: {
-    id: 3, // Ajuste conforme sua tabela
+    id: parseInt(import.meta.env.VITE_BASEROW_PRODUCTS_TABLE_ID || '628'),
     fields: {
       id: 'field_1',
       name: 'field_2',
@@ -54,7 +54,7 @@ export const BASEROW_TABLES = {
   
   // Tabela de posts do blog
   BLOG_POSTS: {
-    id: 4, // Ajuste conforme sua tabela
+    id: parseInt(import.meta.env.VITE_BASEROW_BLOG_POSTS_TABLE_ID || '632'),
     fields: {
       id: 'field_1',
       title: 'field_2',
@@ -73,7 +73,7 @@ export const BASEROW_TABLES = {
   
   // Tabela de pedidos
   ORDERS: {
-    id: 5, // Ajuste conforme sua tabela
+    id: parseInt(import.meta.env.VITE_BASEROW_ORDERS_TABLE_ID || '630'),
     fields: {
       id: 'field_1',
       user_id: 'field_2',
@@ -89,7 +89,7 @@ export const BASEROW_TABLES = {
   
   // Tabela de itens do pedido
   ORDER_ITEMS: {
-    id: 6, // Ajuste conforme sua tabela
+    id: parseInt(import.meta.env.VITE_BASEROW_ORDER_ITEMS_TABLE_ID || '631'),
     fields: {
       id: 'field_1',
       order_id: 'field_2',
@@ -102,7 +102,7 @@ export const BASEROW_TABLES = {
   
   // Tabela de avaliações de produtos
   PRODUCT_REVIEWS: {
-    id: 7, // Ajuste conforme sua tabela
+    id: parseInt(import.meta.env.VITE_BASEROW_REVIEWS_TABLE_ID || '633'),
     fields: {
       id: 'field_1',
       product_id: 'field_2',
