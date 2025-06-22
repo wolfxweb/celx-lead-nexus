@@ -9,7 +9,7 @@ import SEOHead from '@/components/SEOHead';
 
 const Blog = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 12;
 
