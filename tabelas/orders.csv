@@ -1,0 +1,4 @@
+id,user_id,guest_email,guest_name,total,status,payment_method,payment_status,shipping_address,billing_address,notes,created_at,updated_at
+1,Ana Souza,,,199.90,completed,credit_card,paid,"Rua A, 123 - São Paulo","Rua A, 123 - São Paulo","Entregar após as 18h",2025-06-22,2025-06-22
+2,Beto Lima,,,89.50,pending,pix,pending,"Av. B, 456 - Rio de Janeiro","Av. B, 456 - Rio de Janeiro","",2025-06-22,2025-06-22
+3,,guest@example.com,João Convidado,49.99,processing,boleto,awaiting_payment,"Rua do Guest, 100 - Salvador","Rua do Guest, 100 - Salvador","Pedido feito como convidado",2025-06-22,2025-06-22

@@ -1,0 +1,4 @@
+id,name,email,password_hash,role,avatar,phone,address,is_active,created_at,updated_at
+1,Ana Souza,ana@example.com,$2b$12$abcdefghijkLmnopQRSTuv.USER1,admin,https://example.com/avatar1.jpg,+5511999999999,"Rua A, 123 - Centro, São Paulo, SP",true,2025-06-22,2025-06-22
+2,Beto Lima,beto@example.com,$2b$12$abcdefghijkLmnopQRSTuv.USER2,user,https://example.com/avatar2.jpg,+5521988888888,"Av. B, 456 - Copacabana, Rio de Janeiro, RJ",true,2025-06-22,2025-06-22
+3,Carla Mendes,carla@example.com,$2b$12$abcdefghijkLmnopQRSTuv.USER3,editor,,+5531997777777,"Rua C, 789 - Centro, Belo Horizonte, MG",true,2025-06-22,2025-06-22

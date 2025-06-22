@@ -1,0 +1,17 @@
+id,name,slug,description,color,type,created_at,updated_at
+1,Templates,templates,Templates e temas para sites,blue,product,2025-06-22,2025-06-22
+2,Cursos,cursos,Cursos online e treinamentos,green,product,2025-06-22,2025-06-22
+3,Plugins,plugins,Plugins e extensões,purple,product,2025-06-22,2025-06-22
+4,E-books,ebooks,Livros digitais e guias,orange,product,2025-06-22,2025-06-22
+5,Ícones,icones,Pacotes de ícones e elementos visuais,pink,product,2025-06-22,2025-06-22
+6,Ferramentas,ferramentas,Ferramentas e softwares,red,product,2025-06-22,2025-06-22
+7,Design,design,Recursos de design e UI/UX,teal,product,2025-06-22,2025-06-22
+8,Marketing,marketing,Ferramentas e recursos de marketing,indigo,product,2025-06-22,2025-06-22
+9,Tecnologia,tecnologia,Posts sobre tecnologia e inovação,blue,blog,2025-06-22,2025-06-22
+10,Segurança,seguranca,Posts sobre segurança cibernética,red,blog,2025-06-22,2025-06-22
+11,Cloud,cloud,Posts sobre cloud computing,purple,blog,2025-06-22,2025-06-22
+12,Inteligência Artificial,ai,Posts sobre IA e machine learning,green,blog,2025-06-22,2025-06-22
+13,Marketing Digital,marketing-digital,Posts sobre marketing digital,orange,blog,2025-06-22,2025-06-22
+14,Desenvolvimento,desenvolvimento,Posts sobre desenvolvimento web,indigo,blog,2025-06-22,2025-06-22
+15,Design UX/UI,design-ux,Posts sobre UX/UI design,pink,blog,2025-06-22,2025-06-22
+16,E-commerce,ecommerce,Posts sobre e-commerce,teal,blog,2025-06-22,2025-06-22

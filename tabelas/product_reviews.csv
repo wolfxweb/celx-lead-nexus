@@ -1,0 +1,5 @@
+id,product_id,user_id,guest_name,guest_email,rating,comment,is_verified,is_approved,created_at
+1,Produto Alpha,Ana Souza,,,,5,"Excelente produto, superou minhas expectativas.",true,true,2025-06-22
+2,Produto Beta,,João Convidado,joao@email.com,4,"Gostei bastante, mas o frete demorou um pouco.",false,true,2025-06-22
+3,Produto Gama,Carla Mendes,,,,3,"Produto razoável, poderia ser melhor embalado.",true,true,2025-06-22
+4,Produto Alpha,,Maria Silva,maria@exemplo.com,5,"Comprei como convidada e fiquei muito satisfeita!",false,false,2025-06-22
