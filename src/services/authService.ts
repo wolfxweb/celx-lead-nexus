@@ -1,4 +1,4 @@
-import { BASEROW_CONFIG, baserowRequest, getBaserowHeaders, getBaserowRows, createBaserowRow } from '@/lib/baserow';
+import { BASEROW_CONFIG, baserowRequest, getBaserowHeaders, getBaserowRows, createBaserowRow, getBaserowRow, updateBaserowRow } from '@/lib/baserow';
 import { User, LoginCredentials, RegisterData } from '@/types/auth';
 import { getTableId, getFieldId, createFieldFilter } from '@/config/baserowTables';
 
@@ -106,15 +106,9 @@ export const updateLastLogin = async (userId: number): Promise<void> => {
     const tableId = getTableId('USERS');
     const lastLoginField = getFieldId('USERS', 'last_login');
     
-    await baserowRequest(
-      `/database/rows/table/${tableId}/${userId}/`,
-      {
-        method: 'PATCH',
-        body: JSON.stringify({
-          [lastLoginField]: new Date().toISOString(),
-        }),
-      }
-    );
+    await updateBaserowRow(tableId, userId, {
+        [lastLoginField]: new Date().toISOString(),
+    });
   } catch (error) {
     console.error('Erro ao atualizar último login:', error);
   }
@@ -124,9 +118,7 @@ export const updateLastLogin = async (userId: number): Promise<void> => {
 export const getUserById = async (userId: number): Promise<BaserowUser | null> => {
   try {
     const tableId = getTableId('USERS');
-    const user = await baserowRequest<BaserowUser>(
-      `/database/rows/table/${tableId}/${userId}/`
-    );
+    const user = await getBaserowRow<BaserowUser>(tableId, userId);
     return user;
   } catch (error) {
     console.error('Erro ao buscar usuário por ID:', error);
