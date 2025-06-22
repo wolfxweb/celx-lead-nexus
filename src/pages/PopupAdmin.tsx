@@ -39,6 +39,8 @@ const PopupAdmin = () => {
   const [loading, setLoading] = useState(true);
   const [editingPopup, setEditingPopup] = useState<PopupConfig | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [popupToDelete, setPopupToDelete] = useState<PopupConfig | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     message: '',
@@ -58,15 +60,15 @@ const PopupAdmin = () => {
       const response = await getBaserowRows(tableId, { size: 200 });
       const mappedPopups = (response.results || []).map((popup: any) => ({
         id: popup.id.toString(),
-        title: popup.title,
-        message: popup.message,
-        showEmailField: popup.show_email_field,
-        emailPlaceholder: popup.email_placeholder,
-        buttonText: popup.button_text,
-        pdfUrl: popup.pdf_url,
-        delay: popup.delay,
-        pages: popup.pages,
-        isActive: popup.is_active
+        title: popup.title || '',
+        message: popup.message || '',
+        showEmailField: popup.show_email_field === 'true' || popup.show_email_field === true,
+        emailPlaceholder: popup.email_placeholder || '',
+        buttonText: popup.button_text || '',
+        pdfUrl: popup.pdf_url || '',
+        delay: parseInt(popup.delay) || 5,
+        pages: popup.pages || '',
+        isActive: popup.is_active === 'true' || popup.is_active === true
       }));
       setPopups(mappedPopups);
     } catch (error) {
@@ -88,16 +90,17 @@ const PopupAdmin = () => {
     try {
       setLoading(true);
       const tableId = getTableId('POPUP_CONFIGS');
+      
       const data = {
         title: formData.title,
         message: formData.message,
-        show_email_field: formData.showEmailField,
-        email_placeholder: formData.emailPlaceholder,
+        show_email_field: formData.showEmailField ? "true" : "false",
+        email_placeholder: formData.emailPlaceholder || "",
         button_text: formData.buttonText,
-        pdf_url: formData.pdfUrl,
-        delay: formData.delay,
+        pdf_url: formData.pdfUrl || "",
+        delay: formData.delay.toString(),
         pages: formData.pages,
-        is_active: formData.isActive
+        is_active: formData.isActive ? "true" : "false"
       };
 
       if (editingPopup) {
@@ -139,6 +142,36 @@ const PopupAdmin = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const confirmDelete = (popup: PopupConfig) => {
+    setPopupToDelete(popup);
+    setShowDeleteModal(true);
+  };
+
+  const executeDelete = async () => {
+    if (!popupToDelete) return;
+
+    try {
+      setLoading(true);
+      const tableId = getTableId('POPUP_CONFIGS');
+      await deleteBaserowRow(tableId, parseInt(popupToDelete.id));
+      toast.success('Pop-up excluído com sucesso!');
+      // Atualizar a lista localmente
+      setPopups((prev) => prev.filter(p => p.id !== popupToDelete.id));
+    } catch (error) {
+      console.error('Erro ao excluir pop-up:', error);
+      toast.error('Erro ao excluir pop-up');
+    } finally {
+      setLoading(false);
+      setShowDeleteModal(false);
+      setPopupToDelete(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setPopupToDelete(null);
   };
 
   const handleEdit = (popup: PopupConfig) => {
@@ -376,7 +409,7 @@ const PopupAdmin = () => {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleDelete(popup.id)}
+                    onClick={() => confirmDelete(popup)}
                     className="text-red-600 hover:text-red-700"
                     disabled={loading}
                   >
@@ -412,6 +445,45 @@ const PopupAdmin = () => {
       {popups.length === 0 && !loading && (
         <div className="text-center py-8 text-gray-500">
           Nenhum pop-up configurado ainda.
+        </div>
+      )}
+
+      {/* Modal de Confirmação de Exclusão */}
+      {showDeleteModal && popupToDelete && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-red-600">
+                <Trash2 className="h-5 w-5" />
+                Confirmar Exclusão
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-gray-700">
+                Tem certeza que deseja excluir o pop-up <strong>"{popupToDelete.title}"</strong>?
+              </p>
+              <p className="text-sm text-gray-500">
+                Esta ação não pode ser desfeita.
+              </p>
+              
+              <div className="flex gap-2 justify-end">
+                <Button 
+                  variant="outline" 
+                  onClick={cancelDelete}
+                  disabled={loading}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={executeDelete}
+                  className="bg-red-600 hover:bg-red-700"
+                  disabled={loading}
+                >
+                  {loading ? 'Excluindo...' : 'Excluir'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>
