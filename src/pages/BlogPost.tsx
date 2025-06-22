@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,8 +12,14 @@ import SEOHead from '@/components/SEOHead';
 
 const BlogPost = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { toast } = useToast();
   
+  // Efeito para rolar para o topo quando o ID do post mudar
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
+
   const [comment, setComment] = useState({
     name: '',
     email: '',
@@ -35,72 +41,161 @@ const BlogPost = () => {
     }
   ]);
 
-  // Mock data do post with SEO fields
-  const post = {
-    id: parseInt(id || '1'),
-    title: 'O Futuro da Transformação Digital nas Empresas',
-    content: `
-      A transformação digital não é mais uma opção, mas uma necessidade para empresas que desejam se manter competitivas no mercado atual. Este processo envolve a integração de tecnologias digitais em todas as áreas de negócio, mudando fundamentalmente como as empresas operam e entregam valor aos clientes.
+  // Mock de todos os posts disponíveis
+  const allPosts = [
+    {
+      id: 1,
+      title: 'O Futuro da Transformação Digital nas Empresas',
+      content: `
+        A transformação digital não é mais uma opção, mas uma necessidade para empresas que desejam se manter competitivas no mercado atual. Este processo envolve a integração de tecnologias digitais em todas as áreas de negócio, mudando fundamentalmente como as empresas operam e entregam valor aos clientes.
 
-      ## Por que a Transformação Digital é Essencial?
+        ## Por que a Transformação Digital é Essencial?
 
-      A transformação digital oferece diversos benefícios:
+        A transformação digital oferece diversos benefícios:
 
-      1. **Eficiência Operacional**: Automatização de processos manuais
-      2. **Melhor Experiência do Cliente**: Canais digitais integrados
-      3. **Tomada de Decisão Baseada em Dados**: Analytics avançados
-      4. **Agilidade de Negócio**: Resposta rápida às mudanças do mercado
-      5. **Redução de Custos**: Otimização de recursos e processos
+        1. **Eficiência Operacional**: Automatização de processos manuais
+        2. **Melhor Experiência do Cliente**: Canais digitais integrados
+        3. **Tomada de Decisão Baseada em Dados**: Analytics avançados
+        4. **Agilidade de Negócio**: Resposta rápida às mudanças do mercado
+        5. **Redução de Custos**: Otimização de recursos e processos
 
-      ## Principais Tecnologias Envolvidas
+        ## Principais Tecnologias Envolvidas
 
-      ### Cloud Computing
-      A migração para a nuvem é frequentemente o primeiro passo na jornada de transformação digital. Oferece escalabilidade, flexibilidade e redução de custos de infraestrutura.
+        ### Cloud Computing
+        A migração para a nuvem é frequentemente o primeiro passo na jornada de transformação digital. Oferece escalabilidade, flexibilidade e redução de custos de infraestrutura.
 
-      ### Inteligência Artificial e Machine Learning
-      Essas tecnologias permitem automação inteligente, análise preditiva e personalização em escala.
+        ### Inteligência Artificial e Machine Learning
+        Essas tecnologias permitem automação inteligente, análise preditiva e personalização em escala.
 
-      ### Internet das Coisas (IoT)
-      Conecta dispositivos e sistemas, gerando dados valiosos para otimização de processos.
+        ### Internet das Coisas (IoT)
+        Conecta dispositivos e sistemas, gerando dados valiosos para otimização de processos.
 
-      ### Big Data e Analytics
-      Transformam dados em insights acionáveis para melhor tomada de decisão.
+        ### Big Data e Analytics
+        Transformam dados em insights acionáveis para melhor tomada de decisão.
 
-      ## Desafios Comuns
+        ## Desafios Comuns
 
-      Embora os benefícios sejam claros, a transformação digital apresenta desafios:
+        Embora os benefícios sejam claros, a transformação digital apresenta desafios:
 
-      - **Resistência à Mudança**: Funcionários podem resistir a novos processos
-      - **Investimento Inicial**: Custos significativos de implementação
-      - **Segurança**: Novos riscos cibernéticos devem ser gerenciados
-      - **Integração**: Conectar sistemas legados com novas tecnologias
+        - **Resistência à Mudança**: Funcionários podem resistir a novos processos
+        - **Investimento Inicial**: Custos significativos de implementação
+        - **Segurança**: Novos riscos cibernéticos devem ser gerenciados
+        - **Integração**: Conectar sistemas legados com novas tecnologias
 
-      ## Estratégias para o Sucesso
+        ## Estratégias para o Sucesso
 
-      Para uma transformação digital bem-sucedida, considere:
+        Para uma transformação digital bem-sucedida, considere:
 
-      1. **Definir uma Visão Clara**: Estabeleça objetivos específicos
-      2. **Engajar a Liderança**: Apoio executivo é fundamental
-      3. **Investir em Capacitação**: Treine sua equipe
-      4. **Implementação Gradual**: Comece com projetos piloto
-      5. **Medir Resultados**: Acompanhe métricas de sucesso
+        1. **Definir uma Visão Clara**: Estabeleça objetivos específicos
+        2. **Engajar a Liderança**: Apoio executivo é fundamental
+        3. **Investir em Capacitação**: Treine sua equipe
+        4. **Implementação Gradual**: Comece com projetos piloto
+        5. **Medir Resultados**: Acompanhe métricas de sucesso
 
-      ## Conclusão
+        ## Conclusão
 
-      A transformação digital é uma jornada contínua que requer planejamento estratégico, investimento em tecnologia e, principalmente, uma mudança cultural. Empresas que abraçam essa transformação estarão melhor posicionadas para prosperar no futuro digital.
+        A transformação digital é uma jornada contínua que requer planejamento estratégico, investimento em tecnologia e, principalmente, uma mudança cultural. Empresas que abraçam essa transformação estarão melhor posicionadas para prosperar no futuro digital.
 
-      Na CELX, ajudamos empresas em todas as etapas dessa jornada, desde o planejamento estratégico até a implementação de soluções tecnológicas avançadas.
-    `,
-    category: 'tecnologia',
-    author: 'Carlos Silva',
-    date: '2024-06-15',
-    readTime: '5 min',
-    tags: ['transformação digital', 'tecnologia', 'inovação', 'estratégia'],
-    image: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=400&fit=crop',
-    metaDescription: 'Descubra como a transformação digital pode revolucionar sua empresa e impulsionar o crescimento no mercado atual. Estratégias, tecnologias e benefícios essenciais.',
-    metaKeywords: 'transformação digital, tecnologia empresarial, inovação, digitalização, automação, cloud computing, inteligência artificial'
-  };
+        Na CELX, ajudamos empresas em todas as etapas dessa jornada, desde o planejamento estratégico até a implementação de soluções tecnológicas avançadas.
+      `,
+      category: 'tecnologia',
+      author: 'Carlos Silva',
+      date: '2024-06-15',
+      readTime: '5 min',
+      tags: ['transformação digital', 'tecnologia', 'inovação', 'estratégia'],
+      image: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=400&fit=crop',
+      metaDescription: 'Descubra como a transformação digital pode revolucionar sua empresa e impulsionar o crescimento no mercado atual. Estratégias, tecnologias e benefícios essenciais.',
+      metaKeywords: 'transformação digital, tecnologia empresarial, inovação, digitalização, automação, cloud computing, inteligência artificial'
+    },
+    {
+      id: 2,
+      title: 'Segurança Cibernética: Protegendo Seus Dados Essenciais',
+      content: `
+        A segurança cibernética é uma preocupação essencial para qualquer empresa que dependa de tecnologias digitais. Este artigo aborda os principais riscos cibernéticos, as melhores práticas para proteger seus dados e estratégias para mitigar esses riscos.
 
+        ## Principais Riscos Cibernéticos
+
+        - **Phishing**: Fraudes online que visam roubar informações pessoais
+        - **Ransomware**: Malware que criptografa arquivos e exige um resgate para desbloqueá-los
+        - **DDoS**: Ataques de negação de serviço que sobrecarregam o sistema
+        - **Man-in-the-Middle**: Interceptação de comunicações entre dois dispositivos
+
+        ## Melhores Práticas para Proteger Seus Dados
+
+        1. **Autenticação Multifator**: Use vários métodos de verificação
+        2. **Atualizações de Segurança**: Mantenha seus sistemas atualizados
+        3. **Backup Regular**: Faça backups regulares dos seus dados
+        4. **Treinamento em Segurança**: Eduque seus funcionários sobre práticas seguras
+        5. **Monitoramento de Segurança**: Use ferramentas de monitoramento
+
+        ## Estratégias para Mitigar Riscos
+
+        - **Implemente Políticas de Segurança**: Defina regras claras para proteger seus dados
+        - **Treine sua Equipe**: Ensine a reconhecer e responder a ameaças cibernéticas
+        - **Contrate Especialistas**: Contrate profissionais qualificados para gerenciar sua segurança
+        - **Participe de Programas de Certificação**: Obtenha certificações que comprovem sua segurança
+
+        ## Conclusão
+
+        Proteger seus dados é uma responsabilidade compartilhada entre a empresa e seus funcionários. Adotando práticas de segurança eficazes, você pode mitigar riscos cibernéticos e garantir a segurança de seus dados.
+      `,
+      category: 'segurança',
+      author: 'Ana Oliveira',
+      date: '2024-06-18',
+      readTime: '4 min',
+      tags: ['segurança cibernética', 'tecnologia', 'proteção de dados'],
+      image: 'https://images.unsplash.com/photo-1554224371-f57f5ecc2e50?w=800&h=400&fit=crop',
+      metaDescription: 'Descubra como proteger seus dados contra riscos cibernéticos. Melhores práticas, estratégias e tecnologias para garantir a segurança dos seus dados.',
+      metaKeywords: 'segurança cibernética, proteção de dados, tecnologia, segurança digital'
+    },
+    {
+      id: 3,
+      title: 'Cloud Computing: Benefícios e Estratégias de Implementação',
+      content: `
+        O Cloud Computing é uma tecnologia essencial para empresas que buscam escalabilidade, flexibilidade e redução de custos. Este artigo explora os principais benefícios do Cloud Computing, estratégias para implementá-lo e como isso pode revolucionar sua infraestrutura de TI.
+
+        ## Principais Benefícios
+
+        - **Escalabilidade**: Aumente ou diminua recursos conforme necessário
+        - **Flexibilidade**: Acesse recursos de qualquer lugar, a qualquer momento
+        - **Redução de Custos**: Economize em infraestrutura física e energia
+        - **Agilidade**: Responda rapidamente às mudanças do mercado
+
+        ## Estratégias para Implementar o Cloud Computing
+
+        1. **Análise de Necessidades**: Identifique quais serviços podem ser migrados para a nuvem
+        2. **Seleção de Provedor**: Escolha um provedor de nuvem confiável
+        3. **Migração Gradual**: Migre serviços gradualmente para a nuvem
+        4. **Integração**: Conecte sistemas legados com a nuvem
+        5. **Monitoramento e Gerenciamento**: Monitore o uso e o desempenho da nuvem
+
+        ## Conclusão
+
+        O Cloud Computing é uma tecnologia poderosa que pode transformar sua infraestrutura de TI. Ao adotá-lo, você pode obter benefícios significativos em termos de escalabilidade, flexibilidade e redução de custos.
+      `,
+      category: 'tecnologia',
+      author: 'Pedro Mendes',
+      date: '2024-06-20',
+      readTime: '5 min',
+      tags: ['cloud computing', 'tecnologia', 'inovação', 'infraestrutura'],
+      image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&h=400&fit=crop',
+      metaDescription: 'Descubra como o Cloud Computing pode revolucionar sua infraestrutura de TI. Benefícios, estratégias e tecnologias essenciais.',
+      metaKeywords: 'cloud computing, tecnologia empresarial, inovação, digitalização, automação, cloud computing, inteligência artificial'
+    }
+  ];
+
+  const post = allPosts.find(p => p.id === parseInt(id || '1'));
+
+  // Filtra posts relacionados, excluindo o atual
+  const relatedPosts = allPosts.filter(p => p.id !== post?.id);
+
+  if (!post) {
+    useEffect(() => {
+      navigate('/404');
+    }, [navigate]);
+    return null;
+  }
+  
   const handleCommentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -204,35 +299,22 @@ const BlogPost = () => {
         <section className="mb-12">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Posts Relacionados</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <CardTitle className="text-lg">
-                  <Link to="/blog/2" className="hover:text-primary transition-colors">
-                    Segurança Cibernética: Protegendo Seus Dados
-                  </Link>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 text-sm">
-                  As melhores práticas para manter sua empresa segura no ambiente digital atual.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <CardTitle className="text-lg">
-                  <Link to="/blog/3" className="hover:text-primary transition-colors">
-                    Cloud Computing: Benefícios e Implementação
-                  </Link>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 text-sm">
-                  Como migrar para a nuvem pode revolucionar sua infraestrutura de TI.
-                </p>
-              </CardContent>
-            </Card>
+            {relatedPosts.map(relatedPost => (
+              <Card key={relatedPost.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <CardTitle className="text-lg">
+                    <Link to={`/blog/${relatedPost.id}`} className="hover:text-primary transition-colors">
+                      {relatedPost.title}
+                    </Link>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600 text-sm">
+                    {relatedPost.content.substring(0, 100)}...
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </section>
 
