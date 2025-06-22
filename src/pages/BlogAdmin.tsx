@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,6 +32,7 @@ const BlogAdmin = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [activeTab, setActiveTab] = useState('manage');
 
   const [posts, setPosts] = useState([
     {
@@ -129,8 +129,7 @@ const BlogAdmin = () => {
       
       setIsEditing(false);
       setEditingPost(null);
-      // Switch back to manage tab after editing
-      document.querySelector('[value="manage"]')?.click();
+      setActiveTab('manage');
     } else {
       const post = {
         id: posts.length + 1,
@@ -176,8 +175,7 @@ const BlogAdmin = () => {
       scheduledDate: post.scheduledDate || ''
     });
     setIsEditing(true);
-    // Switch to create tab for editing
-    document.querySelector('[value="create"]')?.click();
+    setActiveTab('create');
   };
 
   const handleCancelEdit = () => {
@@ -303,7 +301,7 @@ const BlogAdmin = () => {
           </div>
         </div>
 
-        <Tabs defaultValue={isEditing ? "create" : "manage"} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 lg:grid-cols-3 bg-white shadow-sm">
             <TabsTrigger value="create" className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
