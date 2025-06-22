@@ -8,6 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Edit, Trash2, Eye, Calendar, User, Clock, Search, Plus, FileText } from 'lucide-react';
 import SEOHead from '@/components/SEOHead';
 
 const BlogAdmin = () => {
@@ -24,13 +26,15 @@ const BlogAdmin = () => {
 
   const [editingPost, setEditingPost] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
 
   const [posts, setPosts] = useState([
     {
       id: 1,
       title: 'O Futuro da Transformação Digital nas Empresas',
       excerpt: 'A transformação digital não é mais uma opção, mas uma necessidade...',
-      content: 'Conteúdo completo do post...',
+      content: 'Conteúdo completo do post sobre transformação digital e como as empresas podem se adaptar...',
       status: 'published',
       author: 'Carlos Silva',
       date: '2024-06-15',
@@ -43,7 +47,7 @@ const BlogAdmin = () => {
       id: 2,
       title: 'Segurança Cibernética: Protegendo Seus Dados',
       excerpt: 'As melhores práticas para manter sua empresa segura...',
-      content: 'Conteúdo completo do post sobre segurança...',
+      content: 'Conteúdo completo do post sobre segurança cibernética e proteção de dados empresariais...',
       status: 'published',
       author: 'Ana Costa',
       date: '2024-06-10',
@@ -51,6 +55,19 @@ const BlogAdmin = () => {
       tags: 'segurança, cibernética, proteção',
       metaDescription: 'Aprenda as estratégias essenciais de segurança cibernética para proteger sua empresa contra ameaças digitais.',
       metaKeywords: 'segurança cibernética, proteção de dados, cybersecurity, segurança digital'
+    },
+    {
+      id: 3,
+      title: 'Cloud Computing: O Futuro da Infraestrutura',
+      excerpt: 'Como migrar para a nuvem pode revolucionar sua infraestrutura...',
+      content: 'Conteúdo completo sobre cloud computing e suas vantagens...',
+      status: 'draft',
+      author: 'Pedro Santos',
+      date: '2024-06-12',
+      category: 'cloud',
+      tags: 'cloud, infraestrutura, tecnologia',
+      metaDescription: 'Entenda como o cloud computing pode transformar sua infraestrutura de TI.',
+      metaKeywords: 'cloud computing, infraestrutura, nuvem, tecnologia'
     }
   ]);
 
@@ -60,7 +77,6 @@ const BlogAdmin = () => {
     e.preventDefault();
     
     if (isEditing && editingPost) {
-      // Update existing post
       setPosts(posts.map(post => 
         post.id === editingPost.id 
           ? { ...editingPost, ...newPost, id: editingPost.id }
@@ -75,7 +91,6 @@ const BlogAdmin = () => {
       setIsEditing(false);
       setEditingPost(null);
     } else {
-      // Create new post
       const post = {
         id: posts.length + 1,
         ...newPost,
@@ -153,157 +168,237 @@ const BlogAdmin = () => {
     });
   };
 
+  const filteredPosts = posts.filter(post => {
+    const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         post.author.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = filterStatus === 'all' || post.status === filterStatus;
+    return matchesSearch && matchesStatus;
+  });
+
+  const stats = {
+    total: posts.length,
+    published: posts.filter(p => p.status === 'published').length,
+    drafts: posts.filter(p => p.status === 'draft').length
+  };
+
   return (
-    <div className="min-h-screen py-20">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 py-20">
       <SEOHead 
         title="Administração do Blog"
         description="Gerencie o conteúdo do blog CELX - crie, edite e publique artigos"
         keywords="blog admin, gestão de conteúdo, CELX, administração"
       />
       
-      <div className="container mx-auto px-4 max-w-6xl">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Administração do Blog
-          </h1>
-          <p className="text-gray-600">
-            Gerencie o conteúdo do blog CELX
-          </p>
+      <div className="container mx-auto px-4 max-w-7xl">
+        {/* Header com estatísticas */}
+        <div className="mb-8">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-4">
+              Central de Conteúdo
+            </h1>
+            <p className="text-gray-600 text-lg">
+              Gerencie e publique conteúdo de forma inteligente
+            </p>
+          </div>
+
+          {/* Cards de estatísticas */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-blue-100 text-sm">Total de Posts</p>
+                    <p className="text-3xl font-bold">{stats.total}</p>
+                  </div>
+                  <FileText className="h-8 w-8 text-blue-200" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-green-100 text-sm">Publicados</p>
+                    <p className="text-3xl font-bold">{stats.published}</p>
+                  </div>
+                  <Eye className="h-8 w-8 text-green-200" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-amber-100 text-sm">Rascunhos</p>
+                    <p className="text-3xl font-bold">{stats.drafts}</p>
+                  </div>
+                  <Edit className="h-8 w-8 text-amber-200" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
-        <Tabs defaultValue="create" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="create">
-              {isEditing ? 'Editar Post' : 'Criar Post'}
+        <Tabs defaultValue={isEditing ? "create" : "manage"} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-3 bg-white shadow-sm">
+            <TabsTrigger value="create" className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">{isEditing ? 'Editar Post' : 'Criar Post'}</span>
+              <span className="sm:hidden">{isEditing ? 'Editar' : 'Criar'}</span>
             </TabsTrigger>
-            <TabsTrigger value="manage">Gerenciar Posts</TabsTrigger>
-            <TabsTrigger value="comments">Comentários</TabsTrigger>
+            <TabsTrigger value="manage" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline">Gerenciar Posts</span>
+              <span className="sm:hidden">Posts</span>
+            </TabsTrigger>
+            <TabsTrigger value="comments" className="flex items-center gap-2 hidden lg:flex">
+              <User className="h-4 w-4" />
+              Comentários
+            </TabsTrigger>
           </TabsList>
 
           {/* Criar/Editar Post */}
           <TabsContent value="create">
-            <Card>
-              <CardHeader>
-                <CardTitle>{isEditing ? 'Editar Post' : 'Novo Post'}</CardTitle>
-                <CardDescription>
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+              <CardHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg">
+                <CardTitle className="flex items-center gap-2">
+                  {isEditing ? <Edit className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+                  {isEditing ? 'Editar Post' : 'Novo Post'}
+                </CardTitle>
+                <CardDescription className="text-blue-100">
                   {isEditing ? 'Edite o artigo selecionado' : 'Crie um novo artigo para o blog'}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-6">
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  <div>
-                    <Label htmlFor="title">Título *</Label>
-                    <Input
-                      id="title"
-                      value={newPost.title}
-                      onChange={(e) => setNewPost({...newPost, title: e.target.value})}
-                      placeholder="Digite o título do post"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="excerpt">Resumo</Label>
-                    <Textarea
-                      id="excerpt"
-                      value={newPost.excerpt}
-                      onChange={(e) => setNewPost({...newPost, excerpt: e.target.value})}
-                      placeholder="Breve descrição do post"
-                      rows={3}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="content">Conteúdo *</Label>
-                    <Textarea
-                      id="content"
-                      value={newPost.content}
-                      onChange={(e) => setNewPost({...newPost, content: e.target.value})}
-                      placeholder="Escreva o conteúdo completo do post"
-                      rows={10}
-                      required
-                    />
-                  </div>
-
-                  {/* SEO Fields */}
-                  <div className="border-t pt-6">
-                    <h3 className="text-lg font-semibold mb-4">Configurações SEO</h3>
-                    
-                    <div className="space-y-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-6">
                       <div>
-                        <Label htmlFor="metaDescription">Meta Descrição</Label>
-                        <Textarea
-                          id="metaDescription"
-                          value={newPost.metaDescription}
-                          onChange={(e) => setNewPost({...newPost, metaDescription: e.target.value})}
-                          placeholder="Descrição do post para mecanismos de busca (máx. 160 caracteres)"
-                          rows={3}
-                          maxLength={160}
-                        />
-                        <p className="text-sm text-gray-500 mt-1">
-                          {newPost.metaDescription.length}/160 caracteres
-                        </p>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="metaKeywords">Palavras-chave</Label>
+                        <Label htmlFor="title" className="text-base font-semibold">Título *</Label>
                         <Input
-                          id="metaKeywords"
-                          value={newPost.metaKeywords}
-                          onChange={(e) => setNewPost({...newPost, metaKeywords: e.target.value})}
-                          placeholder="Palavras-chave separadas por vírgula"
+                          id="title"
+                          value={newPost.title}
+                          onChange={(e) => setNewPost({...newPost, title: e.target.value})}
+                          placeholder="Digite o título do post"
+                          required
+                          className="mt-2"
                         />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="excerpt" className="text-base font-semibold">Resumo</Label>
+                        <Textarea
+                          id="excerpt"
+                          value={newPost.excerpt}
+                          onChange={(e) => setNewPost({...newPost, excerpt: e.target.value})}
+                          placeholder="Breve descrição do post"
+                          rows={3}
+                          className="mt-2"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="category" className="text-base font-semibold">Categoria</Label>
+                          <Select value={newPost.category} onValueChange={(value) => setNewPost({...newPost, category: value})}>
+                            <SelectTrigger className="mt-2">
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="tecnologia">Tecnologia</SelectItem>
+                              <SelectItem value="seguranca">Segurança</SelectItem>
+                              <SelectItem value="cloud">Cloud</SelectItem>
+                              <SelectItem value="ai">Inteligência Artificial</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="author" className="text-base font-semibold">Autor</Label>
+                          <Input
+                            id="author"
+                            value={newPost.author}
+                            onChange={(e) => setNewPost({...newPost, author: e.target.value})}
+                            placeholder="Nome do autor"
+                            className="mt-2"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="tags" className="text-base font-semibold">Tags</Label>
+                        <Input
+                          id="tags"
+                          value={newPost.tags}
+                          onChange={(e) => setNewPost({...newPost, tags: e.target.value})}
+                          placeholder="Tags separadas por vírgula"
+                          className="mt-2"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-6">
+                      <div>
+                        <Label htmlFor="content" className="text-base font-semibold">Conteúdo *</Label>
+                        <Textarea
+                          id="content"
+                          value={newPost.content}
+                          onChange={(e) => setNewPost({...newPost, content: e.target.value})}
+                          placeholder="Escreva o conteúdo completo do post"
+                          rows={8}
+                          required
+                          className="mt-2"
+                        />
+                      </div>
+
+                      {/* SEO Fields */}
+                      <div className="border-t pt-6">
+                        <h3 className="text-lg font-semibold mb-4 text-blue-600">Configurações SEO</h3>
+                        
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="metaDescription" className="text-base font-semibold">Meta Descrição</Label>
+                            <Textarea
+                              id="metaDescription"
+                              value={newPost.metaDescription}
+                              onChange={(e) => setNewPost({...newPost, metaDescription: e.target.value})}
+                              placeholder="Descrição para mecanismos de busca"
+                              rows={3}
+                              maxLength={160}
+                              className="mt-2"
+                            />
+                            <p className="text-sm text-gray-500 mt-1">
+                              {newPost.metaDescription.length}/160 caracteres
+                            </p>
+                          </div>
+
+                          <div>
+                            <Label htmlFor="metaKeywords" className="text-base font-semibold">Palavras-chave SEO</Label>
+                            <Input
+                              id="metaKeywords"
+                              value={newPost.metaKeywords}
+                              onChange={(e) => setNewPost({...newPost, metaKeywords: e.target.value})}
+                              placeholder="Palavras-chave separadas por vírgula"
+                              className="mt-2"
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="category">Categoria</Label>
-                      <Select value={newPost.category} onValueChange={(value) => setNewPost({...newPost, category: value})}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione uma categoria" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="tecnologia">Tecnologia</SelectItem>
-                          <SelectItem value="seguranca">Segurança</SelectItem>
-                          <SelectItem value="cloud">Cloud</SelectItem>
-                          <SelectItem value="ai">Inteligência Artificial</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="author">Autor</Label>
-                      <Input
-                        id="author"
-                        value={newPost.author}
-                        onChange={(e) => setNewPost({...newPost, author: e.target.value})}
-                        placeholder="Nome do autor"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="tags">Tags</Label>
-                    <Input
-                      id="tags"
-                      value={newPost.tags}
-                      onChange={(e) => setNewPost({...newPost, tags: e.target.value})}
-                      placeholder="Tags separadas por vírgula"
-                    />
-                  </div>
-
-                  <div className="flex gap-4">
+                  <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t">
                     {isEditing && (
-                      <Button type="button" variant="outline" onClick={handleCancelEdit}>
+                      <Button type="button" variant="outline" onClick={handleCancelEdit} className="order-2 sm:order-1">
                         Cancelar
                       </Button>
                     )}
-                    <Button type="submit" variant="outline">
+                    <Button type="submit" variant="outline" className="order-1 sm:order-2">
                       {isEditing ? 'Atualizar como Rascunho' : 'Salvar como Rascunho'}
                     </Button>
-                    <Button type="submit">
+                    <Button type="submit" className="order-1 sm:order-3 bg-gradient-to-r from-blue-500 to-blue-600">
                       {isEditing ? 'Atualizar e Publicar' : 'Publicar Agora'}
                     </Button>
                   </div>
@@ -314,97 +409,193 @@ const BlogAdmin = () => {
 
           {/* Gerenciar Posts */}
           <TabsContent value="manage">
-            <Card>
-              <CardHeader>
-                <CardTitle>Posts Existentes</CardTitle>
-                <CardDescription>
-                  Gerencie todos os posts do blog
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {posts.map((post) => (
-                    <div key={post.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex-1">
-                        <h3 className="font-semibold">{post.title}</h3>
-                        <div className="flex items-center gap-4 text-sm text-gray-500 mt-1">
-                          <span>Por {post.author}</span>
-                          <span>{new Date(post.date).toLocaleDateString()}</span>
-                          <span className={`px-2 py-1 rounded text-xs ${
-                            post.status === 'published' 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            {post.status === 'published' ? 'Publicado' : 'Rascunho'}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => handleEdit(post)}
-                        >
-                          Editar
-                        </Button>
-                        {post.status === 'draft' && (
-                          <Button size="sm" onClick={() => handlePublish(post.id)}>
-                            Publicar
-                          </Button>
-                        )}
-                        <Button 
-                          variant="destructive" 
-                          size="sm"
-                          onClick={() => handleDelete(post.id)}
-                        >
-                          Excluir
-                        </Button>
-                      </div>
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+              <CardHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Posts Existentes
+                    </CardTitle>
+                    <CardDescription className="text-blue-100">
+                      Gerencie todos os posts do blog
+                    </CardDescription>
+                  </div>
+                  
+                  {/* Filtros */}
+                  <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        placeholder="Buscar posts..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 bg-white/90 w-full sm:w-64"
+                      />
                     </div>
+                    <Select value={filterStatus} onValueChange={setFilterStatus}>
+                      <SelectTrigger className="bg-white/90 w-full sm:w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos</SelectItem>
+                        <SelectItem value="published">Publicados</SelectItem>
+                        <SelectItem value="draft">Rascunhos</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  {filteredPosts.map((post) => (
+                    <Card key={post.id} className="hover:shadow-md transition-all duration-200 border border-gray-200">
+                      <CardContent className="p-6">
+                        <div className="flex flex-col lg:flex-row justify-between gap-4">
+                          <div className="flex-1 space-y-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                              <h3 className="font-semibold text-lg text-gray-900 flex-1">{post.title}</h3>
+                              <Badge 
+                                variant={post.status === 'published' ? 'default' : 'secondary'}
+                                className={post.status === 'published' 
+                                  ? 'bg-green-100 text-green-800 hover:bg-green-200' 
+                                  : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                                }
+                              >
+                                {post.status === 'published' ? 'Publicado' : 'Rascunho'}
+                              </Badge>
+                            </div>
+                            
+                            <p className="text-gray-600 text-sm line-clamp-2">{post.excerpt}</p>
+                            
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                              <span className="flex items-center gap-1">
+                                <User className="h-4 w-4" />
+                                {post.author}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-4 w-4" />
+                                {new Date(post.date).toLocaleDateString()}
+                              </span>
+                              <Badge variant="outline" className="text-xs">
+                                {post.category}
+                              </Badge>
+                            </div>
+                          </div>
+                          
+                          <div className="flex flex-row lg:flex-col gap-2 lg:min-w-[120px]">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => handleEdit(post)}
+                              className="flex-1 lg:flex-none flex items-center gap-1"
+                            >
+                              <Edit className="h-4 w-4" />
+                              <span className="hidden sm:inline">Editar</span>
+                            </Button>
+                            {post.status === 'draft' && (
+                              <Button 
+                                size="sm" 
+                                onClick={() => handlePublish(post.id)}
+                                className="flex-1 lg:flex-none bg-green-600 hover:bg-green-700 flex items-center gap-1"
+                              >
+                                <Eye className="h-4 w-4" />
+                                <span className="hidden sm:inline">Publicar</span>
+                              </Button>
+                            )}
+                            <Button 
+                              variant="destructive" 
+                              size="sm"
+                              onClick={() => handleDelete(post.id)}
+                              className="flex-1 lg:flex-none flex items-center gap-1"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              <span className="hidden sm:inline">Excluir</span>
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   ))}
+                  
+                  {filteredPosts.length === 0 && (
+                    <div className="text-center py-12">
+                      <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">Nenhum post encontrado com os filtros aplicados.</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
           {/* Comentários */}
-          <TabsContent value="comments">
-            <Card>
-              <CardHeader>
-                <CardTitle>Gerenciar Comentários</CardTitle>
-                <CardDescription>
+          <TabsContent value="comments" className="hidden lg:block">
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+              <CardHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg">
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Gerenciar Comentários
+                </CardTitle>
+                <CardDescription className="text-blue-100">
                   Modere os comentários dos posts
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-6">
                 <div className="space-y-4">
-                  <div className="p-4 border rounded-lg">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-semibold">João Silva</p>
-                        <p className="text-sm text-gray-500">Em: O Futuro da Transformação Digital</p>
-                        <p className="mt-2">Excelente artigo! Muito esclarecedor sobre as tendências do mercado.</p>
+                  <Card className="border border-gray-200">
+                    <CardContent className="p-4">
+                      <div className="flex flex-col lg:flex-row justify-between gap-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold">João Silva</p>
+                            <Badge variant="outline" className="text-xs">Pendente</Badge>
+                          </div>
+                          <p className="text-sm text-gray-500">Em: O Futuro da Transformação Digital</p>
+                          <p className="text-gray-700">Excelente artigo! Muito esclarecedor sobre as tendências do mercado.</p>
+                          <p className="text-xs text-gray-400 flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            Há 2 horas
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" className="text-green-600 border-green-600 hover:bg-green-50">
+                            Aprovar
+                          </Button>
+                          <Button size="sm" variant="destructive">
+                            Rejeitar
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline">Aprovar</Button>
-                        <Button size="sm" variant="destructive">Rejeitar</Button>
-                      </div>
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
 
-                  <div className="p-4 border rounded-lg">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-semibold">Maria Santos</p>
-                        <p className="text-sm text-gray-500">Em: Segurança Cibernética</p>
-                        <p className="mt-2">Vocês oferecem consultoria em segurança? Gostaria de saber mais.</p>
+                  <Card className="border border-gray-200">
+                    <CardContent className="p-4">
+                      <div className="flex flex-col lg:flex-row justify-between gap-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold">Maria Santos</p>
+                            <Badge variant="outline" className="text-xs">Pendente</Badge>
+                          </div>
+                          <p className="text-sm text-gray-500">Em: Segurança Cibernética</p>
+                          <p className="text-gray-700">Vocês oferecem consultoria em segurança? Gostaria de saber mais.</p>
+                          <p className="text-xs text-gray-400 flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            Há 1 dia
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" className="text-green-600 border-green-600 hover:bg-green-50">
+                            Aprovar
+                          </Button>
+                          <Button size="sm" variant="destructive">
+                            Rejeitar
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline">Aprovar</Button>
-                        <Button size="sm" variant="destructive">Rejeitar</Button>
-                      </div>
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
                 </div>
               </CardContent>
             </Card>
