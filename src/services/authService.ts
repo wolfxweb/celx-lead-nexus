@@ -1,4 +1,4 @@
-import { BASEROW_CONFIG, baserowRequest, getBaserowHeaders } from '@/lib/baserow';
+import { BASEROW_CONFIG, baserowRequest, getBaserowHeaders, getBaserowRows, createBaserowRow } from '@/lib/baserow';
 import { User, LoginCredentials, RegisterData } from '@/types/auth';
 import { getTableId, getFieldId, createFieldFilter } from '@/config/baserowTables';
 
@@ -13,6 +13,7 @@ export interface BaserowUser {
   created_at: string;
   updated_at: string;
   last_login?: string;
+  is_active?: boolean;
 }
 
 // Interface para resposta de autenticação do Baserow
@@ -50,16 +51,13 @@ export const authenticateUser = async (credentials: LoginCredentials): Promise<B
   }
 };
 
-// Função para buscar usuário por email
+// Função para buscar usuário por email (CORRIGIDA)
 export const getUserByEmail = async (email: string): Promise<BaserowUser | null> => {
   try {
     const tableId = getTableId('USERS');
-    const emailField = getFieldId('USERS', 'email');
-    const filter = `filter__${emailField}__equal=${encodeURIComponent(email)}`;
+    const filter = createFieldFilter('USERS', 'email', 'equal', email);
     
-    const response = await baserowRequest<{ results: BaserowUser[] }>(
-      `/database/rows/table/${tableId}/?${filter}`
-    );
+    const response = await getBaserowRows<BaserowUser>(tableId, { filter });
 
     if (response.results.length > 0) {
       return response.results[0];
@@ -72,36 +70,33 @@ export const getUserByEmail = async (email: string): Promise<BaserowUser | null>
   }
 };
 
-// Função para criar novo usuário
+// Função para criar novo usuário (CORRIGIDA)
 export const createUser = async (userData: RegisterData): Promise<BaserowUser> => {
   try {
-    // Verificar se o usuário já existe
     const existingUser = await getUserByEmail(userData.email);
     if (existingUser) {
       throw new Error('Este email já está em uso');
     }
 
-    // Hash da senha (em produção, use bcrypt ou similar)
     const hashedPassword = await hashPassword(userData.password);
-
     const tableId = getTableId('USERS');
-    const newUser = await baserowRequest<BaserowUser>(
-      `/database/rows/table/${tableId}/`,
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          [getFieldId('USERS', 'name')]: userData.name,
-          [getFieldId('USERS', 'email')]: userData.email,
-          [getFieldId('USERS', 'password_hash')]: hashedPassword,
-          [getFieldId('USERS', 'role')]: 'user',
-          [getFieldId('USERS', 'avatar')]: '👤',
-        }),
-      }
-    );
+    
+    // Corpo da requisição com nomes de campo corretos
+    const newUserPayload = {
+      name: userData.name,
+      email: userData.email,
+      password_hash: hashedPassword,
+      role: 'user',
+      is_active: "true", // Define o usuário como ativo no registro (enviando como string)
+    };
+
+    // Usa a função createBaserowRow que está 100% correta
+    const newUser = await createBaserowRow<BaserowUser>(tableId, newUserPayload);
 
     return newUser;
   } catch (error) {
-    throw new Error('Erro ao criar usuário');
+    console.error("Falha detalhada ao criar usuário:", error);
+    throw error;
   }
 };
 

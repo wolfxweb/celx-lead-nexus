@@ -81,7 +81,20 @@ export const baserowRequest = async <T>(
   });
 
   if (!response.ok) {
-    throw new Error(`Baserow API error: ${response.status} ${response.statusText}`);
+    let errorBody;
+    try {
+      errorBody = await response.json();
+    } catch (e) {
+      errorBody = { detail: response.statusText };
+    }
+    
+    // Log do erro real para depuração
+    console.error('Baserow API Error Body:', errorBody);
+
+    // Garante que a mensagem de erro seja sempre uma string JSON
+    const errorMessage = JSON.stringify(errorBody);
+    
+    throw new Error(errorMessage);
   }
 
   return response.json();
@@ -140,16 +153,19 @@ export const getBaserowRows = async <T = BaserowRow>(
     order_by?: string;
   } = {}
 ): Promise<BaserowResponse<T>> => {
-  const searchParams = new URLSearchParams();
+  const searchParams = new URLSearchParams({ user_field_names: 'true' });
   
   if (params.page) searchParams.append('page', params.page.toString());
   if (params.size) searchParams.append('size', params.size.toString());
   if (params.search) searchParams.append('search', params.search);
-  if (params.filter) searchParams.append('filter', params.filter);
+  if (params.filter) {
+     const [filterKey, filterValue] = params.filter.split('=');
+     searchParams.append(filterKey, filterValue);
+  }
   if (params.order_by) searchParams.append('order_by', params.order_by);
 
   const queryString = searchParams.toString();
-  const endpoint = `/database/rows/table/${tableId}/${queryString ? `?${queryString}` : ''}`;
+  const endpoint = `/database/rows/table/${tableId}/?${queryString}`;
   
   return baserowRequest<BaserowResponse<T>>(endpoint);
 };
@@ -159,7 +175,8 @@ export const createBaserowRow = async <T = BaserowRow>(
   tableId: number,
   data: Record<string, any>
 ): Promise<T> => {
-  return baserowRequest<T>(`/database/rows/table/${tableId}/`, {
+  const endpoint = `/database/rows/table/${tableId}/?user_field_names=true`;
+  return baserowRequest<T>(endpoint, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -171,7 +188,8 @@ export const updateBaserowRow = async <T = BaserowRow>(
   rowId: number,
   data: Record<string, any>
 ): Promise<T> => {
-  return baserowRequest<T>(`/database/rows/table/${tableId}/${rowId}/`, {
+  const endpoint = `/database/rows/table/${tableId}/${rowId}/?user_field_names=true`;
+  return baserowRequest<T>(endpoint, {
     method: 'PATCH',
     body: JSON.stringify(data),
   });
@@ -192,5 +210,6 @@ export const getBaserowRow = async <T = BaserowRow>(
   tableId: number,
   rowId: number
 ): Promise<T> => {
-  return baserowRequest<T>(`/database/rows/table/${tableId}/${rowId}/`);
+  const endpoint = `/database/rows/table/${tableId}/${rowId}/?user_field_names=true`;
+  return baserowRequest<T>(endpoint);
 }; 

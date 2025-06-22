@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback, useMemo } from 'react';
 import { AuthContextType, AuthState, LoginCredentials, RegisterData, User } from '@/types/auth';
 import { 
   authenticateUser, 
@@ -97,27 +97,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, []);
 
-  const login = async (credentials: LoginCredentials): Promise<void> => {
+  const login = useCallback(async (credentials: LoginCredentials): Promise<void> => {
     dispatch({ type: 'LOGIN_START' });
 
     try {
-      // Autenticar com o Baserow
-      const authResponse: BaserowAuthResponse = await authenticateUser(credentials);
-      
-      // Buscar dados completos do usuário
+      const authResponse = await authenticateUser(credentials);
       const baserowUser = await getUserById(authResponse.user.id);
       
       if (!baserowUser) {
         throw new Error('Usuário não encontrado');
       }
 
-      // Atualizar último login
       await updateLastLogin(baserowUser.id);
-
-      // Converter para o formato da aplicação
       const user = convertBaserowUserToUser(baserowUser);
 
-      // Salvar no localStorage
       localStorage.setItem('celx_user', JSON.stringify(user));
       localStorage.setItem('celx_token', authResponse.token);
 
@@ -126,9 +119,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const errorMessage = error instanceof Error ? error.message : 'Erro no login';
       dispatch({ type: 'LOGIN_FAILURE', payload: errorMessage });
     }
-  };
+  }, []);
 
-  const register = async (data: RegisterData): Promise<void> => {
+  const register = useCallback(async (data: RegisterData): Promise<void> => {
     dispatch({ type: 'REGISTER_START' });
 
     try {
@@ -137,43 +130,63 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return;
       }
 
-      // Criar usuário no Baserow
       const baserowUser = await createUser(data);
-
-      // Converter para o formato da aplicação
       const user = convertBaserowUserToUser(baserowUser);
-
-      // Gerar token (em uma implementação real, você faria login após o registro)
       const token = 'temp_token_' + Date.now();
 
-      // Salvar no localStorage
       localStorage.setItem('celx_user', JSON.stringify(user));
       localStorage.setItem('celx_token', token);
 
       dispatch({ type: 'REGISTER_SUCCESS', payload: { user, token } });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro no registro';
+      let errorMessage = 'Ocorreu um erro desconhecido durante o registro.';
+      
+      if (error instanceof Error) {
+        try {
+          const errorJson = JSON.parse(error.message);
+          
+          // Verifica se é um erro de validação do Baserow com detalhes
+          if (errorJson.detail) {
+            const detail = typeof errorJson.detail === 'object' ? errorJson.detail : JSON.parse(errorJson.detail);
+            const fieldName = Object.keys(detail)[0];
+            const errorInfo = detail[fieldName][0];
+            errorMessage = `Erro no campo '${fieldName}': ${errorInfo.error}`;
+          } else if (errorJson.error) {
+            errorMessage = `Erro: ${errorJson.error}`;
+          } else {
+             // Fallback para outros tipos de erro JSON
+             const firstKey = Object.keys(errorJson)[0];
+             errorMessage = errorJson[firstKey][0];
+          }
+        } catch (e) {
+          // A mensagem de erro não era JSON, usa a mensagem como está
+          errorMessage = error.message;
+        }
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
       dispatch({ type: 'REGISTER_FAILURE', payload: errorMessage });
     }
-  };
+  }, []);
 
-  const logout = (): void => {
+  const logout = useCallback((): void => {
     localStorage.removeItem('celx_user');
     localStorage.removeItem('celx_token');
     dispatch({ type: 'LOGOUT' });
-  };
+  }, []);
 
-  const clearError = (): void => {
+  const clearError = useCallback((): void => {
     dispatch({ type: 'CLEAR_ERROR' });
-  };
+  }, []);
 
-  const value: AuthContextType = {
+  const value = useMemo(() => ({
     ...state,
     login,
     register,
     logout,
     clearError
-  };
+  }), [state, login, register, logout, clearError]);
 
   return (
     <AuthContext.Provider value={value}>
