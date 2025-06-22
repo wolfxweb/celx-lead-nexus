@@ -9,7 +9,7 @@ export interface Product {
   tags: string[];
   image: string;
   images: string[];
-  downloadUrl?: string;
+  video?: string;
   fileSize?: string;
   fileType?: string;
   isActive: boolean;
@@ -43,7 +43,7 @@ export interface Order {
   items: OrderItem[];
   total: number;
   status: OrderStatus;
-  paymentMethod: string;
+  paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   createdAt: Date;
   updatedAt: Date;
@@ -56,7 +56,7 @@ export interface OrderItem {
   productImage: string;
   price: number;
   quantity: number;
-  downloadUrl?: string;
+  downloadUrl: string;
 }
 
 export interface DownloadLink {
@@ -69,11 +69,17 @@ export interface DownloadLink {
 
 export type OrderStatus = 'pending' | 'processing' | 'completed' | 'cancelled' | 'refunded';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
+export type PaymentMethod = 'credit' | 'pix' | 'boleto';
 
-export interface CheckoutData {
+export interface CheckoutFormData {
   name: string;
   email: string;
-  paymentMethod: string;
+  cardNumber: string;
+  cardName: string;
+  expiryMonth: string;
+  expiryYear: string;
+  cvv: string;
+  paymentMethod: PaymentMethod;
 }
 
 export interface Category {

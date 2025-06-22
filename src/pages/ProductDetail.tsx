@@ -1,37 +1,57 @@
 import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { Star, ShoppingCart, Download, FileText, Calendar, Users, Tag, ArrowLeft } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Star, ShoppingCart, Download, ArrowLeft, Play, ChevronLeft, ChevronRight } from 'lucide-react';
 import { mockProducts } from '@/data/products';
 import { useCart } from '@/contexts/CartContext';
-import { Product } from '@/types/ecommerce';
 
-const ProductDetail: React.FC = () => {
+const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const [selectedImage, setSelectedImage] = useState(0);
-  const { addItem, isInCart } = useCart();
+  const navigate = useNavigate();
+  const { addItem } = useCart();
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [quantity, setQuantity] = useState(1);
 
   const product = mockProducts.find(p => p.id === id);
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Produto não encontrado</h1>
-          <p className="text-gray-600 mb-6">O produto que você está procurando não existe.</p>
-          <Button asChild>
-            <Link to="/loja">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar para a loja
-            </Link>
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white p-6">
+        <div className="max-w-6xl mx-auto">
+          <Button variant="ghost" onClick={() => navigate(-1)} className="mb-6">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar
           </Button>
+          <div className="text-center py-12">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Produto não encontrado</h1>
+            <p className="text-gray-600">O produto que você está procurando não existe.</p>
+          </div>
         </div>
       </div>
     );
   }
+
+  const handleAddToCart = () => {
+    // Add the product multiple times based on quantity
+    for (let i = 0; i < quantity; i++) {
+      addItem(product);
+    }
+  };
+
+  const nextImage = () => {
+    setSelectedImageIndex((prev) => 
+      prev === product.images.length - 1 ? 0 : prev + 1
+    );
+  };
+
+  const prevImage = () => {
+    setSelectedImageIndex((prev) => 
+      prev === 0 ? product.images.length - 1 : prev - 1
+    );
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -40,59 +60,96 @@ const ProductDetail: React.FC = () => {
     }).format(price);
   };
 
-  const renderStars = (rating: number) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <Star
-        key={i}
-        className={`w-4 h-4 ${i < Math.floor(rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
-      />
-    ));
-  };
-
-  const handleAddToCart = () => {
-    addItem(product);
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-      {/* Breadcrumb */}
-      <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4">
-          <nav className="flex items-center space-x-2 text-sm text-gray-600">
-            <Link to="/" className="hover:text-blue-600">Home</Link>
-            <span>/</span>
-            <Link to="/loja" className="hover:text-blue-600">Loja</Link>
-            <span>/</span>
-            <span className="text-gray-900">{product.name}</span>
-          </nav>
-        </div>
-      </div>
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white p-6">
+      <div className="max-w-6xl mx-auto">
+        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-6">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Voltar
+        </Button>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Product Images */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Galeria de Imagens */}
           <div className="space-y-4">
-            <div className="aspect-square bg-white rounded-lg border overflow-hidden">
+            {/* Vídeo (se disponível) */}
+            {product.video && (
+              <div className="space-y-2">
+                <h3 className="font-semibold text-lg flex items-center">
+                  <Play className="w-5 h-5 mr-2" />
+                  Vídeo do Produto
+                </h3>
+                <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                  <iframe
+                    src={product.video}
+                    title={`Vídeo do ${product.name}`}
+                    className="w-full h-full"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden">
               <img
-                src={product.images[selectedImage]}
-                alt={product.name}
+                src={product.images[selectedImageIndex]}
+                alt={`${product.name} - Imagem ${selectedImageIndex + 1}`}
                 className="w-full h-full object-cover"
               />
+              
+              {/* Controles do carrossel */}
+              {product.images.length > 1 && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white hover:bg-black/70"
+                    onClick={prevImage}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white hover:bg-black/70"
+                    onClick={nextImage}
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </>
+              )}
+
+              {/* Indicadores */}
+              {product.images.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                  {product.images.map((_, index) => (
+                    <button
+                      key={index}
+                      className={`w-2 h-2 rounded-full ${
+                        index === selectedImageIndex ? 'bg-white' : 'bg-white/50'
+                      }`}
+                      onClick={() => setSelectedImageIndex(index)}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-            
+
+            {/* Miniaturas */}
             {product.images.length > 1 && (
-              <div className="grid grid-cols-4 gap-2">
+              <div className="flex space-x-2 overflow-x-auto">
                 {product.images.map((image, index) => (
                   <button
                     key={index}
-                    onClick={() => setSelectedImage(index)}
-                    className={`aspect-square bg-white rounded-lg border overflow-hidden ${
-                      selectedImage === index ? 'ring-2 ring-blue-500' : ''
+                    className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
+                      index === selectedImageIndex ? 'border-blue-500' : 'border-gray-200'
                     }`}
+                    onClick={() => setSelectedImageIndex(index)}
                   >
                     <img
                       src={image}
-                      alt={`${product.name} ${index + 1}`}
+                      alt={`${product.name} - Miniatura ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
                   </button>
@@ -101,40 +158,40 @@ const ProductDetail: React.FC = () => {
             )}
           </div>
 
-          {/* Product Info */}
+          {/* Informações do Produto */}
           <div className="space-y-6">
             <div>
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center space-x-2 mb-2">
+                <Badge variant="secondary">{product.category}</Badge>
                 {product.isFeatured && (
-                  <Badge className="bg-yellow-500">Destaque</Badge>
-                )}
-                {product.originalPrice && (
-                  <Badge className="bg-red-500">
-                    {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
-                  </Badge>
+                  <Badge variant="default">Destaque</Badge>
                 )}
               </div>
-              
               <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.name}</h1>
-              
-              <div className="flex items-center gap-4 mb-4">
-                <div className="flex items-center">
-                  {renderStars(product.rating)}
-                  <span className="ml-2 text-sm text-gray-600">({product.rating})</span>
-                </div>
-                <span className="text-gray-400">•</span>
-                <span className="text-sm text-gray-600">{product.salesCount} vendas</span>
-                <span className="text-gray-400">•</span>
-                <span className="text-sm text-gray-600">{product.reviews.length} avaliações</span>
-              </div>
-
-              <p className="text-gray-600 mb-6">{product.shortDescription}</p>
+              <p className="text-gray-600 text-lg">{product.shortDescription}</p>
             </div>
 
-            {/* Price */}
-            <div className="bg-gray-50 rounded-lg p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <span className="text-4xl font-bold text-green-600">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`w-5 h-5 ${
+                      i < Math.floor(product.rating)
+                        ? 'text-yellow-400 fill-current'
+                        : 'text-gray-300'
+                    }`}
+                  />
+                ))}
+                <span className="ml-2 text-sm text-gray-600">
+                  {product.rating.toFixed(1)} ({product.reviews.length} avaliações)
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center space-x-4">
+                <span className="text-3xl font-bold text-gray-900">
                   {formatPrice(product.price)}
                 </span>
                 {product.originalPrice && (
@@ -143,124 +200,142 @@ const ProductDetail: React.FC = () => {
                   </span>
                 )}
               </div>
+              {product.originalPrice && (
+                <Badge variant="destructive" className="text-sm">
+                  {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+                </Badge>
+              )}
+            </div>
 
-              <div className="flex gap-3">
+            <div className="space-y-4">
+              <div className="flex items-center space-x-4">
+                <label htmlFor="quantity" className="font-medium">
+                  Quantidade:
+                </label>
+                <div className="flex items-center border rounded-lg">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    className="px-3"
+                  >
+                    -
+                  </Button>
+                  <span className="px-4 py-2 min-w-[60px] text-center">{quantity}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setQuantity(quantity + 1)}
+                    className="px-3"
+                  >
+                    +
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex space-x-4">
                 <Button
-                  size="lg"
-                  className="flex-1"
                   onClick={handleAddToCart}
-                  disabled={isInCart(product.id)}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
                 >
-                  <ShoppingCart className="w-5 h-5 mr-2" />
-                  {isInCart(product.id) ? 'No carrinho' : 'Adicionar ao carrinho'}
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  Adicionar ao Carrinho
                 </Button>
-                
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="flex-1"
-                >
-                  <Download className="w-5 h-5 mr-2" />
-                  Comprar agora
+                <Button variant="outline" className="flex-1">
+                  <Download className="w-4 h-4 mr-2" />
+                  Comprar Agora
                 </Button>
               </div>
             </div>
 
-            {/* Product Details */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Detalhes do Produto</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm text-gray-600">Tamanho:</span>
-                    <span className="text-sm font-medium">{product.fileSize}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Tag className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm text-gray-600">Formato:</span>
-                    <span className="text-sm font-medium">{product.fileType}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm text-gray-600">Atualizado:</span>
-                    <span className="text-sm font-medium">
-                      {product.updatedAt.toLocaleDateString('pt-BR')}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm text-gray-600">Categoria:</span>
-                    <span className="text-sm font-medium capitalize">{product.category}</span>
-                  </div>
-                </div>
+            <Separator />
 
-                <Separator />
-
+            <div className="space-y-4">
+              <h3 className="font-semibold text-lg">Informações do Produto</h3>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                {product.fileSize && (
+                  <div>
+                    <span className="font-medium text-gray-600">Tamanho:</span>
+                    <span className="ml-2">{product.fileSize}</span>
+                  </div>
+                )}
+                {product.fileType && (
+                  <div>
+                    <span className="font-medium text-gray-600">Tipo:</span>
+                    <span className="ml-2">{product.fileType}</span>
+                  </div>
+                )}
                 <div>
-                  <h4 className="font-medium mb-2">Tags:</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {product.tags.map((tag) => (
-                      <Badge key={tag} variant="secondary">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
+                  <span className="font-medium text-gray-600">Vendas:</span>
+                  <span className="ml-2">{product.salesCount}</span>
                 </div>
-              </CardContent>
-            </Card>
+                <div>
+                  <span className="font-medium text-gray-600">Categoria:</span>
+                  <span className="ml-2 capitalize">{product.category}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="font-semibold text-lg">Tags</h3>
+              <div className="flex flex-wrap gap-2">
+                {product.tags.map(tag => (
+                  <Badge key={tag} variant="outline">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Description */}
+        {/* Descrição Completa */}
         <div className="mt-12">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Descrição Completa</h2>
           <Card>
-            <CardHeader>
-              <CardTitle>Descrição Completa</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+            <CardContent className="p-6">
+              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
                 {product.description}
               </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Reviews */}
+        {/* Avaliações */}
         {product.reviews.length > 0 && (
           <div className="mt-12">
-            <Card>
-              <CardHeader>
-                <CardTitle>Avaliações ({product.reviews.length})</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {product.reviews.map((review) => (
-                    <div key={review.id} className="border-b border-gray-100 pb-6 last:border-b-0">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                            <span className="text-sm font-medium text-blue-600">
-                              {review.userName.charAt(0)}
-                            </span>
-                          </div>
-                          <span className="font-medium">{review.userName}</span>
-                        </div>
-                        <div className="flex items-center">
-                          {renderStars(review.rating)}
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              Avaliações ({product.reviews.length})
+            </h2>
+            <div className="space-y-4">
+              {product.reviews.map(review => (
+                <Card key={review.id}>
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h4 className="font-semibold">{review.userName}</h4>
+                        <div className="flex items-center space-x-1 mt-1">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`w-4 h-4 ${
+                                i < review.rating
+                                  ? 'text-yellow-400 fill-current'
+                                  : 'text-gray-300'
+                              }`}
+                            />
+                          ))}
                         </div>
                       </div>
-                      <p className="text-gray-600">{review.comment}</p>
-                      <p className="text-sm text-gray-400 mt-2">
-                        {review.createdAt.toLocaleDateString('pt-BR')}
-                      </p>
+                      <span className="text-sm text-gray-500">
+                        {new Date(review.createdAt).toLocaleDateString('pt-BR')}
+                      </span>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    <p className="text-gray-700">{review.comment}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
         )}
       </div>

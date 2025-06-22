@@ -182,309 +182,307 @@ const UserAdmin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 py-20">
+    <div className="p-8">
       <SEOHead 
         title="Administração de Usuários"
         description="Gerencie usuários do sistema CELX - controle de acesso e permissões"
         keywords="admin users, gestão de usuários, CELX, administração"
       />
       
-      <div className="container mx-auto px-4 max-w-7xl">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-4">
-              Administração de Usuários
-            </h1>
-            <p className="text-gray-600 text-lg">
-              Gerencie usuários, permissões e controle de acesso
-            </p>
-          </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-            <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-blue-100 text-sm">Total</p>
-                    <p className="text-3xl font-bold">{stats.total}</p>
-                  </div>
-                  <Users className="h-8 w-8 text-blue-200" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-green-100 text-sm">Ativos</p>
-                    <p className="text-3xl font-bold">{stats.active}</p>
-                  </div>
-                  <User className="h-8 w-8 text-green-200" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-r from-red-500 to-red-600 text-white border-0">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-red-100 text-sm">Admins</p>
-                    <p className="text-3xl font-bold">{stats.admins}</p>
-                  </div>
-                  <Shield className="h-8 w-8 text-red-200" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white border-0">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-purple-100 text-sm">Usuários</p>
-                    <p className="text-3xl font-bold">{stats.regularUsers}</p>
-                  </div>
-                  <User className="h-8 w-8 text-purple-200" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-r from-gray-500 to-gray-600 text-white border-0">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-100 text-sm">Inativos</p>
-                    <p className="text-3xl font-bold">{stats.inactive}</p>
-                  </div>
-                  <User className="h-8 w-8 text-gray-200" />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+      {/* Header */}
+      <div className="mb-8">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-4">
+            Administração de Usuários
+          </h1>
+          <p className="text-gray-600 text-lg">
+            Gerencie usuários, permissões e controle de acesso
+          </p>
         </div>
 
-        {/* Filters */}
-        <Card className="mb-6">
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Buscar usuários..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+          <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-blue-100 text-sm">Total</p>
+                  <p className="text-3xl font-bold">{stats.total}</p>
+                </div>
+                <Users className="h-8 w-8 text-blue-200" />
               </div>
-              
-              <Select value={filterRole} onValueChange={setFilterRole}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Filtrar por função" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas as funções</SelectItem>
-                  <SelectItem value="admin">Administradores</SelectItem>
-                  <SelectItem value="user">Usuários</SelectItem>
-                </SelectContent>
-              </Select>
+            </CardContent>
+          </Card>
 
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Filtrar por status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os status</SelectItem>
-                  <SelectItem value="active">Ativos</SelectItem>
-                  <SelectItem value="inactive">Inativos</SelectItem>
-                </SelectContent>
-              </Select>
+          <Card className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-green-100 text-sm">Ativos</p>
+                  <p className="text-3xl font-bold">{stats.active}</p>
+                </div>
+                <User className="h-8 w-8 text-green-200" />
+              </div>
+            </CardContent>
+          </Card>
 
-              <Button className="w-full md:w-auto">
-                <Filter className="h-4 w-4 mr-2" />
-                Limpar Filtros
-              </Button>
+          <Card className="bg-gradient-to-r from-red-500 to-red-600 text-white border-0">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-red-100 text-sm">Admins</p>
+                  <p className="text-3xl font-bold">{stats.admins}</p>
+                </div>
+                <Shield className="h-8 w-8 text-red-200" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white border-0">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-purple-100 text-sm">Usuários</p>
+                  <p className="text-3xl font-bold">{stats.regularUsers}</p>
+                </div>
+                <User className="h-8 w-8 text-purple-200" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-r from-gray-500 to-gray-600 text-white border-0">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-100 text-sm">Inativos</p>
+                  <p className="text-3xl font-bold">{stats.inactive}</p>
+                </div>
+                <User className="h-8 w-8 text-gray-200" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <Card className="mb-6">
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Buscar usuários..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
             </div>
-          </CardContent>
-        </Card>
+            
+            <Select value={filterRole} onValueChange={setFilterRole}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filtrar por função" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as funções</SelectItem>
+                <SelectItem value="admin">Administradores</SelectItem>
+                <SelectItem value="user">Usuários</SelectItem>
+              </SelectContent>
+            </Select>
 
-        {/* Users Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>Usuários ({filteredUsers.length})</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {filteredUsers.map((user) => (
-                <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center space-x-4">
-                    <Avatar className="h-12 w-12">
-                      <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
-                        {user.avatar || user.name.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filtrar por status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os status</SelectItem>
+                <SelectItem value="active">Ativos</SelectItem>
+                <SelectItem value="inactive">Inativos</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Button className="w-full md:w-auto">
+              <Filter className="h-4 w-4 mr-2" />
+              Limpar Filtros
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Users Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span>Usuários ({filteredUsers.length})</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {filteredUsers.map((user) => (
+              <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                <div className="flex items-center space-x-4">
+                  <Avatar className="h-12 w-12">
+                    <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+                      {user.avatar || user.name.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <h3 className="text-lg font-semibold text-gray-900 truncate">
+                        {user.name}
+                      </h3>
+                      <Badge className={getRoleBadgeColor(user.role)}>
+                        {user.role === 'admin' ? 'Admin' : 'Usuário'}
+                      </Badge>
+                      <Badge className={getStatusBadgeColor(user.status)}>
+                        {user.status === 'active' ? 'Ativo' : 'Inativo'}
+                      </Badge>
+                    </div>
                     
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <h3 className="text-lg font-semibold text-gray-900 truncate">
-                          {user.name}
-                        </h3>
-                        <Badge className={getRoleBadgeColor(user.role)}>
-                          {user.role === 'admin' ? 'Admin' : 'Usuário'}
-                        </Badge>
-                        <Badge className={getStatusBadgeColor(user.status)}>
-                          {user.status === 'active' ? 'Ativo' : 'Inativo'}
-                        </Badge>
+                    <div className="flex items-center space-x-4 text-sm text-gray-500">
+                      <div className="flex items-center">
+                        <Mail className="h-4 w-4 mr-1" />
+                        {user.email}
                       </div>
-                      
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <div className="flex items-center">
-                          <Mail className="h-4 w-4 mr-1" />
-                          {user.email}
-                        </div>
+                      <div className="flex items-center">
+                        <Calendar className="h-4 w-4 mr-1" />
+                        Criado em {user.createdAt.toLocaleDateString('pt-BR')}
+                      </div>
+                      {user.lastLogin && (
                         <div className="flex items-center">
                           <Calendar className="h-4 w-4 mr-1" />
-                          Criado em {user.createdAt.toLocaleDateString('pt-BR')}
+                          Último login: {user.lastLogin.toLocaleDateString('pt-BR')}
                         </div>
-                        {user.lastLogin && (
-                          <div className="flex items-center">
-                            <Calendar className="h-4 w-4 mr-1" />
-                            Último login: {user.lastLogin.toLocaleDateString('pt-BR')}
-                          </div>
-                        )}
-                      </div>
+                      )}
                     </div>
                   </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Dialog open={isEditDialogOpen && editingUser?.id === user.id} onOpenChange={(open) => {
-                      if (!open) {
-                        setIsEditDialogOpen(false);
-                        setEditingUser(null);
-                      }
-                    }}>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setEditingUser(user);
-                            setIsEditDialogOpen(true);
-                          }}
-                        >
-                          <Edit className="h-4 w-4 mr-2" />
-                          Editar
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Editar Usuário</DialogTitle>
-                          <DialogDescription>
-                            Atualize as informações do usuário
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          <div>
-                            <Label htmlFor="name">Nome</Label>
-                            <Input
-                              id="name"
-                              value={editingUser?.name || ''}
-                              onChange={(e) => setEditingUser({...editingUser, name: e.target.value})}
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="email">E-mail</Label>
-                            <Input
-                              id="email"
-                              value={editingUser?.email || ''}
-                              onChange={(e) => setEditingUser({...editingUser, email: e.target.value})}
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="role">Função</Label>
-                            <Select 
-                              value={editingUser?.role || 'user'} 
-                              onValueChange={(value) => setEditingUser({...editingUser, role: value as UserRole})}
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="user">Usuário</SelectItem>
-                                <SelectItem value="admin">Administrador</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <Label htmlFor="status">Status</Label>
-                            <Select 
-                              value={editingUser?.status || 'active'} 
-                              onValueChange={(value) => setEditingUser({...editingUser, status: value})}
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="active">Ativo</SelectItem>
-                                <SelectItem value="inactive">Inativo</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="flex justify-end space-x-2">
-                            <Button
-                              variant="outline"
-                              onClick={() => {
-                                setIsEditDialogOpen(false);
-                                setEditingUser(null);
-                              }}
-                            >
-                              Cancelar
-                            </Button>
-                            <Button
-                              onClick={() => handleUpdateUser(editingUser.id, editingUser)}
-                            >
-                              Salvar
-                            </Button>
-                          </div>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => handleStatusToggle(user.id)}
-                          disabled={user.role === 'admin'}
-                        >
-                          {user.status === 'active' ? 'Desativar' : 'Ativar'}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleDeleteUser(user.id)}
-                          disabled={user.role === 'admin'}
-                          className="text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+
+                <div className="flex items-center space-x-2">
+                  <Dialog open={isEditDialogOpen && editingUser?.id === user.id} onOpenChange={(open) => {
+                    if (!open) {
+                      setIsEditDialogOpen(false);
+                      setEditingUser(null);
+                    }
+                  }}>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setEditingUser(user);
+                          setIsEditDialogOpen(true);
+                        }}
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Editar
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Editar Usuário</DialogTitle>
+                        <DialogDescription>
+                          Atualize as informações do usuário
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="name">Nome</Label>
+                          <Input
+                            id="name"
+                            value={editingUser?.name || ''}
+                            onChange={(e) => setEditingUser({...editingUser, name: e.target.value})}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="email">E-mail</Label>
+                          <Input
+                            id="email"
+                            value={editingUser?.email || ''}
+                            onChange={(e) => setEditingUser({...editingUser, email: e.target.value})}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="role">Função</Label>
+                          <Select 
+                            value={editingUser?.role || 'user'} 
+                            onValueChange={(value) => setEditingUser({...editingUser, role: value as UserRole})}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="user">Usuário</SelectItem>
+                              <SelectItem value="admin">Administrador</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="status">Status</Label>
+                          <Select 
+                            value={editingUser?.status || 'active'} 
+                            onValueChange={(value) => setEditingUser({...editingUser, status: value})}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="active">Ativo</SelectItem>
+                              <SelectItem value="inactive">Inativo</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex justify-end space-x-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setIsEditDialogOpen(false);
+                              setEditingUser(null);
+                            }}
+                          >
+                            Cancelar
+                          </Button>
+                          <Button
+                            onClick={() => handleUpdateUser(editingUser.id, editingUser)}
+                          >
+                            Salvar
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => handleStatusToggle(user.id)}
+                        disabled={user.role === 'admin'}
+                      >
+                        {user.status === 'active' ? 'Desativar' : 'Ativar'}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleDeleteUser(user.id)}
+                        disabled={user.role === 'admin'}
+                        className="text-red-600"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Excluir
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

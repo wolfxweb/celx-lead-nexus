@@ -180,221 +180,219 @@ const OrderAdmin: React.FC = () => {
   const pendingOrders = orders.filter(order => order.status === 'pending').length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Gestão de Pedidos</h1>
-            <p className="text-gray-600 mt-2">Gerencie todos os pedidos da sua loja</p>
-          </div>
+    <div className="p-8">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Gestão de Pedidos</h1>
+          <p className="text-gray-600 mt-2">Gerencie todos os pedidos da sua loja</p>
         </div>
+      </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <Package className="w-8 h-8 text-blue-600" />
-                <div>
-                  <p className="text-sm text-gray-600">Total de Pedidos</p>
-                  <p className="text-2xl font-bold">{totalOrders}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <DollarSign className="w-8 h-8 text-green-600" />
-                <div>
-                  <p className="text-sm text-gray-600">Receita Total</p>
-                  <p className="text-2xl font-bold">{formatPrice(totalRevenue)}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <CheckCircle className="w-8 h-8 text-green-600" />
-                <div>
-                  <p className="text-sm text-gray-600">Pedidos Concluídos</p>
-                  <p className="text-2xl font-bold">{completedOrders}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <Clock className="w-8 h-8 text-yellow-600" />
-                <div>
-                  <p className="text-sm text-gray-600">Pedidos Pendentes</p>
-                  <p className="text-2xl font-bold">{pendingOrders}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Filters */}
-        <Card className="mb-6">
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <Card>
           <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row gap-4 items-center">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Buscar por cliente, email ou ID do pedido..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+            <div className="flex items-center gap-3">
+              <Package className="w-8 h-8 text-blue-600" />
+              <div>
+                <p className="text-sm text-gray-600">Total de Pedidos</p>
+                <p className="text-2xl font-bold">{totalOrders}</p>
               </div>
-              
-              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Status do pedido" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os status</SelectItem>
-                  <SelectItem value="pending">Pendente</SelectItem>
-                  <SelectItem value="processing">Processando</SelectItem>
-                  <SelectItem value="completed">Concluído</SelectItem>
-                  <SelectItem value="cancelled">Cancelado</SelectItem>
-                  <SelectItem value="refunded">Reembolsado</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={selectedPaymentStatus} onValueChange={setSelectedPaymentStatus}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Status do pagamento" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os pagamentos</SelectItem>
-                  <SelectItem value="pending">Pendente</SelectItem>
-                  <SelectItem value="paid">Pago</SelectItem>
-                  <SelectItem value="failed">Falhou</SelectItem>
-                  <SelectItem value="refunded">Reembolsado</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </CardContent>
         </Card>
-
-        {/* Orders Table */}
+        
         <Card>
-          <CardHeader>
-            <CardTitle>Pedidos ({filteredOrders.length})</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Produtos</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Pagamento</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredOrders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell>
-                      <span className="font-mono text-sm">#{order.id}</span>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{order.userName}</p>
-                        <p className="text-sm text-gray-600">{order.userEmail}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        {order.items.map((item, index) => (
-                          <div key={index} className="flex items-center gap-2">
-                            <img
-                              src={item.productImage}
-                              alt={item.productName}
-                              className="w-6 h-6 rounded object-cover"
-                            />
-                            <span className="text-sm">{item.productName}</span>
-                            <Badge variant="secondary" className="text-xs">
-                              x{item.quantity}
-                            </Badge>
-                          </div>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-medium">{formatPrice(order.total)}</span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-1">
-                        {getStatusBadge(order.status)}
-                        <Select
-                          value={order.status}
-                          onValueChange={(value: OrderStatus) => handleStatusUpdate(order.id, value)}
-                        >
-                          <SelectTrigger className="w-32">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="pending">Pendente</SelectItem>
-                            <SelectItem value="processing">Processando</SelectItem>
-                            <SelectItem value="completed">Concluído</SelectItem>
-                            <SelectItem value="cancelled">Cancelado</SelectItem>
-                            <SelectItem value="refunded">Reembolsado</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-1">
-                        {getPaymentStatusBadge(order.paymentStatus)}
-                        <span className="text-xs text-gray-600 capitalize">
-                          {order.paymentMethod}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        <p>{formatDate(order.createdAt)}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSelectedOrder(order)}
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
-                          <DialogHeader>
-                            <DialogTitle>Detalhes do Pedido #{order.id}</DialogTitle>
-                          </DialogHeader>
-                          <OrderDetails order={selectedOrder} />
-                        </DialogContent>
-                      </Dialog>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <DollarSign className="w-8 h-8 text-green-600" />
+              <div>
+                <p className="text-sm text-gray-600">Receita Total</p>
+                <p className="text-2xl font-bold">{formatPrice(totalRevenue)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <CheckCircle className="w-8 h-8 text-green-600" />
+              <div>
+                <p className="text-sm text-gray-600">Pedidos Concluídos</p>
+                <p className="text-2xl font-bold">{completedOrders}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <Clock className="w-8 h-8 text-yellow-600" />
+              <div>
+                <p className="text-sm text-gray-600">Pedidos Pendentes</p>
+                <p className="text-2xl font-bold">{pendingOrders}</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Filters */}
+      <Card className="mb-6">
+        <CardContent className="p-6">
+          <div className="flex flex-col md:flex-row gap-4 items-center">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Buscar por cliente, email ou ID do pedido..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            
+            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Status do pedido" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os status</SelectItem>
+                <SelectItem value="pending">Pendente</SelectItem>
+                <SelectItem value="processing">Processando</SelectItem>
+                <SelectItem value="completed">Concluído</SelectItem>
+                <SelectItem value="cancelled">Cancelado</SelectItem>
+                <SelectItem value="refunded">Reembolsado</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={selectedPaymentStatus} onValueChange={setSelectedPaymentStatus}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Status do pagamento" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os pagamentos</SelectItem>
+                <SelectItem value="pending">Pendente</SelectItem>
+                <SelectItem value="paid">Pago</SelectItem>
+                <SelectItem value="failed">Falhou</SelectItem>
+                <SelectItem value="refunded">Reembolsado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Orders Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Pedidos ({filteredOrders.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>ID</TableHead>
+                <TableHead>Cliente</TableHead>
+                <TableHead>Produtos</TableHead>
+                <TableHead>Total</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Pagamento</TableHead>
+                <TableHead>Data</TableHead>
+                <TableHead>Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredOrders.map((order) => (
+                <TableRow key={order.id}>
+                  <TableCell>
+                    <span className="font-mono text-sm">#{order.id}</span>
+                  </TableCell>
+                  <TableCell>
+                    <div>
+                      <p className="font-medium">{order.userName}</p>
+                      <p className="text-sm text-gray-600">{order.userEmail}</p>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-1">
+                      {order.items.map((item, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <img
+                            src={item.productImage}
+                            alt={item.productName}
+                            className="w-6 h-6 rounded object-cover"
+                          />
+                          <span className="text-sm">{item.productName}</span>
+                          <Badge variant="secondary" className="text-xs">
+                            x{item.quantity}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-medium">{formatPrice(order.total)}</span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-1">
+                      {getStatusBadge(order.status)}
+                      <Select
+                        value={order.status}
+                        onValueChange={(value: OrderStatus) => handleStatusUpdate(order.id, value)}
+                      >
+                        <SelectTrigger className="w-32">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pendente</SelectItem>
+                          <SelectItem value="processing">Processando</SelectItem>
+                          <SelectItem value="completed">Concluído</SelectItem>
+                          <SelectItem value="cancelled">Cancelado</SelectItem>
+                          <SelectItem value="refunded">Reembolsado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-1">
+                      {getPaymentStatusBadge(order.paymentStatus)}
+                      <span className="text-xs text-gray-600 capitalize">
+                        {order.paymentMethod}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      <p>{formatDate(order.createdAt)}</p>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedOrder(order)}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl">
+                        <DialogHeader>
+                          <DialogTitle>Detalhes do Pedido #{order.id}</DialogTitle>
+                        </DialogHeader>
+                        <OrderDetails order={selectedOrder} />
+                      </DialogContent>
+                    </Dialog>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 };

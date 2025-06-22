@@ -89,176 +89,174 @@ const AdminDashboard: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Painel Administrativo</h1>
-          <p className="text-gray-600">Gerencie sua loja digital, produtos, pedidos e usuários</p>
-        </div>
+    <div className="p-8">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Painel Administrativo</h1>
+        <p className="text-gray-600">Gerencie sua loja digital, produtos, pedidos e usuários</p>
+      </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Receita Total</p>
-                  <p className="text-2xl font-bold text-green-600">{formatPrice(stats.totalRevenue)}</p>
-                </div>
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <DollarSign className="w-6 h-6 text-green-600" />
-                </div>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Receita Total</p>
+                <p className="text-2xl font-bold text-green-600">{formatPrice(stats.totalRevenue)}</p>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Pedidos</p>
-                  <p className="text-2xl font-bold text-blue-600">{stats.totalOrders}</p>
-                </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <ShoppingCart className="w-6 h-6 text-blue-600" />
-                </div>
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <DollarSign className="w-6 h-6 text-green-600" />
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Usuários</p>
-                  <p className="text-2xl font-bold text-purple-600">{stats.totalUsers}</p>
-                </div>
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <Users className="w-6 h-6 text-purple-600" />
-                </div>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Pedidos</p>
+                <p className="text-2xl font-bold text-blue-600">{stats.totalOrders}</p>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Produtos Ativos</p>
-                  <p className="text-2xl font-bold text-orange-600">{stats.activeProducts}</p>
-                </div>
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <Package className="w-6 h-6 text-orange-600" />
-                </div>
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <ShoppingCart className="w-6 h-6 text-blue-600" />
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Admin Sections */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {adminSections.map((section) => (
-            <Card key={section.title} className="hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <div className={`w-12 h-12 ${section.color} rounded-lg flex items-center justify-center`}>
-                    <section.icon className="w-6 h-6 text-white" />
-                  </div>
-                  <Badge variant="secondary" className="text-xs">
-                    {section.stats}
-                  </Badge>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Usuários</p>
+                <p className="text-2xl font-bold text-purple-600">{stats.totalUsers}</p>
+              </div>
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                <Users className="w-6 h-6 text-purple-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Produtos Ativos</p>
+                <p className="text-2xl font-bold text-orange-600">{stats.activeProducts}</p>
+              </div>
+              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                <Package className="w-6 h-6 text-orange-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Admin Sections */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {adminSections.map((section) => (
+          <Card key={section.title} className="hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <div className={`w-12 h-12 ${section.color} rounded-lg flex items-center justify-center`}>
+                  <section.icon className="w-6 h-6 text-white" />
                 </div>
-                <CardTitle className="text-lg">{section.title}</CardTitle>
-                <p className="text-sm text-gray-600">{section.description}</p>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <Button asChild className="w-full">
-                  <Link to={section.href}>
-                    <Eye className="w-4 h-4 mr-2" />
-                    Acessar
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Recent Orders */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5" />
-                Pedidos Recentes
-              </CardTitle>
+                <Badge variant="secondary" className="text-xs">
+                  {section.stats}
+                </Badge>
+              </div>
+              <CardTitle className="text-lg">{section.title}</CardTitle>
+              <p className="text-sm text-gray-600">{section.description}</p>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentOrders.map((order) => (
-                  <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">{order.customer}</p>
-                      <p className="text-xs text-gray-600">{order.product}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium text-sm">{formatPrice(order.amount)}</p>
-                      {getStatusBadge(order.status)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4">
-                <Button variant="outline" asChild className="w-full">
-                  <Link to="/admin/pedidos">
-                    Ver todos os pedidos
-                  </Link>
-                </Button>
-              </div>
+            <CardContent className="pt-0">
+              <Button asChild className="w-full">
+                <Link to={section.href}>
+                  <Eye className="w-4 h-4 mr-2" />
+                  Acessar
+                </Link>
+              </Button>
             </CardContent>
           </Card>
+        ))}
+      </div>
 
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="w-5 h-5" />
-                Ações Rápidas
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <Button asChild className="w-full justify-start">
-                  <Link to="/admin/produtos">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Adicionar Novo Produto
-                  </Link>
-                </Button>
-                
-                <Button variant="outline" asChild className="w-full justify-start">
-                  <Link to="/admin/pedidos">
-                    <ShoppingCart className="w-4 h-4 mr-2" />
-                    Ver Pedidos Pendentes
-                  </Link>
-                </Button>
-                
-                <Button variant="outline" asChild className="w-full justify-start">
-                  <Link to="/admin/usuarios">
-                    <Users className="w-4 h-4 mr-2" />
-                    Gerenciar Usuários
-                  </Link>
-                </Button>
-                
-                <Button variant="outline" asChild className="w-full justify-start">
-                  <Link to="/blog-admin">
-                    <FileText className="w-4 h-4 mr-2" />
-                    Criar Novo Post
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      {/* Recent Orders */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5" />
+              Pedidos Recentes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {recentOrders.map((order) => (
+                <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{order.customer}</p>
+                    <p className="text-xs text-gray-600">{order.product}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium text-sm">{formatPrice(order.amount)}</p>
+                    {getStatusBadge(order.status)}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4">
+              <Button variant="outline" asChild className="w-full">
+                <Link to="/admin/pedidos">
+                  Ver todos os pedidos
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Quick Actions */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="w-5 h-5" />
+              Ações Rápidas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <Button asChild className="w-full justify-start">
+                <Link to="/admin/produtos">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Adicionar Novo Produto
+                </Link>
+              </Button>
+              
+              <Button variant="outline" asChild className="w-full justify-start">
+                <Link to="/admin/pedidos">
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  Ver Pedidos Pendentes
+                </Link>
+              </Button>
+              
+              <Button variant="outline" asChild className="w-full justify-start">
+                <Link to="/admin/usuarios">
+                  <Users className="w-4 h-4 mr-2" />
+                  Gerenciar Usuários
+                </Link>
+              </Button>
+              
+              <Button variant="outline" asChild className="w-full justify-start">
+                <Link to="/blog-admin">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Criar Novo Post
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
