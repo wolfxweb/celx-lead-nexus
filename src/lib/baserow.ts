@@ -204,7 +204,9 @@ export const deleteBaserowRow = async (
   tableId: number,
   rowId: number
 ): Promise<void> => {
-  await baserowRequest(`/database/rows/table/${tableId}/${rowId}/`, {
+  const endpoint = `/database/rows/table/${tableId}/${rowId}/?user_field_names=true`;
+  
+  await baserowRequest(endpoint, {
     method: 'DELETE',
   });
 };

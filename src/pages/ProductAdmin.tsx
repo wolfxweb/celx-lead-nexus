@@ -171,14 +171,16 @@ const ProductAdmin: React.FC = () => {
       };
 
       if (editingProduct) {
-        const updated = await updateProduct(editingProduct.id, productData);
-        setProducts(products.map(p => p.id === updated.id ? updated : p));
+        await updateProduct(editingProduct.id, productData);
         toast({ title: "Produto atualizado!" });
       } else {
-        const newProduct = await createProduct(productData);
-        setProducts([...products, newProduct]);
+        await createProduct(productData);
         toast({ title: "Produto criado!" });
       }
+      
+      // Recarregar os produtos do Baserow para garantir sincronização
+      await fetchProducts();
+      
       resetForm();
       setIsDialogOpen(false);
     } catch (error) {
@@ -211,7 +213,10 @@ const ProductAdmin: React.FC = () => {
   const handleDelete = async (productId: number) => {
     try {
       await deleteProduct(productId);
-      setProducts(products.filter(p => p.id !== productId));
+      
+      // Recarregar os produtos do Baserow para garantir sincronização
+      await fetchProducts();
+      
       toast({ title: "Produto excluído!" });
     } catch (error) {
       toast({ title: "Erro ao excluir produto", variant: "destructive" });
@@ -273,16 +278,12 @@ const ProductAdmin: React.FC = () => {
       if (isEditingCategory && editingCategory) {
         // Atualizar categoria
         const slug = await generateUniqueSlug(newCategory.name, editingCategory.id);
-        const updatedCategory = await updateCategory(editingCategory.id, { 
+        await updateCategory(editingCategory.id, { 
           name: newCategory.name,
           slug,
           description: newCategory.description,
           color: newCategory.color
         });
-
-        setProductCategories(productCategories.map(cat => 
-          cat.id === updatedCategory.id ? updatedCategory : cat
-        ));
         
         toast({ title: "Categoria atualizada com sucesso!" });
         
@@ -290,12 +291,14 @@ const ProductAdmin: React.FC = () => {
         // Criar nova categoria
         const slug = await generateUniqueSlug(newCategory.name);
         const newCatData = { ...newCategory, slug, type: 'product' as const };
-        const createdCategory = await createCategory(newCatData);
-        setProductCategories([...productCategories, createdCategory]);
+        await createCategory(newCatData);
         
         toast({ title: "Categoria criada com sucesso!" });
       }
 
+      // Recarregar as categorias do Baserow para garantir sincronização
+      await fetchCategories();
+      
       resetCategoryForm();
     } catch (error) {
        toast({
@@ -327,9 +330,13 @@ const ProductAdmin: React.FC = () => {
   const handleDeleteCategory = async (id: number) => {
     try {
       await deleteCategory(id);
-      setProductCategories(productCategories.filter(cat => cat.id !== id));
+      
+      // Recarregar as categorias do Baserow para garantir sincronização
+      await fetchCategories();
+      
       toast({ title: "Categoria excluída com sucesso." });
     } catch (error) {
+      console.error('Erro ao excluir categoria:', error);
       toast({
         title: "Erro ao excluir categoria",
         description: "Verifique se a categoria não está sendo usada por um produto.",
@@ -342,11 +349,34 @@ const ProductAdmin: React.FC = () => {
     resetCategoryForm();
   };
 
-  const totalRevenue = products.reduce((sum, product) => sum + (parseFloat(product.price) * parseFloat(product.sales_count)), 0);
-  const totalSales = products.reduce((sum, product) => sum + parseFloat(product.sales_count), 0);
+  // Cálculos de estatísticas com debug
+  const totalRevenue = products.reduce((sum, product) => {
+    const price = parseFloat(product.price) || 0;
+    const sales = parseFloat(product.sales_count) || 0;
+    const revenue = price * sales;
+    console.log(`Produto ${product.name}: Preço=${price}, Vendas=${sales}, Receita=${revenue}`);
+    return sum + revenue;
+  }, 0);
+  
+  const totalSales = products.reduce((sum, product) => {
+    const sales = parseFloat(product.sales_count) || 0;
+    console.log(`Produto ${product.name}: Vendas=${sales}`);
+    return sum + sales;
+  }, 0);
+  
   const averageRating = products.length > 0 
-    ? products.reduce((sum, product) => sum + parseFloat(product.rating), 0) / products.length 
+    ? products.reduce((sum, product) => {
+        const rating = parseFloat(product.rating) || 0;
+        console.log(`Produto ${product.name}: Avaliação=${rating}`);
+        return sum + rating;
+      }, 0) / products.length 
     : 0;
+
+  console.log('=== ESTATÍSTICAS FINAIS ===');
+  console.log('Total de Receita:', totalRevenue);
+  console.log('Total de Vendas:', totalSales);
+  console.log('Avaliação Média:', averageRating);
+  console.log('Número de Produtos:', products.length);
 
   return (
     <div className="p-8">
