@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { mockProducts, categories } from '@/data/products';
+import { mockProducts } from '@/data/products';
+import { defaultProductCategories } from '@/data/productData';
 import { useCart } from '@/contexts/CartContext';
 import { Product } from '@/types/ecommerce';
 import { Link } from 'react-router-dom';
@@ -121,7 +122,7 @@ const Store: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas as categorias</SelectItem>
-                    {categories.map(category => (
+                    {defaultProductCategories.map(category => (
                       <SelectItem key={category.id} value={category.slug}>
                         {category.name}
                       </SelectItem>

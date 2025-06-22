@@ -1,13 +1,7 @@
 import { Product } from '@/types/ecommerce';
+import { defaultProductCategories } from '@/data/productData';
 
-export const categories = [
-  { id: 1, name: 'Templates', slug: 'templates' },
-  { id: 2, name: 'Cursos', slug: 'cursos' },
-  { id: 3, name: 'E-books', slug: 'ebooks' },
-  { id: 4, name: 'Plugins', slug: 'plugins' },
-  { id: 5, name: 'Ícones', slug: 'icones' },
-  { id: 6, name: 'Ferramentas', slug: 'ferramentas' }
-];
+export const categories = defaultProductCategories;
 
 export const mockProducts: Product[] = [
   {
