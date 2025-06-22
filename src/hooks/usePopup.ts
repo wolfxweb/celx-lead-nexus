@@ -51,8 +51,6 @@ export const usePopup = (currentPage: string) => {
           // Pegar o primeiro pop-up válido (pode ser expandido para seleção aleatória)
           const config = validPopups[0];
           
-          console.log('Popup config encontrado:', config);
-          
           setPopupConfig({
             id: config.id.toString(),
             title: config.title || '',
@@ -66,11 +64,9 @@ export const usePopup = (currentPage: string) => {
             isActive: config.is_active || false
           });
         } else {
-          console.log('Nenhum pop-up configurado para a página:', currentPage);
           setPopupConfig(null);
         }
       } else {
-        console.log('Nenhum pop-up ativo encontrado');
         setPopupConfig(null);
       }
     } catch (error) {
@@ -92,10 +88,7 @@ export const usePopup = (currentPage: string) => {
         timestamp: new Date().toISOString()
       };
       
-      console.log('Salvando email:', emailData);
-      
       await createBaserowRow(tableId, emailData);
-      console.log('Email salvo com sucesso');
     } catch (error) {
       console.error('Erro ao salvar email:', error);
       throw error;
@@ -105,10 +98,7 @@ export const usePopup = (currentPage: string) => {
   // Mostrar pop-up após delay
   useEffect(() => {
     if (popupConfig && !hasShownPopup && !loading) {
-      console.log('Agendando pop-up para aparecer em', popupConfig.delay, 'segundos');
-      
       const timer = setTimeout(() => {
-        console.log('Mostrando pop-up');
         setShowPopup(true);
         setHasShownPopup(true);
       }, popupConfig.delay * 1000);
@@ -119,14 +109,12 @@ export const usePopup = (currentPage: string) => {
 
   // Buscar configuração quando a página muda
   useEffect(() => {
-    console.log('Página mudou para:', currentPage);
     fetchPopupConfig();
     setHasShownPopup(false);
     setShowPopup(false);
   }, [currentPage]);
 
   const closePopup = () => {
-    console.log('Fechando pop-up');
     setShowPopup(false);
   };
 

@@ -7,7 +7,6 @@ import AdminLayout from '@/components/AdminLayout';
 import Header from '@/components/Header';
 import WhatsAppButton from '@/components/WhatsAppButton';
 import PopupModal from '@/components/PopupModal';
-import PopupDebug from '@/components/PopupDebug';
 import { CONTACT_CONFIG } from '@/config/contact';
 import { usePopup } from '@/hooks/usePopup';
 import Home from '@/pages/Home';
@@ -121,9 +120,6 @@ const PublicLayout = () => {
           onEmailSubmit={saveEmail}
         />
       )}
-
-      {/* Debug Component - Remover em produção */}
-      <PopupDebug />
     </div>
   );
 };

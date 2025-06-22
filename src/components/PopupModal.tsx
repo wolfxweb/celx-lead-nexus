@@ -75,7 +75,6 @@ const PopupModal: React.FC<PopupModalProps> = ({
 
   const handleDownloadPdf = () => {
     if (config.pdfUrl) {
-      console.log('Abrindo PDF:', config.pdfUrl);
       window.open(config.pdfUrl, '_blank');
     } else {
       toast.error('URL do PDF não configurada');
@@ -83,7 +82,6 @@ const PopupModal: React.FC<PopupModalProps> = ({
   };
 
   const handleClose = () => {
-    console.log('Fechando pop-up manualmente');
     onClose();
   };
 
