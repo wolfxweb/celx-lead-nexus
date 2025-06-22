@@ -9,8 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { Edit, Trash2, Eye, Calendar, User, Clock, Search, Plus, FileText } from 'lucide-react';
 import SEOHead from '@/components/SEOHead';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 const BlogAdmin = () => {
   const [newPost, setNewPost] = useState({
@@ -21,7 +24,9 @@ const BlogAdmin = () => {
     author: '',
     tags: '',
     metaDescription: '',
-    metaKeywords: ''
+    metaKeywords: '',
+    isDraft: true,
+    scheduledDate: ''
   });
 
   const [editingPost, setEditingPost] = useState<any>(null);
@@ -34,10 +39,11 @@ const BlogAdmin = () => {
       id: 1,
       title: 'O Futuro da Transformação Digital nas Empresas',
       excerpt: 'A transformação digital não é mais uma opção, mas uma necessidade...',
-      content: 'Conteúdo completo do post sobre transformação digital e como as empresas podem se adaptar...',
+      content: '<p>Conteúdo completo do post sobre transformação digital e como as empresas podem se adaptar...</p>',
       status: 'published',
       author: 'Carlos Silva',
       date: '2024-06-15',
+      scheduledDate: '',
       category: 'tecnologia',
       tags: 'transformação digital, tecnologia, inovação',
       metaDescription: 'Descubra como a transformação digital pode revolucionar sua empresa e impulsionar o crescimento no mercado atual.',
@@ -47,10 +53,11 @@ const BlogAdmin = () => {
       id: 2,
       title: 'Segurança Cibernética: Protegendo Seus Dados',
       excerpt: 'As melhores práticas para manter sua empresa segura...',
-      content: 'Conteúdo completo do post sobre segurança cibernética e proteção de dados empresariais...',
+      content: '<p>Conteúdo completo do post sobre segurança cibernética e proteção de dados empresariais...</p>',
       status: 'published',
       author: 'Ana Costa',
       date: '2024-06-10',
+      scheduledDate: '',
       category: 'seguranca',
       tags: 'segurança, cibernética, proteção',
       metaDescription: 'Aprenda as estratégias essenciais de segurança cibernética para proteger sua empresa contra ameaças digitais.',
@@ -60,10 +67,11 @@ const BlogAdmin = () => {
       id: 3,
       title: 'Cloud Computing: O Futuro da Infraestrutura',
       excerpt: 'Como migrar para a nuvem pode revolucionar sua infraestrutura...',
-      content: 'Conteúdo completo sobre cloud computing e suas vantagens...',
+      content: '<p>Conteúdo completo sobre cloud computing e suas vantagens...</p>',
       status: 'draft',
       author: 'Pedro Santos',
       date: '2024-06-12',
+      scheduledDate: '2024-06-20',
       category: 'cloud',
       tags: 'cloud, infraestrutura, tecnologia',
       metaDescription: 'Entenda como o cloud computing pode transformar sua infraestrutura de TI.',
@@ -73,28 +81,61 @@ const BlogAdmin = () => {
 
   const { toast } = useToast();
 
+  // Configuração do ReactQuill
+  const quillModules = {
+    toolbar: [
+      [{ 'header': [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+      [{ 'indent': '-1'}, { 'indent': '+1' }],
+      ['link', 'image'],
+      [{ 'align': [] }],
+      [{ 'color': [] }, { 'background': [] }],
+      ['blockquote', 'code-block'],
+      ['clean']
+    ],
+  };
+
+  const quillFormats = [
+    'header', 'bold', 'italic', 'underline', 'strike',
+    'list', 'bullet', 'indent',
+    'link', 'image', 'align', 'color', 'background',
+    'blockquote', 'code-block'
+  ];
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const postStatus = newPost.isDraft ? 'draft' : 
+                      newPost.scheduledDate ? 'scheduled' : 'published';
     
     if (isEditing && editingPost) {
       setPosts(posts.map(post => 
         post.id === editingPost.id 
-          ? { ...editingPost, ...newPost, id: editingPost.id }
+          ? { 
+              ...editingPost, 
+              ...newPost, 
+              id: editingPost.id,
+              status: postStatus,
+              date: newPost.isDraft || newPost.scheduledDate ? editingPost.date : new Date().toISOString().split('T')[0]
+            }
           : post
       ));
       
       toast({
         title: "Post atualizado com sucesso!",
-        description: "As alterações foram salvas.",
+        description: `Post ${postStatus === 'draft' ? 'salvo como rascunho' : postStatus === 'scheduled' ? 'agendado' : 'publicado'}.`,
       });
       
       setIsEditing(false);
       setEditingPost(null);
+      // Switch back to manage tab after editing
+      document.querySelector('[value="manage"]')?.click();
     } else {
       const post = {
         id: posts.length + 1,
         ...newPost,
-        status: 'draft',
+        status: postStatus,
         date: new Date().toISOString().split('T')[0]
       };
 
@@ -102,7 +143,7 @@ const BlogAdmin = () => {
       
       toast({
         title: "Post criado com sucesso!",
-        description: "O post foi salvo como rascunho.",
+        description: `Post ${postStatus === 'draft' ? 'salvo como rascunho' : postStatus === 'scheduled' ? 'agendado' : 'publicado'}.`,
       });
     }
 
@@ -114,7 +155,9 @@ const BlogAdmin = () => {
       author: '',
       tags: '',
       metaDescription: '',
-      metaKeywords: ''
+      metaKeywords: '',
+      isDraft: true,
+      scheduledDate: ''
     });
   };
 
@@ -128,9 +171,13 @@ const BlogAdmin = () => {
       author: post.author,
       tags: post.tags,
       metaDescription: post.metaDescription || '',
-      metaKeywords: post.metaKeywords || ''
+      metaKeywords: post.metaKeywords || '',
+      isDraft: post.status === 'draft',
+      scheduledDate: post.scheduledDate || ''
     });
     setIsEditing(true);
+    // Switch to create tab for editing
+    document.querySelector('[value="create"]')?.click();
   };
 
   const handleCancelEdit = () => {
@@ -144,13 +191,15 @@ const BlogAdmin = () => {
       author: '',
       tags: '',
       metaDescription: '',
-      metaKeywords: ''
+      metaKeywords: '',
+      isDraft: true,
+      scheduledDate: ''
     });
   };
 
   const handlePublish = (id: number) => {
     setPosts(posts.map(post => 
-      post.id === id ? { ...post, status: 'published' } : post
+      post.id === id ? { ...post, status: 'published', date: new Date().toISOString().split('T')[0] } : post
     ));
     
     toast({
@@ -178,7 +227,8 @@ const BlogAdmin = () => {
   const stats = {
     total: posts.length,
     published: posts.filter(p => p.status === 'published').length,
-    drafts: posts.filter(p => p.status === 'draft').length
+    drafts: posts.filter(p => p.status === 'draft').length,
+    scheduled: posts.filter(p => p.status === 'scheduled').length
   };
 
   return (
@@ -202,7 +252,7 @@ const BlogAdmin = () => {
           </div>
 
           {/* Cards de estatísticas */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
             <Card className="bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -235,6 +285,18 @@ const BlogAdmin = () => {
                     <p className="text-3xl font-bold">{stats.drafts}</p>
                   </div>
                   <Edit className="h-8 w-8 text-amber-200" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white border-0">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-purple-100 text-sm">Agendados</p>
+                    <p className="text-3xl font-bold">{stats.scheduled}</p>
+                  </div>
+                  <Calendar className="h-8 w-8 text-purple-200" />
                 </div>
               </CardContent>
             </Card>
@@ -337,20 +399,58 @@ const BlogAdmin = () => {
                           className="mt-2"
                         />
                       </div>
+
+                      {/* Configurações de Publicação */}
+                      <div className="border-t pt-6">
+                        <h3 className="text-lg font-semibold mb-4 text-blue-600">Configurações de Publicação</h3>
+                        
+                        <div className="space-y-4">
+                          <div className="flex items-center space-x-2">
+                            <Switch
+                              id="isDraft"
+                              checked={newPost.isDraft}
+                              onCheckedChange={(checked) => setNewPost({...newPost, isDraft: checked})}
+                            />
+                            <Label htmlFor="isDraft" className="text-base font-semibold">
+                              Salvar como Rascunho
+                            </Label>
+                          </div>
+
+                          {!newPost.isDraft && (
+                            <div>
+                              <Label htmlFor="scheduledDate" className="text-base font-semibold">
+                                Data de Agendamento (opcional)
+                              </Label>
+                              <Input
+                                id="scheduledDate"
+                                type="datetime-local"
+                                value={newPost.scheduledDate}
+                                onChange={(e) => setNewPost({...newPost, scheduledDate: e.target.value})}
+                                className="mt-2"
+                              />
+                              <p className="text-sm text-gray-500 mt-1">
+                                Deixe em branco para publicar imediatamente
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
 
                     <div className="space-y-6">
                       <div>
                         <Label htmlFor="content" className="text-base font-semibold">Conteúdo *</Label>
-                        <Textarea
-                          id="content"
-                          value={newPost.content}
-                          onChange={(e) => setNewPost({...newPost, content: e.target.value})}
-                          placeholder="Escreva o conteúdo completo do post"
-                          rows={8}
-                          required
-                          className="mt-2"
-                        />
+                        <div className="mt-2">
+                          <ReactQuill
+                            theme="snow"
+                            value={newPost.content}
+                            onChange={(content) => setNewPost({...newPost, content})}
+                            modules={quillModules}
+                            formats={quillFormats}
+                            placeholder="Escreva o conteúdo completo do post..."
+                            style={{ height: '300px', marginBottom: '50px' }}
+                          />
+                        </div>
                       </div>
 
                       {/* SEO Fields */}
@@ -395,11 +495,8 @@ const BlogAdmin = () => {
                         Cancelar
                       </Button>
                     )}
-                    <Button type="submit" variant="outline" className="order-1 sm:order-2">
-                      {isEditing ? 'Atualizar como Rascunho' : 'Salvar como Rascunho'}
-                    </Button>
-                    <Button type="submit" className="order-1 sm:order-3 bg-gradient-to-r from-blue-500 to-blue-600">
-                      {isEditing ? 'Atualizar e Publicar' : 'Publicar Agora'}
+                    <Button type="submit" className="order-1 sm:order-2 bg-gradient-to-r from-blue-500 to-blue-600">
+                      {isEditing ? 'Atualizar Post' : 'Salvar Post'}
                     </Button>
                   </div>
                 </form>
@@ -441,6 +538,7 @@ const BlogAdmin = () => {
                         <SelectItem value="all">Todos</SelectItem>
                         <SelectItem value="published">Publicados</SelectItem>
                         <SelectItem value="draft">Rascunhos</SelectItem>
+                        <SelectItem value="scheduled">Agendados</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -457,12 +555,16 @@ const BlogAdmin = () => {
                               <h3 className="font-semibold text-lg text-gray-900 flex-1">{post.title}</h3>
                               <Badge 
                                 variant={post.status === 'published' ? 'default' : 'secondary'}
-                                className={post.status === 'published' 
-                                  ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                                  : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                                className={
+                                  post.status === 'published' 
+                                    ? 'bg-green-100 text-green-800 hover:bg-green-200' 
+                                    : post.status === 'scheduled'
+                                    ? 'bg-purple-100 text-purple-800 hover:bg-purple-200'
+                                    : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
                                 }
                               >
-                                {post.status === 'published' ? 'Publicado' : 'Rascunho'}
+                                {post.status === 'published' ? 'Publicado' : 
+                                 post.status === 'scheduled' ? 'Agendado' : 'Rascunho'}
                               </Badge>
                             </div>
                             
@@ -477,6 +579,12 @@ const BlogAdmin = () => {
                                 <Calendar className="h-4 w-4" />
                                 {new Date(post.date).toLocaleDateString()}
                               </span>
+                              {post.scheduledDate && (
+                                <span className="flex items-center gap-1 text-purple-600">
+                                  <Clock className="h-4 w-4" />
+                                  Agendado: {new Date(post.scheduledDate).toLocaleString()}
+                                </span>
+                              )}
                               <Badge variant="outline" className="text-xs">
                                 {post.category}
                               </Badge>
@@ -493,7 +601,7 @@ const BlogAdmin = () => {
                               <Edit className="h-4 w-4" />
                               <span className="hidden sm:inline">Editar</span>
                             </Button>
-                            {post.status === 'draft' && (
+                            {(post.status === 'draft' || post.status === 'scheduled') && (
                               <Button 
                                 size="sm" 
                                 onClick={() => handlePublish(post.id)}
