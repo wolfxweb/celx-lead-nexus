@@ -115,7 +115,7 @@ const Home = () => {
               <span className="text-sm font-medium">Soluções Digitais Personalizadas</span>
             </div>
             
-            <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
+            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-white mb-6 leading-tight">
               Soluções Digitais
               <span className="block bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
                 Personalizadas
