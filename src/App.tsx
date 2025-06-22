@@ -8,6 +8,8 @@ import Header from '@/components/Header';
 import Home from '@/pages/Home';
 import Produtos from '@/pages/Produtos';
 import Sobre from '@/pages/Sobre';
+import Blog from '@/pages/Blog';
+import BlogPost from '@/pages/BlogPost';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import BlogAdmin from '@/pages/BlogAdmin';
@@ -95,6 +97,8 @@ function App() {
                     <Routes>
                       <Route path="/" element={<Home />} />
                       <Route path="/produtos" element={<Produtos />} />
+                      <Route path="/blog" element={<Blog />} />
+                      <Route path="/blog/:id" element={<BlogPost />} />
                       <Route path="/sobre" element={<Sobre />} />
                       <Route path="/login" element={<Login />} />
                       <Route path="/register" element={<Register />} />
