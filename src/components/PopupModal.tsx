@@ -37,9 +37,24 @@ const PopupModal: React.FC<PopupModalProps> = ({
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showPdfButton, setShowPdfButton] = useState(false);
 
+  // Reset form when config changes
+  useEffect(() => {
+    setEmail('');
+    setIsSubmitting(false);
+    setIsSubmitted(false);
+    setShowPdfButton(false);
+  }, [config.id]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) {
+      toast.error('Por favor, insira um email válido');
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
       toast.error('Por favor, insira um email válido');
       return;
     }
@@ -51,6 +66,7 @@ const PopupModal: React.FC<PopupModalProps> = ({
       setShowPdfButton(true);
       toast.success('Email cadastrado com sucesso!');
     } catch (error) {
+      console.error('Erro ao salvar email:', error);
       toast.error('Erro ao cadastrar email. Tente novamente.');
     } finally {
       setIsSubmitting(false);
@@ -59,8 +75,16 @@ const PopupModal: React.FC<PopupModalProps> = ({
 
   const handleDownloadPdf = () => {
     if (config.pdfUrl) {
+      console.log('Abrindo PDF:', config.pdfUrl);
       window.open(config.pdfUrl, '_blank');
+    } else {
+      toast.error('URL do PDF não configurada');
     }
+  };
+
+  const handleClose = () => {
+    console.log('Fechando pop-up manualmente');
+    onClose();
   };
 
   return (
@@ -70,7 +94,7 @@ const PopupModal: React.FC<PopupModalProps> = ({
           variant="ghost"
           size="sm"
           className="absolute top-2 right-2 h-8 w-8 p-0"
-          onClick={onClose}
+          onClick={handleClose}
         >
           <X className="h-4 w-4" />
         </Button>
@@ -93,6 +117,7 @@ const PopupModal: React.FC<PopupModalProps> = ({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  disabled={isSubmitting}
                 />
               </div>
               
@@ -127,7 +152,7 @@ const PopupModal: React.FC<PopupModalProps> = ({
           
           {!config.showEmailField && (
             <Button 
-              onClick={onClose}
+              onClick={handleClose}
               className="w-full bg-green-600 hover:bg-green-700"
             >
               {config.buttonText}

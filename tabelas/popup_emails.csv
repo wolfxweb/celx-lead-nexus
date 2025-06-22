@@ -1,0 +1,6 @@
+email,popup_id,page,timestamp,created_at
+"joao@exemplo.com",1,"home",2024-01-15T10:30:00Z,2024-01-15T10:30:00Z
+"maria@empresa.com",1,"sobre",2024-01-15T14:20:00Z,2024-01-15T14:20:00Z
+"pedro@startup.com",2,"produtos",2024-01-15T16:45:00Z,2024-01-15T16:45:00Z
+"ana@tech.com",3,"blog",2024-01-16T09:15:00Z,2024-01-16T09:15:00Z
+"carlos@digital.com",4,"home",2024-01-16T11:30:00Z,2024-01-16T11:30:00Z 

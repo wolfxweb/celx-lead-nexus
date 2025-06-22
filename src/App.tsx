@@ -7,6 +7,7 @@ import AdminLayout from '@/components/AdminLayout';
 import Header from '@/components/Header';
 import WhatsAppButton from '@/components/WhatsAppButton';
 import PopupModal from '@/components/PopupModal';
+import PopupDebug from '@/components/PopupDebug';
 import { CONTACT_CONFIG } from '@/config/contact';
 import { usePopup } from '@/hooks/usePopup';
 import Home from '@/pages/Home';
@@ -34,8 +35,41 @@ import './index.css';
 // Componente para gerenciar pop-ups nas páginas públicas
 const PublicLayout = () => {
   const location = useLocation();
-  const currentPage = location.pathname.replace('/', '') || 'home';
-  const { popupConfig, showPopup, closePopup, saveEmail } = usePopup(currentPage);
+  
+  // Mapear rotas para nomes de página
+  const getCurrentPage = (pathname: string) => {
+    const path = pathname.replace('/', '');
+    if (!path) return 'home';
+    
+    // Mapear rotas específicas
+    const pageMap: { [key: string]: string } = {
+      '': 'home',
+      'home': 'home',
+      'sobre': 'sobre',
+      'produtos': 'produtos',
+      'blog': 'blog',
+      'loja': 'loja',
+      'carrinho': 'carrinho',
+      'checkout': 'checkout',
+      'login': 'login',
+      'register': 'register'
+    };
+    
+    // Verificar se é uma rota de produto específico
+    if (path.startsWith('produto/')) {
+      return 'produtos';
+    }
+    
+    // Verificar se é uma rota de blog específico
+    if (path.startsWith('blog/')) {
+      return 'blog';
+    }
+    
+    return pageMap[path] || path;
+  };
+  
+  const currentPage = getCurrentPage(location.pathname);
+  const { popupConfig, showPopup, closePopup, saveEmail, loading } = usePopup(currentPage);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -79,7 +113,7 @@ const PublicLayout = () => {
       />
 
       {/* Pop-up Modal */}
-      {showPopup && popupConfig && (
+      {showPopup && popupConfig && !loading && (
         <PopupModal
           config={popupConfig}
           currentPage={currentPage}
@@ -87,6 +121,9 @@ const PublicLayout = () => {
           onEmailSubmit={saveEmail}
         />
       )}
+
+      {/* Debug Component - Remover em produção */}
+      <PopupDebug />
     </div>
   );
 };
