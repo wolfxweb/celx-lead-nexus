@@ -200,6 +200,7 @@ const ProductDetail = () => {
                   </span>
                 )}
               </div>
+              
               {product.originalPrice && (
                 <Badge variant="destructive" className="text-sm">
                   {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
@@ -234,7 +235,7 @@ const ProductDetail = () => {
               </div>
 
               <div className="flex space-x-4">
-                <Button
+                <Button 
                   onClick={handleAddToCart}
                   className="flex-1 bg-blue-600 hover:bg-blue-700"
                 >
