@@ -8,6 +8,9 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import Produtos from "./pages/Produtos";
+import ProdutoLinkedIn from "./pages/ProdutoLinkedIn";
+import ProdutoAnalytics from "./pages/ProdutoAnalytics";
+import ProdutoSecurity from "./pages/ProdutoSecurity";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import BlogAdmin from "./pages/BlogAdmin";
@@ -28,6 +31,9 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/produtos" element={<Produtos />} />
+              <Route path="/produtos/linkedin-automation" element={<ProdutoLinkedIn />} />
+              <Route path="/produtos/analytics" element={<ProdutoAnalytics />} />
+              <Route path="/produtos/security" element={<ProdutoSecurity />} />
               <Route path="/blog" element={<Blog />} />
               <Route path="/blog/:id" element={<BlogPost />} />
               <Route path="/blog/admin" element={<BlogAdmin />} />

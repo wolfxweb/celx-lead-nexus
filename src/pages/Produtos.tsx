@@ -1,5 +1,5 @@
-
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -23,24 +23,27 @@ const Produtos = () => {
   const produtos = [
     {
       id: 1,
-      nome: 'CELX Cloud',
-      descricao: 'Plataforma em nuvem para gestão empresarial',
-      preco: 'A partir de R$ 299/mês',
-      features: ['Backup automático', 'Acesso multiplataforma', 'Suporte 24/7']
+      nome: 'Automação LinkedIn + IA',
+      descricao: 'Captura automática de leads no LinkedIn com inteligência artificial',
+      preco: 'A partir de R$ 1.299/mês',
+      features: ['Geração de leads orientada por IA', 'Captura de dados abrangente', 'Pontuação automática de leads'],
+      link: '/produtos/linkedin-automation'
     },
     {
       id: 2,
       nome: 'CELX Analytics',
       descricao: 'Análise avançada de dados empresariais',
       preco: 'A partir de R$ 499/mês',
-      features: ['Dashboard interativo', 'Relatórios automatizados', 'IA integrada']
+      features: ['Dashboard interativo', 'Relatórios automatizados', 'IA integrada'],
+      link: '/produtos/analytics'
     },
     {
       id: 3,
       nome: 'CELX Security',
       descricao: 'Segurança digital corporativa',
       preco: 'A partir de R$ 399/mês',
-      features: ['Monitoramento 24/7', 'Firewall avançado', 'Compliance LGPD']
+      features: ['Monitoramento 24/7', 'Firewall avançado', 'Compliance LGPD'],
+      link: '/produtos/security'
     }
   ];
 
@@ -114,9 +117,20 @@ const Produtos = () => {
                       </li>
                     ))}
                   </ul>
-                  <Button className="w-full" onClick={() => setLeadForm({...leadForm, produto: produto.nome})}>
-                    Solicitar Demonstração
-                  </Button>
+                  <div className="space-y-2">
+                    <Link to={produto.link}>
+                      <Button className="w-full" variant="default">
+                        Ver Detalhes
+                      </Button>
+                    </Link>
+                    <Button 
+                      className="w-full" 
+                      variant="outline"
+                      onClick={() => setLeadForm({...leadForm, produto: produto.nome})}
+                    >
+                      Solicitar Demonstração
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -187,7 +201,7 @@ const Produtos = () => {
                       <SelectValue placeholder="Selecione um produto" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="CELX Cloud">CELX Cloud</SelectItem>
+                      <SelectItem value="Automação LinkedIn + IA">Automação LinkedIn + IA</SelectItem>
                       <SelectItem value="CELX Analytics">CELX Analytics</SelectItem>
                       <SelectItem value="CELX Security">CELX Security</SelectItem>
                       <SelectItem value="Todos">Todos os produtos</SelectItem>
