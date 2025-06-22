@@ -181,17 +181,81 @@ export const BASEROW_TABLES = {
   }
 };
 
+const COURSE_TABLES = {
+  COURSES: {
+    id: parseInt(import.meta.env.VITE_BASEROW_COURSES_TABLE_ID || '0'),
+    fields: {
+      id: 'id',
+      title: 'title',
+      description: 'description',
+      cover_image: 'cover_image',
+      instructor_id: 'instructor_id',
+      product_id: 'product_id',
+      is_published: 'is_published',
+      created_at: 'created_at',
+      updated_at: 'updated_at',
+    }
+  },
+  COURSE_MODULES: {
+    id: parseInt(import.meta.env.VITE_BASEROW_COURSE_MODULES_TABLE_ID || '0'),
+    fields: {
+      id: 'id',
+      course_id: 'course_id',
+      title: 'title',
+      description: 'description',
+      order: 'order',
+      created_at: 'created_at',
+      updated_at: 'updated_at',
+    }
+  },
+  COURSE_LESSONS: {
+    id: parseInt(import.meta.env.VITE_BASEROW_COURSE_LESSONS_TABLE_ID || '0'),
+    fields: {
+      id: 'id',
+      module_id: 'module_id',
+      title: 'title',
+      content_type: 'content_type',
+      video_url: 'video_url',
+      pdf_file: 'pdf_file',
+      text_content: 'text_content',
+      quiz_data: 'quiz_data',
+      order: 'order',
+      is_free_preview: 'is_free_preview',
+      created_at: 'created_at',
+      updated_at: 'updated_at',
+    }
+  },
+  LESSON_DOUBTS: {
+    id: parseInt(import.meta.env.VITE_BASEROW_LESSON_DOUBTS_TABLE_ID || '0'),
+    fields: {
+      id: 'id',
+      lesson_id: 'lesson_id',
+      user_id: 'user_id',
+      doubt_text: 'doubt_text',
+      answer_text: 'answer_text',
+      answered_by_id: 'answered_by_id',
+      is_resolved: 'is_resolved',
+      created_at: 'created_at',
+      answered_at: 'answered_at',
+    }
+  }
+};
+
+// Renomeia o objeto original e depois faz o merge
+const MAIN_TABLES = BASEROW_TABLES;
+Object.assign(MAIN_TABLES, COURSE_TABLES);
+
 // Função para obter ID da tabela
-export const getTableId = (tableName: keyof typeof BASEROW_TABLES): number => {
-  return BASEROW_TABLES[tableName].id;
+export const getTableId = (tableName: keyof typeof MAIN_TABLES): number => {
+  return MAIN_TABLES[tableName].id;
 };
 
 // Função para obter campo da tabela
 export const getFieldId = (
-  tableName: keyof typeof BASEROW_TABLES, 
+  tableName: keyof typeof MAIN_TABLES, 
   fieldName: string
 ): string => {
-  const table = BASEROW_TABLES[tableName];
+  const table = MAIN_TABLES[tableName];
   const field = table.fields[fieldName as keyof typeof table.fields];
   
   if (!field) {
@@ -203,7 +267,7 @@ export const getFieldId = (
 
 // Função para criar filtro de campo
 export const createFieldFilter = (
-  tableName: keyof typeof BASEROW_TABLES,
+  tableName: keyof typeof MAIN_TABLES,
   fieldName: string,
   operator: 'equal' | 'contains' | 'greater_than' | 'less_than',
   value: string | number

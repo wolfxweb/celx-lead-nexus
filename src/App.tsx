@@ -29,6 +29,9 @@ import OrderAdmin from '@/pages/OrderAdmin';
 import AdminDashboard from '@/pages/AdminDashboard';
 import PopupAdmin from '@/pages/PopupAdmin';
 import AuthTest from '@/components/AuthTest';
+import MeusCursos from './pages/MeusCursos';
+import CursoDetalhes from './pages/CursoDetalhes';
+import UserLayout from '@/components/UserLayout';
 import './index.css';
 
 // Componente para gerenciar pop-ups nas páginas públicas
@@ -193,6 +196,26 @@ function App() {
                   <AdminLayout>
                     <PopupAdmin />
                   </AdminLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Rotas de Cursos Protegidas */}
+            <Route
+              path="/meus-cursos"
+              element={
+                <ProtectedRoute allowedRoles={['user', 'admin']}>
+                  <UserLayout>
+                    <MeusCursos />
+                  </UserLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/curso/:cursoId"
+              element={
+                <ProtectedRoute allowedRoles={['user', 'admin']}>
+                  <CursoDetalhes />
                 </ProtectedRoute>
               }
             />

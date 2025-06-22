@@ -1,0 +1,3 @@
+id,title,description,cover_image,instructor_id,product_id,is_published,created_at,updated_at
+1,"Curso de Automação com IA","Aprenda a criar automações poderosas com Inteligência Artificial, do zero ao avançado.","[{""url"":""https://images.unsplash.com/photo-1599058917212-d750089bc07e?w=800&h=400&fit=crop""}]",1,1,"true","2024-07-25T10:00:00Z","2024-07-25T10:00:00Z"
+2,"Curso de Desenvolvimento Web Full Stack","Domine as tecnologias mais modernas de front-end e back-end e construa aplicações completas.","[{""url"":""https://images.unsplash.com/photo-1555066931-4365d1469c9b?w=800&h=400&fit=crop""}]",1,2,"true","2024-07-26T10:00:00Z","2024-07-26T10:00:00Z" 
