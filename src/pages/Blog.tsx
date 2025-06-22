@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Search, Calendar, User, ChevronLeft, ChevronRight } from 'lucide-react';
 import SEOHead from '@/components/SEOHead';
+import { defaultPosts, defaultCategories, type BlogPost } from '@/data/blogData';
 
 const Blog = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -13,166 +14,24 @@ const Blog = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 12;
 
-  // Mock data para posts do blog
-  const posts = [
-    {
-      id: 1,
-      title: 'O Futuro da Transformação Digital nas Empresas',
-      excerpt: 'Descubra como a transformação digital está moldando o futuro dos negócios e como sua empresa pode se preparar.',
-      category: 'tecnologia',
-      author: 'Carlos Silva',
-      date: '2024-06-15',
-      readTime: '5 min',
-      image: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&h=250&fit=crop'
-    },
-    {
-      id: 2,
-      title: 'Segurança Cibernética: Protegendo Seus Dados',
-      excerpt: 'As melhores práticas para manter sua empresa segura no ambiente digital atual.',
-      category: 'seguranca',
-      author: 'Ana Costa',
-      date: '2024-06-10',
-      readTime: '7 min',
-      image: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=250&fit=crop'
-    },
-    {
-      id: 3,
-      title: 'Cloud Computing: Benefícios e Implementação',
-      excerpt: 'Como migrar para a nuvem pode revolucionar sua infraestrutura de TI.',
-      category: 'cloud',
-      author: 'Pedro Santos',
-      date: '2024-06-05',
-      readTime: '6 min',
-      image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&h=250&fit=crop'
-    },
-    {
-      id: 4,
-      title: 'Inteligência Artificial: Oportunidades de Negócio',
-      excerpt: 'Explore como a IA pode criar novas oportunidades e otimizar processos empresariais.',
-      category: 'ai',
-      author: 'Maria Oliveira',
-      date: '2024-05-30',
-      readTime: '8 min',
-      image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400&h=250&fit=crop'
-    },
-    {
-      id: 5,
-      title: 'Marketing Digital: Estratégias para 2024',
-      excerpt: 'As principais tendências e estratégias de marketing digital para o próximo ano.',
-      category: 'marketing',
-      author: 'Fernanda Lima',
-      date: '2024-05-25',
-      readTime: '6 min',
-      image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=250&fit=crop'
-    },
-    {
-      id: 6,
-      title: 'Desenvolvimento Web: Frameworks Modernos',
-      excerpt: 'Uma análise dos frameworks mais populares para desenvolvimento web em 2024.',
-      category: 'desenvolvimento',
-      author: 'Roberto Alves',
-      date: '2024-05-20',
-      readTime: '7 min',
-      image: 'https://images.unsplash.com/photo-1551650975-87deedd944c3?w=400&h=250&fit=crop'
-    },
-    {
-      id: 7,
-      title: 'UX/UI Design: Princípios Fundamentais',
-      excerpt: 'Os princípios essenciais para criar interfaces intuitivas e atraentes.',
-      category: 'design',
-      author: 'Juliana Costa',
-      date: '2024-05-15',
-      readTime: '5 min',
-      image: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=400&h=250&fit=crop'
-    },
-    {
-      id: 8,
-      title: 'E-commerce: Tendências e Melhores Práticas',
-      excerpt: 'Como criar uma experiência de compra online excepcional.',
-      category: 'ecommerce',
-      author: 'Lucas Mendes',
-      date: '2024-05-10',
-      readTime: '8 min',
-      image: 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=400&h=250&fit=crop'
-    },
-    {
-      id: 9,
-      title: 'Mobile First: Design Responsivo',
-      excerpt: 'Por que o design mobile-first é essencial nos dias de hoje.',
-      category: 'mobile',
-      author: 'Camila Santos',
-      date: '2024-05-05',
-      readTime: '6 min',
-      image: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400&h=250&fit=crop'
-    },
-    {
-      id: 10,
-      title: 'SEO Avançado: Técnicas para 2024',
-      excerpt: 'Estratégias avançadas de SEO para melhorar o ranking do seu site.',
-      category: 'seo',
-      author: 'Diego Oliveira',
-      date: '2024-04-30',
-      readTime: '9 min',
-      image: 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=400&h=250&fit=crop'
-    },
-    {
-      id: 11,
-      title: 'Analytics: Medindo o Sucesso Digital',
-      excerpt: 'Como usar dados para tomar decisões estratégicas no marketing digital.',
-      category: 'analytics',
-      author: 'Patrícia Silva',
-      date: '2024-04-25',
-      readTime: '7 min',
-      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=250&fit=crop'
-    },
-    {
-      id: 12,
-      title: 'Automação de Marketing: Ferramentas Essenciais',
-      excerpt: 'As melhores ferramentas para automatizar suas campanhas de marketing.',
-      category: 'automacao',
-      author: 'Ricardo Ferreira',
-      date: '2024-04-20',
-      readTime: '8 min',
-      image: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=400&h=250&fit=crop'
-    },
-    {
-      id: 13,
-      title: 'Redes Sociais: Estratégias de Engajamento',
-      excerpt: 'Como aumentar o engajamento nas suas redes sociais.',
-      category: 'redes-sociais',
-      author: 'Amanda Costa',
-      date: '2024-04-15',
-      readTime: '6 min',
-      image: 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=400&h=250&fit=crop'
-    },
-    {
-      id: 14,
-      title: 'Content Marketing: Criando Conteúdo Valioso',
-      excerpt: 'Estratégias para criar conteúdo que realmente engaja sua audiência.',
-      category: 'content',
-      author: 'Thiago Martins',
-      date: '2024-04-10',
-      readTime: '7 min',
-      image: 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=250&fit=crop'
-    }
-  ];
+  // Usar posts compartilhados e filtrar apenas os publicados
+  const posts = defaultPosts.filter(post => post.status === 'published');
+
+  // Criar categorias dinâmicas baseadas nos posts existentes
+  const categoryCounts = posts.reduce((acc, post) => {
+    acc[post.category] = (acc[post.category] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
 
   const categories = [
     { id: 'all', name: 'Todos', count: posts.length },
-    { id: 'tecnologia', name: 'Tecnologia', count: 1 },
-    { id: 'seguranca', name: 'Segurança', count: 1 },
-    { id: 'cloud', name: 'Cloud', count: 1 },
-    { id: 'ai', name: 'IA', count: 1 },
-    { id: 'marketing', name: 'Marketing', count: 1 },
-    { id: 'desenvolvimento', name: 'Desenvolvimento', count: 1 },
-    { id: 'design', name: 'Design', count: 1 },
-    { id: 'ecommerce', name: 'E-commerce', count: 1 },
-    { id: 'mobile', name: 'Mobile', count: 1 },
-    { id: 'seo', name: 'SEO', count: 1 },
-    { id: 'analytics', name: 'Analytics', count: 1 },
-    { id: 'automacao', name: 'Automação', count: 1 },
-    { id: 'redes-sociais', name: 'Redes Sociais', count: 1 },
-    { id: 'content', name: 'Content', count: 1 }
+    ...defaultCategories
+      .filter(cat => categoryCounts[cat.slug])
+      .map(cat => ({
+        id: cat.slug,
+        name: cat.name,
+        count: categoryCounts[cat.slug] || 0
+      }))
   ];
 
   const filteredPosts = posts.filter(post => {

@@ -13,6 +13,7 @@ import { Edit, Trash2, Eye, Calendar, User, Clock, Search, Plus, FileText } from
 import SEOHead from '@/components/SEOHead';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import { defaultCategories, defaultPosts, generateSlug, type BlogCategory, type BlogPost } from '@/data/blogData';
 
 const BlogAdmin = () => {
   const [newPost, setNewPost] = useState({
@@ -35,53 +36,20 @@ const BlogAdmin = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [activeTab, setActiveTab] = useState('manage');
 
-  const [posts, setPosts] = useState([
-    {
-      id: 1,
-      title: 'O Futuro da Transformação Digital nas Empresas',
-      excerpt: 'A transformação digital não é mais uma opção, mas uma necessidade...',
-      content: '<p>Conteúdo completo do post sobre transformação digital e como as empresas podem se adaptar...</p>',
-      status: 'published',
-      author: 'Carlos Silva',
-      date: '2024-06-15',
-      scheduledDate: '',
-      category: 'tecnologia',
-      tags: 'transformação digital, tecnologia, inovação',
-      metaDescription: 'Descubra como a transformação digital pode revolucionar sua empresa e impulsionar o crescimento no mercado atual.',
-      metaKeywords: 'transformação digital, tecnologia empresarial, inovação, digitalização',
-      image: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=400&fit=crop'
-    },
-    {
-      id: 2,
-      title: 'Segurança Cibernética: Protegendo Seus Dados',
-      excerpt: 'As melhores práticas para manter sua empresa segura...',
-      content: '<p>Conteúdo completo do post sobre segurança cibernética e proteção de dados empresariais...</p>',
-      status: 'published',
-      author: 'Ana Costa',
-      date: '2024-06-10',
-      scheduledDate: '',
-      category: 'seguranca',
-      tags: 'segurança, cibernética, proteção',
-      metaDescription: 'Aprenda as estratégias essenciais de segurança cibernética para proteger sua empresa contra ameaças digitais.',
-      metaKeywords: 'segurança cibernética, proteção de dados, cybersecurity, segurança digital',
-      image: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&h=400&fit=crop'
-    },
-    {
-      id: 3,
-      title: 'Cloud Computing: O Futuro da Infraestrutura',
-      excerpt: 'Como migrar para a nuvem pode revolucionar sua infraestrutura...',
-      content: '<p>Conteúdo completo sobre cloud computing e suas vantagens...</p>',
-      status: 'draft',
-      author: 'Pedro Santos',
-      date: '2024-06-12',
-      scheduledDate: '2024-06-20',
-      category: 'cloud',
-      tags: 'cloud, infraestrutura, tecnologia',
-      metaDescription: 'Entenda como o cloud computing pode transformar sua infraestrutura de TI.',
-      metaKeywords: 'cloud computing, infraestrutura, nuvem, tecnologia',
-      image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&h=400&fit=crop'
-    }
-  ]);
+  // Estados para gerenciamento de categorias
+  const [categories, setCategories] = useState<BlogCategory[]>(defaultCategories);
+
+  const [newCategory, setNewCategory] = useState({
+    name: '',
+    slug: '',
+    description: '',
+    color: 'blue'
+  });
+
+  const [editingCategory, setEditingCategory] = useState<BlogCategory | null>(null);
+  const [isEditingCategory, setIsEditingCategory] = useState(false);
+
+  const [posts, setPosts] = useState<BlogPost[]>(defaultPosts);
 
   const { toast } = useToast();
 
@@ -135,11 +103,12 @@ const BlogAdmin = () => {
       setEditingPost(null);
       setActiveTab('manage');
     } else {
-      const post = {
+      const post: BlogPost = {
         id: posts.length + 1,
         ...newPost,
         status: postStatus,
-        date: new Date().toISOString().split('T')[0]
+        date: new Date().toISOString().split('T')[0],
+        readTime: '5 min' // Valor padrão para readTime
       };
 
       setPosts([...posts, post]);
@@ -219,6 +188,90 @@ const BlogAdmin = () => {
     toast({
       title: "Post excluído",
       description: "O post foi removido permanentemente.",
+    });
+  };
+
+  // Funções para gerenciamento de categorias
+  const handleCategorySubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (isEditingCategory && editingCategory) {
+      setCategories(categories.map(cat => 
+        cat.id === editingCategory.id 
+          ? { ...editingCategory, ...newCategory }
+          : cat
+      ));
+      
+      toast({
+        title: "Categoria atualizada com sucesso!",
+        description: "A categoria foi atualizada.",
+      });
+      
+      setIsEditingCategory(false);
+      setEditingCategory(null);
+    } else {
+      const category = {
+        id: categories.length + 1,
+        ...newCategory
+      };
+
+      setCategories([...categories, category]);
+      
+      toast({
+        title: "Categoria criada com sucesso!",
+        description: "A nova categoria foi adicionada.",
+      });
+    }
+
+    setNewCategory({
+      name: '',
+      slug: '',
+      description: '',
+      color: 'blue'
+    });
+  };
+
+  const handleEditCategory = (category: any) => {
+    setEditingCategory(category);
+    setNewCategory({
+      name: category.name,
+      slug: category.slug,
+      description: category.description,
+      color: category.color
+    });
+    setIsEditingCategory(true);
+    setActiveTab('categories');
+  };
+
+  const handleCancelEditCategory = () => {
+    setIsEditingCategory(false);
+    setEditingCategory(null);
+    setNewCategory({
+      name: '',
+      slug: '',
+      description: '',
+      color: 'blue'
+    });
+  };
+
+  const handleDeleteCategory = (id: number) => {
+    // Verificar se há posts usando esta categoria
+    const postsUsingCategory = posts.filter(post => post.category === categories.find(cat => cat.id === id)?.slug);
+    
+    if (postsUsingCategory.length > 0) {
+      toast({
+        title: "Não é possível excluir",
+        description: `Esta categoria está sendo usada por ${postsUsingCategory.length} post(s).`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setCategories(categories.filter(cat => cat.id !== id));
+    
+    toast({
+      title: "Categoria excluída",
+      description: "A categoria foi removida permanentemente.",
     });
   };
 
@@ -308,7 +361,7 @@ const BlogAdmin = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-3 bg-white shadow-sm">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 bg-white shadow-sm">
           <TabsTrigger value="create" className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">{isEditing ? 'Editar Post' : 'Criar Post'}</span>
@@ -318,6 +371,11 @@ const BlogAdmin = () => {
             <FileText className="h-4 w-4" />
             <span className="hidden sm:inline">Gerenciar Posts</span>
             <span className="sm:hidden">Posts</span>
+          </TabsTrigger>
+          <TabsTrigger value="categories" className="flex items-center gap-2">
+            <Badge className="h-4 w-4" />
+            <span className="hidden sm:inline">Categorias</span>
+            <span className="sm:hidden">Cats</span>
           </TabsTrigger>
           <TabsTrigger value="comments" className="flex items-center gap-2 hidden lg:flex">
             <User className="h-4 w-4" />
@@ -400,10 +458,11 @@ const BlogAdmin = () => {
                             <SelectValue placeholder="Selecione" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="tecnologia">Tecnologia</SelectItem>
-                            <SelectItem value="seguranca">Segurança</SelectItem>
-                            <SelectItem value="cloud">Cloud</SelectItem>
-                            <SelectItem value="ai">Inteligência Artificial</SelectItem>
+                            {categories.map((category) => (
+                              <SelectItem key={category.id} value={category.slug}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -678,6 +737,169 @@ const BlogAdmin = () => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Categorias */}
+        <TabsContent value="categories">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Formulário de Categoria */}
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+              <CardHeader className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-t-lg">
+                <CardTitle className="flex items-center gap-2">
+                  {isEditingCategory ? <Edit className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+                  {isEditingCategory ? 'Editar Categoria' : 'Nova Categoria'}
+                </CardTitle>
+                <CardDescription className="text-green-100">
+                  {isEditingCategory ? 'Edite a categoria selecionada' : 'Crie uma nova categoria para os posts'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                <form onSubmit={handleCategorySubmit} className="space-y-4">
+                  <div>
+                    <Label htmlFor="categoryName" className="text-base font-semibold">Nome da Categoria *</Label>
+                    <Input
+                      id="categoryName"
+                      value={newCategory.name}
+                      onChange={(e) => setNewCategory({
+                        ...newCategory, 
+                        name: e.target.value,
+                        slug: generateSlug(e.target.value)
+                      })}
+                      placeholder="Ex: Tecnologia"
+                      required
+                      className="mt-2"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="categorySlug" className="text-base font-semibold">Slug</Label>
+                    <Input
+                      id="categorySlug"
+                      value={newCategory.slug}
+                      onChange={(e) => setNewCategory({...newCategory, slug: e.target.value})}
+                      placeholder="tecnologia"
+                      className="mt-2"
+                    />
+                    <p className="text-sm text-gray-500 mt-1">
+                      URL amigável (gerado automaticamente)
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="categoryDescription" className="text-base font-semibold">Descrição</Label>
+                    <Textarea
+                      id="categoryDescription"
+                      value={newCategory.description}
+                      onChange={(e) => setNewCategory({...newCategory, description: e.target.value})}
+                      placeholder="Breve descrição da categoria"
+                      rows={3}
+                      className="mt-2"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="categoryColor" className="text-base font-semibold">Cor</Label>
+                    <Select value={newCategory.color} onValueChange={(value) => setNewCategory({...newCategory, color: value})}>
+                      <SelectTrigger className="mt-2">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="blue">Azul</SelectItem>
+                        <SelectItem value="red">Vermelho</SelectItem>
+                        <SelectItem value="green">Verde</SelectItem>
+                        <SelectItem value="purple">Roxo</SelectItem>
+                        <SelectItem value="orange">Laranja</SelectItem>
+                        <SelectItem value="indigo">Índigo</SelectItem>
+                        <SelectItem value="pink">Rosa</SelectItem>
+                        <SelectItem value="teal">Teal</SelectItem>
+                        <SelectItem value="yellow">Amarelo</SelectItem>
+                        <SelectItem value="gray">Cinza</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t">
+                    {isEditingCategory && (
+                      <Button type="button" variant="outline" onClick={handleCancelEditCategory} className="order-2 sm:order-1">
+                        Cancelar
+                      </Button>
+                    )}
+                    <Button type="submit" className="order-1 sm:order-2 bg-gradient-to-r from-green-500 to-green-600">
+                      {isEditingCategory ? 'Atualizar Categoria' : 'Salvar Categoria'}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+
+            {/* Lista de Categorias */}
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+              <CardHeader className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-t-lg">
+                <CardTitle className="flex items-center gap-2">
+                  <Badge className="h-5 w-5" />
+                  Categorias Existentes
+                </CardTitle>
+                <CardDescription className="text-green-100">
+                  Gerencie todas as categorias do blog
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  {categories.map((category) => {
+                    const postsInCategory = posts.filter(post => post.category === category.slug).length;
+                    return (
+                      <Card key={category.id} className="hover:shadow-md transition-all duration-200 border border-gray-200">
+                        <CardContent className="p-4">
+                          <div className="flex justify-between items-start gap-4">
+                            <div className="flex-1 space-y-2">
+                              <div className="flex items-center gap-2">
+                                <Badge 
+                                  className={`bg-${category.color}-100 text-${category.color}-800 hover:bg-${category.color}-200`}
+                                >
+                                  {category.name}
+                                </Badge>
+                                <span className="text-sm text-gray-500">({postsInCategory} posts)</span>
+                              </div>
+                              <p className="text-sm text-gray-600">{category.description}</p>
+                              <p className="text-xs text-gray-400">Slug: {category.slug}</p>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => handleEditCategory(category)}
+                                className="flex items-center gap-1"
+                              >
+                                <Edit className="h-4 w-4" />
+                                <span className="hidden sm:inline">Editar</span>
+                              </Button>
+                              <Button 
+                                variant="destructive" 
+                                size="sm"
+                                onClick={() => handleDeleteCategory(category.id)}
+                                className="flex items-center gap-1"
+                                disabled={postsInCategory > 0}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                <span className="hidden sm:inline">Excluir</span>
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                  
+                  {categories.length === 0 && (
+                    <div className="text-center py-12">
+                      <Badge className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">Nenhuma categoria criada ainda.</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* Comentários */}
