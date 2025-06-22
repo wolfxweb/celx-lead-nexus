@@ -10,30 +10,49 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { mockProducts, categories } from '@/data/products';
+import { mockProducts } from '@/data/products';
 import { Product } from '@/types/ecommerce';
-import { defaultProductCategories, generateSlug, type ProductCategory } from '@/data/productData';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
+// Importando nosso serviço e tipos
+import { 
+  getProductCategories, 
+  createCategory, 
+  updateCategory, 
+  deleteCategory, 
+  generateUniqueSlug,
+  type Category 
+} from '@/services/categoryService';
+
+import {
+  getAllProducts,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  type BaserowProduct
+} from '@/services/productService';
+
 const ProductAdmin: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>(mockProducts);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>(mockProducts);
+  const [products, setProducts] = useState<BaserowProduct[]>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+  const [filteredProducts, setFilteredProducts] = useState<BaserowProduct[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingProduct, setEditingProduct] = useState<BaserowProduct | null>(null);
 
-  // Estados para gerenciamento de categorias
-  const [productCategories, setProductCategories] = useState<ProductCategory[]>(defaultProductCategories);
+  // Estados para gerenciamento de categorias (ATUALIZADO)
+  const [productCategories, setProductCategories] = useState<Category[]>([]);
   const [newCategory, setNewCategory] = useState({
     name: '',
     slug: '',
     description: '',
     color: 'blue'
   });
-  const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [isEditingCategory, setIsEditingCategory] = useState(false);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const [activeTab, setActiveTab] = useState('products');
 
   const { toast } = useToast();
@@ -44,20 +63,63 @@ const ProductAdmin: React.FC = () => {
     shortDescription: '',
     price: '',
     originalPrice: '',
-    category: '',
+    category_id: '',
     tags: '',
     image: '',
-    images: [''],
+    images: '',
     video: '',
     fileSize: '',
     fileType: '',
-    isActive: true,
-    isFeatured: false
+    isActive: 'true',
+    isFeatured: 'false'
   });
 
   useEffect(() => {
     filterProducts();
   }, [searchTerm, categoryFilter, products]);
+
+  // Função para buscar produtos (COM DEBUG)
+  const fetchProducts = async () => {
+    try {
+      setIsLoadingProducts(true);
+      console.log('Buscando produtos...');
+      const { products: fetchedProducts } = await getAllProducts();
+      console.log('Produtos encontrados:', fetchedProducts);
+      setProducts(fetchedProducts);
+      setFilteredProducts(fetchedProducts);
+    } catch (error) {
+      console.error('Erro ao buscar produtos:', error);
+      toast({
+        title: "Erro ao buscar produtos",
+        description: "Não foi possível carregar os produtos.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingProducts(false);
+    }
+  };
+
+  // Hook para buscar categorias do Baserow
+  const fetchCategories = async () => {
+    try {
+      setIsLoadingCategories(true);
+      const categories = await getProductCategories();
+      setProductCategories(categories);
+    } catch (error) {
+      toast({
+        title: "Erro ao buscar categorias",
+        description: "Não foi possível carregar as categorias de produtos.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingCategories(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+    fetchProducts();
+  }, [toast]);
 
   const filterProducts = () => {
     let filtered = products;
@@ -70,78 +132,90 @@ const ProductAdmin: React.FC = () => {
     }
 
     if (categoryFilter !== 'all') {
-      filtered = filtered.filter(product => product.category === categoryFilter);
+      // CORREÇÃO: Filtrar pelo nome da categoria
+      filtered = filtered.filter(product => product.category_id === categoryFilter);
     }
 
     setFilteredProducts(filtered);
   };
 
-  const formatPrice = (price: number) => {
+  const formatPrice = (price: string) => {
+    const numPrice = parseFloat(price) || 0;
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
-    }).format(price);
+    }).format(numPrice);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const newProduct: Product = {
-      id: editingProduct?.id || Date.now().toString(),
-      name: formData.name,
-      description: formData.description,
-      shortDescription: formData.shortDescription,
-      price: parseFloat(formData.price),
-      originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined,
-      category: formData.category,
-      tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-      image: formData.image,
-      images: formData.images.filter(img => img.trim()),
-      video: formData.video || undefined,
-      fileSize: formData.fileSize,
-      fileType: formData.fileType,
-      isActive: formData.isActive,
-      isFeatured: formData.isFeatured,
-      createdAt: editingProduct?.createdAt || new Date(),
-      updatedAt: new Date(),
-      salesCount: editingProduct?.salesCount || 0,
-      rating: editingProduct?.rating || 0,
-      reviews: editingProduct?.reviews || []
-    };
+    try {
+      const productData = {
+        name: formData.name,
+        description: formData.description,
+        short_description: formData.shortDescription,
+        price: formData.price,
+        original_price: formData.originalPrice,
+        category_id: formData.category_id,
+        tags: formData.tags,
+        image: formData.image,
+        images: formData.images,
+        video_url: formData.video,
+        file_size: formData.fileSize,
+        file_type: formData.fileType,
+        is_active: formData.isActive,
+        is_featured: formData.isFeatured,
+        sales_count: editingProduct?.sales_count || '0',
+        rating: editingProduct?.rating || '0',
+      };
 
-    if (editingProduct) {
-      setProducts(products.map(p => p.id === editingProduct.id ? newProduct : p));
-    } else {
-      setProducts([...products, newProduct]);
+      if (editingProduct) {
+        const updated = await updateProduct(editingProduct.id, productData);
+        setProducts(products.map(p => p.id === updated.id ? updated : p));
+        toast({ title: "Produto atualizado!" });
+      } else {
+        const newProduct = await createProduct(productData);
+        setProducts([...products, newProduct]);
+        toast({ title: "Produto criado!" });
+      }
+      resetForm();
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error('Erro ao salvar produto:', error);
+      toast({ title: "Erro ao salvar produto", variant: "destructive" });
     }
-
-    resetForm();
-    setIsDialogOpen(false);
   };
 
-  const handleEdit = (product: Product) => {
+  const handleEdit = (product: BaserowProduct) => {
     setEditingProduct(product);
     setFormData({
       name: product.name,
       description: product.description,
-      shortDescription: product.shortDescription,
-      price: product.price.toString(),
-      originalPrice: product.originalPrice?.toString() || '',
-      category: product.category,
-      tags: product.tags.join(', '),
+      shortDescription: product.short_description,
+      price: product.price,
+      originalPrice: product.original_price,
+      category_id: product.category_id,
+      tags: product.tags,
       image: product.image,
-      images: product.images.length > 0 ? product.images : [''],
-      video: product.video || '',
-      fileSize: product.fileSize || '',
-      fileType: product.fileType || '',
-      isActive: product.isActive,
-      isFeatured: product.isFeatured
+      images: product.images,
+      video: product.video_url,
+      fileSize: product.file_size,
+      fileType: product.file_type,
+      isActive: product.is_active,
+      isFeatured: product.is_featured
     });
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (productId: string) => {
-    setProducts(products.filter(p => p.id !== productId));
+  const handleDelete = async (productId: number) => {
+    try {
+      await deleteProduct(productId);
+      setProducts(products.filter(p => p.id !== productId));
+      toast({ title: "Produto excluído!" });
+    } catch (error) {
+      toast({ title: "Erro ao excluir produto", variant: "destructive" });
+    }
   };
 
   const resetForm = () => {
@@ -151,84 +225,88 @@ const ProductAdmin: React.FC = () => {
       shortDescription: '',
       price: '',
       originalPrice: '',
-      category: '',
+      category_id: '',
       tags: '',
       image: '',
-      images: [''],
+      images: '',
       video: '',
       fileSize: '',
       fileType: '',
-      isActive: true,
-      isFeatured: false
+      isActive: 'true',
+      isFeatured: 'false'
     });
     setEditingProduct(null);
   };
 
   const addImageField = () => {
+    const currentImages = formData.images ? formData.images.split(';').filter(img => img.trim()) : [];
+    const newImages = [...currentImages, ''];
     setFormData({
       ...formData,
-      images: [...formData.images, '']
+      images: newImages.join(';')
     });
   };
 
   const removeImageField = (index: number) => {
-    const newImages = formData.images.filter((_, i) => i !== index);
+    const currentImages = formData.images ? formData.images.split(';').filter(img => img.trim()) : [];
+    const newImages = currentImages.filter((_, i) => i !== index);
     setFormData({
       ...formData,
-      images: newImages.length > 0 ? newImages : ['']
+      images: newImages.join(';')
     });
   };
 
   const updateImageField = (index: number, value: string) => {
-    const newImages = [...formData.images];
-    newImages[index] = value;
+    const currentImages = formData.images ? formData.images.split(';') : [];
+    currentImages[index] = value;
     setFormData({
       ...formData,
-      images: newImages
+      images: currentImages.join(';')
     });
   };
 
-  // Funções para gerenciamento de categorias
-  const handleCategorySubmit = (e: React.FormEvent) => {
+  // Funções para gerenciamento de categorias (CORRIGIDAS)
+  const handleCategorySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (isEditingCategory && editingCategory) {
-      setProductCategories(productCategories.map(cat => 
-        cat.id === editingCategory.id 
-          ? { ...editingCategory, ...newCategory }
-          : cat
-      ));
-      
-      toast({
-        title: "Categoria atualizada com sucesso!",
-        description: "A categoria foi atualizada.",
-      });
-      
-      setIsEditingCategory(false);
-      setEditingCategory(null);
-    } else {
-      const category: ProductCategory = {
-        id: productCategories.length + 1,
-        ...newCategory
-      };
+    try {
+      if (isEditingCategory && editingCategory) {
+        // Atualizar categoria
+        const slug = await generateUniqueSlug(newCategory.name, editingCategory.id);
+        const updatedCategory = await updateCategory(editingCategory.id, { 
+          name: newCategory.name,
+          slug,
+          description: newCategory.description,
+          color: newCategory.color
+        });
 
-      setProductCategories([...productCategories, category]);
-      
-      toast({
-        title: "Categoria criada com sucesso!",
-        description: "A nova categoria foi adicionada.",
+        setProductCategories(productCategories.map(cat => 
+          cat.id === updatedCategory.id ? updatedCategory : cat
+        ));
+        
+        toast({ title: "Categoria atualizada com sucesso!" });
+        
+      } else {
+        // Criar nova categoria
+        const slug = await generateUniqueSlug(newCategory.name);
+        const newCatData = { ...newCategory, slug, type: 'product' as const };
+        const createdCategory = await createCategory(newCatData);
+        setProductCategories([...productCategories, createdCategory]);
+        
+        toast({ title: "Categoria criada com sucesso!" });
+      }
+
+      resetCategoryForm();
+    } catch (error) {
+       toast({
+        title: "Erro ao salvar categoria",
+        description: "Não foi possível completar a operação.",
+        variant: "destructive",
       });
     }
-
-    setNewCategory({
-      name: '',
-      slug: '',
-      description: '',
-      color: 'blue'
-    });
   };
 
-  const handleEditCategory = (category: ProductCategory) => {
+  const handleEditCategory = (category: Category) => {
     setEditingCategory(category);
     setNewCategory({
       name: category.name,
@@ -240,42 +318,34 @@ const ProductAdmin: React.FC = () => {
     setActiveTab('categories');
   };
 
-  const handleCancelEditCategory = () => {
+  const resetCategoryForm = () => {
     setIsEditingCategory(false);
     setEditingCategory(null);
-    setNewCategory({
-      name: '',
-      slug: '',
-      description: '',
-      color: 'blue'
-    });
+    setNewCategory({ name: '', slug: '', description: '', color: 'blue' });
   };
 
-  const handleDeleteCategory = (id: number) => {
-    // Verificar se há produtos usando esta categoria
-    const productsUsingCategory = products.filter(product => product.category === productCategories.find(cat => cat.id === id)?.slug);
-    
-    if (productsUsingCategory.length > 0) {
+  const handleDeleteCategory = async (id: number) => {
+    try {
+      await deleteCategory(id);
+      setProductCategories(productCategories.filter(cat => cat.id !== id));
+      toast({ title: "Categoria excluída com sucesso." });
+    } catch (error) {
       toast({
-        title: "Não é possível excluir",
-        description: `Esta categoria está sendo usada por ${productsUsingCategory.length} produto(s).`,
-        variant: "destructive"
+        title: "Erro ao excluir categoria",
+        description: "Verifique se a categoria não está sendo usada por um produto.",
+        variant: "destructive",
       });
-      return;
     }
-
-    setProductCategories(productCategories.filter(cat => cat.id !== id));
-    
-    toast({
-      title: "Categoria excluída",
-      description: "A categoria foi removida permanentemente.",
-    });
   };
 
-  const totalRevenue = products.reduce((sum, product) => sum + (product.price * product.salesCount), 0);
-  const totalSales = products.reduce((sum, product) => sum + product.salesCount, 0);
+  const handleCancelEditCategory = () => {
+    resetCategoryForm();
+  };
+
+  const totalRevenue = products.reduce((sum, product) => sum + (parseFloat(product.price) * parseFloat(product.sales_count)), 0);
+  const totalSales = products.reduce((sum, product) => sum + parseFloat(product.sales_count), 0);
   const averageRating = products.length > 0 
-    ? products.reduce((sum, product) => sum + product.rating, 0) / products.length 
+    ? products.reduce((sum, product) => sum + parseFloat(product.rating), 0) / products.length 
     : 0;
 
   return (
@@ -312,7 +382,7 @@ const ProductAdmin: React.FC = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="category">Categoria *</Label>
-                  <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
+                  <Select value={formData.category_id} onValueChange={(value) => setFormData({...formData, category_id: value})}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione uma categoria" />
                     </SelectTrigger>
@@ -401,7 +471,7 @@ const ProductAdmin: React.FC = () => {
                     Adicionar Imagem
                   </Button>
                 </div>
-                {formData.images.map((image, index) => (
+                {formData.images.split(';').map((image, index) => (
                   <div key={index} className="flex gap-2">
                     <Input
                       type="url"
@@ -409,7 +479,7 @@ const ProductAdmin: React.FC = () => {
                       onChange={(e) => updateImageField(index, e.target.value)}
                       placeholder="https://example.com/image.jpg"
                     />
-                    {formData.images.length > 1 && (
+                    {formData.images.split(';').length > 1 && (
                       <Button
                         type="button"
                         variant="outline"
@@ -462,16 +532,16 @@ const ProductAdmin: React.FC = () => {
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="isActive"
-                    checked={formData.isActive}
-                    onCheckedChange={(checked) => setFormData({...formData, isActive: checked})}
+                    checked={formData.isActive === 'true'}
+                    onCheckedChange={(checked) => setFormData({...formData, isActive: checked ? 'true' : 'false'})}
                   />
                   <Label htmlFor="isActive">Produto Ativo</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="isFeatured"
-                    checked={formData.isFeatured}
-                    onCheckedChange={(checked) => setFormData({...formData, isFeatured: checked})}
+                    checked={formData.isFeatured === 'true'}
+                    onCheckedChange={(checked) => setFormData({...formData, isFeatured: checked ? 'true' : 'false'})}
                   />
                   <Label htmlFor="isFeatured">Produto em Destaque</Label>
                 </div>
@@ -524,7 +594,7 @@ const ProductAdmin: React.FC = () => {
                   <DollarSign className="w-8 h-8 text-green-600" />
                   <div>
                     <p className="text-sm text-gray-600">Receita Total</p>
-                    <p className="text-2xl font-bold">{formatPrice(totalRevenue)}</p>
+                    <p className="text-2xl font-bold">{formatPrice(totalRevenue.toString())}</p>
                   </div>
                 </div>
               </CardContent>
@@ -605,91 +675,71 @@ const ProductAdmin: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredProducts.map((product) => (
-                    <TableRow key={product.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            className="w-12 h-12 rounded object-cover"
-                          />
-                          <div>
-                            <p className="font-medium">{product.name}</p>
-                            <p className="text-sm text-gray-600">{product.shortDescription}</p>
+                  {isLoadingProducts ? (
+                    <TableRow><TableCell colSpan={7}>Carregando produtos...</TableCell></TableRow>
+                  ) : (
+                    filteredProducts.map((product) => (
+                      <TableRow key={product.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={product.image}
+                              alt={product.name}
+                              className="w-10 h-10 rounded object-cover"
+                            />
+                            <div>
+                              <p className="font-medium">{product.name}</p>
+                              <p className="text-sm text-gray-600">{product.short_description}</p>
+                            </div>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className="capitalize">
-                          {product.category}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{formatPrice(product.price)}</p>
-                          {product.originalPrice && (
-                            <p className="text-sm text-gray-500 line-through">
-                              {formatPrice(product.originalPrice)}
-                            </p>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>{product.salesCount}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                          <span>{product.rating}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Badge className={product.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
-                            {product.isActive ? 'Ativo' : 'Inativo'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary" className="capitalize">
+                            {product.category_id}
                           </Badge>
-                          {product.isFeatured && (
-                            <Badge className="bg-yellow-100 text-yellow-800">
-                              Destaque
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{formatPrice(product.price)}</p>
+                            {product.original_price && parseFloat(product.original_price) > 0 && (
+                              <p className="text-sm text-gray-500 line-through">
+                                {formatPrice(product.original_price)}
+                              </p>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>{product.sales_count}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                            <span>{product.rating}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Badge className={product.is_active === 'true' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                              {product.is_active === 'true' ? 'Ativo' : 'Inativo'}
                             </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            asChild
-                          >
-                            <a href={`/produto/${product.id}`}>
-                              <Eye className="w-4 h-4" />
-                            </a>
-                          </Button>
-                          
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEdit(product)}
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                            </DialogTrigger>
-                          </Dialog>
-                          
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(product.id)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                            {product.is_featured === 'true' && (
+                              <Badge className="bg-yellow-100 text-yellow-800">
+                                Destaque
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="icon" onClick={() => handleEdit(product)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleDelete(product.id)}>
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -697,166 +747,92 @@ const ProductAdmin: React.FC = () => {
         </TabsContent>
 
         {/* Aba de Categorias */}
-        <TabsContent value="categories">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Formulário de Categoria */}
-            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-              <CardHeader className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-t-lg">
-                <CardTitle className="flex items-center gap-2">
-                  {isEditingCategory ? <Edit className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
-                  {isEditingCategory ? 'Editar Categoria' : 'Nova Categoria'}
-                </CardTitle>
-                <CardDescription className="text-green-100">
-                  {isEditingCategory ? 'Edite a categoria selecionada' : 'Crie uma nova categoria para os produtos'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-6">
-                <form onSubmit={handleCategorySubmit} className="space-y-4">
-                  <div>
-                    <Label htmlFor="categoryName" className="text-base font-semibold">Nome da Categoria *</Label>
-                    <Input
-                      id="categoryName"
-                      value={newCategory.name}
-                      onChange={(e) => setNewCategory({
-                        ...newCategory, 
-                        name: e.target.value,
-                        slug: generateSlug(e.target.value)
-                      })}
-                      placeholder="Ex: Templates"
-                      required
-                      className="mt-2"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="categorySlug" className="text-base font-semibold">Slug</Label>
-                    <Input
-                      id="categorySlug"
-                      value={newCategory.slug}
-                      onChange={(e) => setNewCategory({...newCategory, slug: e.target.value})}
-                      placeholder="templates"
-                      className="mt-2"
-                    />
-                    <p className="text-sm text-gray-500 mt-1">
-                      URL amigável (gerado automaticamente)
-                    </p>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="categoryDescription" className="text-base font-semibold">Descrição</Label>
-                    <Textarea
-                      id="categoryDescription"
-                      value={newCategory.description}
-                      onChange={(e) => setNewCategory({...newCategory, description: e.target.value})}
-                      placeholder="Breve descrição da categoria"
-                      rows={3}
-                      className="mt-2"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="categoryColor" className="text-base font-semibold">Cor</Label>
-                    <Select value={newCategory.color} onValueChange={(value) => setNewCategory({...newCategory, color: value})}>
-                      <SelectTrigger className="mt-2">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="blue">Azul</SelectItem>
-                        <SelectItem value="red">Vermelho</SelectItem>
-                        <SelectItem value="green">Verde</SelectItem>
-                        <SelectItem value="purple">Roxo</SelectItem>
-                        <SelectItem value="orange">Laranja</SelectItem>
-                        <SelectItem value="indigo">Índigo</SelectItem>
-                        <SelectItem value="pink">Rosa</SelectItem>
-                        <SelectItem value="teal">Teal</SelectItem>
-                        <SelectItem value="yellow">Amarelo</SelectItem>
-                        <SelectItem value="gray">Cinza</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t">
-                    {isEditingCategory && (
-                      <Button type="button" variant="outline" onClick={handleCancelEditCategory} className="order-2 sm:order-1">
-                        Cancelar
-                      </Button>
-                    )}
-                    <Button type="submit" className="order-1 sm:order-2 bg-gradient-to-r from-green-500 to-green-600">
-                      {isEditingCategory ? 'Atualizar Categoria' : 'Salvar Categoria'}
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-
-            {/* Lista de Categorias */}
-            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-              <CardHeader className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-t-lg">
-                <CardTitle className="flex items-center gap-2">
-                  <Badge className="h-5 w-5" />
-                  Categorias Existentes
-                </CardTitle>
-                <CardDescription className="text-green-100">
-                  Gerencie todas as categorias de produtos
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  {productCategories.map((category) => {
-                    const productsInCategory = products.filter(product => product.category === category.slug).length;
-                    return (
-                      <Card key={category.id} className="hover:shadow-md transition-all duration-200 border border-gray-200">
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start gap-4">
-                            <div className="flex-1 space-y-2">
-                              <div className="flex items-center gap-2">
-                                <Badge 
-                                  className={`bg-${category.color}-100 text-${category.color}-800 hover:bg-${category.color}-200`}
-                                >
-                                  {category.name}
-                                </Badge>
-                                <span className="text-sm text-gray-500">({productsInCategory} produtos)</span>
-                              </div>
-                              <p className="text-sm text-gray-600">{category.description}</p>
-                              <p className="text-xs text-gray-400">Slug: {category.slug}</p>
-                            </div>
-                            <div className="flex gap-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                onClick={() => handleEditCategory(category)}
-                                className="flex items-center gap-1"
-                              >
-                                <Edit className="h-4 w-4" />
-                                <span className="hidden sm:inline">Editar</span>
-                              </Button>
-                              <Button 
-                                variant="destructive" 
-                                size="sm"
-                                onClick={() => handleDeleteCategory(category.id)}
-                                className="flex items-center gap-1"
-                                disabled={productsInCategory > 0}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                                <span className="hidden sm:inline">Excluir</span>
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                  
-                  {productCategories.length === 0 && (
-                    <div className="text-center py-12">
-                      <Badge className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-500">Nenhuma categoria criada ainda.</p>
-                    </div>
+        <TabsContent value="categories" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>{isEditingCategory ? 'Editar Categoria' : 'Adicionar Nova Categoria'}</CardTitle>
+              <CardDescription>
+                {isEditingCategory ? 'Altere os detalhes da categoria.' : 'Crie uma nova categoria para organizar seus produtos.'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleCategorySubmit} className="space-y-4">
+                <div>
+                  <Label htmlFor="categoryName">Nome da Categoria</Label>
+                  <Input
+                    id="categoryName"
+                    value={newCategory.name}
+                    onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
+                    placeholder="Ex: Templates de Sites"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="categoryDescription">Descrição</Label>
+                  <Textarea
+                    id="categoryDescription"
+                    value={newCategory.description}
+                    onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
+                    placeholder="Uma breve descrição da categoria."
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="categoryColor">Cor</Label>
+                  <Input
+                    id="categoryColor"
+                    type="color"
+                    value={newCategory.color}
+                    onChange={(e) => setNewCategory({ ...newCategory, color: e.target.value })}
+                  />
+                </div>
+                <div className="flex space-x-2">
+                  <Button type="submit">{isEditingCategory ? 'Salvar Alterações' : 'Criar Categoria'}</Button>
+                  {isEditingCategory && (
+                    <Button variant="outline" onClick={handleCancelEditCategory}>Cancelar</Button>
                   )}
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              </form>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Categorias de Produtos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Slug</TableHead>
+                    <TableHead>Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoadingCategories ? (
+                    <TableRow><TableCell colSpan={3}>Carregando categorias...</TableCell></TableRow>
+                  ) : (
+                    productCategories.map((cat) => (
+                      <TableRow key={cat.id}>
+                        <TableCell>
+                          <Badge style={{ backgroundColor: cat.color, color: '#fff' }}>{cat.name}</Badge>
+                        </TableCell>
+                        <TableCell>{cat.slug}</TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="icon" onClick={() => handleEditCategory(cat)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDeleteCategory(cat.id)}>
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

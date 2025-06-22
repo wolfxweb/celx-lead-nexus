@@ -3,9 +3,9 @@ import {
   createBaserowRow, 
   updateBaserowRow, 
   deleteBaserowRow,
-  getBaserowRow,
-  type BaserowRow 
+  getBaserowRow
 } from '@/lib/baserow';
+import { getTableId, createFieldFilter } from '@/config/baserowTables';
 
 // Interface para categoria
 export interface Category {
@@ -19,15 +19,11 @@ export interface Category {
   updated_at: string;
 }
 
-// Configuração das tabelas (será configurada após criar no Baserow)
-export const TABLE_IDS = {
-  CATEGORIES: process.env.VITE_BASEROW_CATEGORIES_TABLE_ID || '0',
-};
-
 // Função para obter todas as categorias
 export const getAllCategories = async (): Promise<Category[]> => {
-  const response = await getBaserowRows<Category>(parseInt(TABLE_IDS.CATEGORIES), {
-    size: 1000, // Buscar todas as categorias
+  const tableId = getTableId('CATEGORIES');
+  const response = await getBaserowRows<Category>(tableId, {
+    size: 1000,
     order_by: 'name',
   });
   
@@ -36,8 +32,10 @@ export const getAllCategories = async (): Promise<Category[]> => {
 
 // Função para obter categorias por tipo
 export const getCategoriesByType = async (type: 'product' | 'blog'): Promise<Category[]> => {
-  const filter = `filter__field_type__equal=${type}`;
-  const response = await getBaserowRows<Category>(parseInt(TABLE_IDS.CATEGORIES), {
+  const tableId = getTableId('CATEGORIES');
+  const filter = createFieldFilter('CATEGORIES', 'type', 'equal', type);
+  
+  const response = await getBaserowRows<Category>(tableId, {
     size: 1000,
     filter,
     order_by: 'name',
@@ -58,26 +56,31 @@ export const getBlogCategories = async (): Promise<Category[]> => {
 
 // Função para obter uma categoria específica
 export const getCategory = async (id: number): Promise<Category> => {
-  return getBaserowRow<Category>(parseInt(TABLE_IDS.CATEGORIES), id);
+  const tableId = getTableId('CATEGORIES');
+  return getBaserowRow<Category>(tableId, id);
 };
 
 // Função para criar uma nova categoria
 export const createCategory = async (categoryData: Omit<Category, 'id' | 'created_at' | 'updated_at'>): Promise<Category> => {
-  return createBaserowRow<Category>(parseInt(TABLE_IDS.CATEGORIES), categoryData);
+  const tableId = getTableId('CATEGORIES');
+  return createBaserowRow<Category>(tableId, categoryData);
 };
 
 // Função para atualizar uma categoria
 export const updateCategory = async (id: number, categoryData: Partial<Omit<Category, 'id' | 'created_at' | 'updated_at'>>): Promise<Category> => {
-  return updateBaserowRow<Category>(parseInt(TABLE_IDS.CATEGORIES), id, categoryData);
+  const tableId = getTableId('CATEGORIES');
+  return updateBaserowRow<Category>(tableId, id, categoryData);
 };
 
 // Função para deletar uma categoria
 export const deleteCategory = async (id: number): Promise<void> => {
-  await deleteBaserowRow(parseInt(TABLE_IDS.CATEGORIES), id);
+  const tableId = getTableId('CATEGORIES');
+  await deleteBaserowRow(tableId, id);
 };
 
 // Função para buscar categorias por nome
 export const searchCategories = async (searchTerm: string, type?: 'product' | 'blog'): Promise<Category[]> => {
+  const tableId = getTableId('CATEGORIES');
   const params: any = {
     search: searchTerm,
     size: 100,
@@ -85,19 +88,26 @@ export const searchCategories = async (searchTerm: string, type?: 'product' | 'b
   };
 
   if (type) {
-    params.filter = `filter__field_type__equal=${type}`;
+    params.filter = createFieldFilter('CATEGORIES', 'type', 'equal', type);
   }
 
-  const response = await getBaserowRows<Category>(parseInt(TABLE_IDS.CATEGORIES), params);
+  const response = await getBaserowRows<Category>(tableId, params);
   return response.results;
 };
 
 // Função para verificar se uma categoria está sendo usada
 export const isCategoryInUse = async (categoryId: number, type: 'product' | 'blog'): Promise<boolean> => {
   try {
-    // Esta função precisará ser implementada quando tivermos as tabelas de produtos e posts
-    // Por enquanto, retorna false
-    return false;
+    const tableId = getTableId(type === 'product' ? 'PRODUCTS' : 'BLOG_POSTS');
+    const filter = createFieldFilter(
+      type === 'product' ? 'PRODUCTS' : 'BLOG_POSTS',
+      'category_id',
+      'equal',
+      categoryId
+    );
+
+    const response = await getBaserowRows(tableId, { filter, size: 1 });
+    return response.count > 0;
   } catch (error) {
     console.error('Erro ao verificar uso da categoria:', error);
     return false;
@@ -121,8 +131,9 @@ export const getCategoryStats = async (): Promise<{
 
 // Função para validar slug único
 export const isSlugUnique = async (slug: string, excludeId?: number): Promise<boolean> => {
-  const filter = `filter__field_slug__equal=${slug}`;
-  const response = await getBaserowRows<Category>(parseInt(TABLE_IDS.CATEGORIES), {
+  const tableId = getTableId('CATEGORIES');
+  const filter = createFieldFilter('CATEGORIES', 'slug', 'equal', slug);
+  const response = await getBaserowRows<Category>(tableId, {
     filter,
     size: 1,
   });
@@ -131,7 +142,6 @@ export const isSlugUnique = async (slug: string, excludeId?: number): Promise<bo
     return true;
   }
   
-  // Se estamos editando, verificar se é o mesmo registro
   if (excludeId) {
     return response.results[0].id === excludeId;
   }
@@ -144,10 +154,10 @@ export const generateUniqueSlug = async (name: string, excludeId?: number): Prom
   let slug = name
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // Remove acentos
-    .replace(/[^a-z0-9\s-]/g, '') // Remove caracteres especiais
-    .replace(/\s+/g, '-') // Substitui espaços por hífens
-    .replace(/-+/g, '-') // Remove hífens duplicados
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
     .trim();
   
   let counter = 1;

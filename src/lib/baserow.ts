@@ -56,7 +56,15 @@ export const getAuthToken = (): string | null => {
 
 // Função para obter headers da API
 export const getBaserowHeaders = (token?: string) => {
-  const authToken = token || getAuthToken() || BASEROW_CONFIG.TOKEN;
+  const authToken = token || BASEROW_CONFIG.TOKEN;
+  
+  // Debug: verificar se o token está sendo carregado
+  console.log('Token sendo usado:', authToken ? `${authToken.substring(0, 10)}...` : 'NENHUM');
+  console.log('BASEROW_CONFIG.TOKEN:', BASEROW_CONFIG.TOKEN ? `${BASEROW_CONFIG.TOKEN.substring(0, 10)}...` : 'NENHUM');
+  
+  if (!authToken) {
+    throw new Error('Token do Baserow não configurado. Verifique o arquivo .env');
+  }
   
   return {
     'Authorization': `Token ${authToken}`,
