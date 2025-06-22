@@ -23,7 +23,6 @@ import MyAccount from '@/pages/MyAccount';
 import ProductAdmin from '@/pages/ProductAdmin';
 import OrderAdmin from '@/pages/OrderAdmin';
 import AdminDashboard from '@/pages/AdminDashboard';
-import BaserowTest from '@/components/BaserowTest';
 import './index.css';
 
 function App() {
@@ -110,9 +109,6 @@ function App() {
                       <Route path="/produto/:id" element={<ProductDetail />} />
                       <Route path="/carrinho" element={<Cart />} />
                       <Route path="/checkout" element={<Checkout />} />
-                      
-                      {/* Baserow Test Route */}
-                      <Route path="/baserow-test" element={<BaserowTest />} />
                       
                       {/* Protected User Routes */}
                       <Route
