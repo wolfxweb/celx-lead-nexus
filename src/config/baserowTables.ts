@@ -131,6 +131,21 @@ export const BASEROW_TABLES = {
       is_approved: 'is_approved',
       created_at: 'created_at',
     }
+  },
+  
+  // Tabela de inscrições da newsletter
+  NEWSLETTER_SUBSCRIPTIONS: {
+    id: parseInt(import.meta.env.VITE_BASEROW_NEWSLETTER_TABLE_ID || '635'),
+    fields: {
+      id: 'id',
+      email: 'email',
+      name: 'name',
+      subscribed_at: 'subscribed_at',
+      status: 'status',
+      source: 'source',
+      created_at: 'created_at',
+      updated_at: 'updated_at',
+    }
   }
 };
 

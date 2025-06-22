@@ -4,7 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, Calendar, User, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Calendar, User, ChevronLeft, ChevronRight, Mail, CheckCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { subscribeToNewsletter } from '@/services/newsletterService';
 import SEOHead from '@/components/SEOHead';
 import { defaultPosts, defaultCategories, type BlogPost } from '@/data/blogData';
 
@@ -12,6 +14,10 @@ const Blog = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [isSubscribing, setIsSubscribing] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const { toast } = useToast();
   const postsPerPage = 12;
 
   // Usar posts compartilhados e filtrar apenas os publicados
@@ -60,6 +66,67 @@ const Blog = () => {
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
     setCurrentPage(1); // Reset para primeira página ao buscar
+  };
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!newsletterEmail.trim()) {
+      toast({
+        title: "Email obrigatório",
+        description: "Por favor, insira um endereço de email válido.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validar formato do email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newsletterEmail)) {
+      toast({
+        title: "Email inválido",
+        description: "Por favor, insira um endereço de email válido.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubscribing(true);
+
+    try {
+      // Usar o serviço de newsletter com Baserow
+      await subscribeToNewsletter(newsletterEmail, undefined, 'blog');
+      
+      // Sucesso
+      setIsSubscribed(true);
+      setNewsletterEmail('');
+      
+      toast({
+        title: "Inscrição realizada com sucesso!",
+        description: "Você receberá nossas atualizações por email.",
+      });
+
+      // Reset após 3 segundos
+      setTimeout(() => {
+        setIsSubscribed(false);
+      }, 3000);
+
+    } catch (error: any) {
+      console.error('Erro ao inscrever na newsletter:', error);
+      
+      let errorMessage = "Ocorreu um erro. Tente novamente.";
+      if (error.message === 'Este email já está inscrito na newsletter') {
+        errorMessage = "Este email já está inscrito na newsletter.";
+      }
+      
+      toast({
+        title: "Erro ao inscrever",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubscribing(false);
+    }
   };
 
   return (
@@ -200,6 +267,59 @@ const Blog = () => {
             Mostrando {startIndex + 1} a {Math.min(endIndex, filteredPosts.length)} de {filteredPosts.length} artigos
           </div>
         )}
+
+        {/* Newsletter Section */}
+        <div className="mt-24 mb-12">
+          <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-0 shadow-lg">
+            <CardContent className="p-8 md:p-12">
+              <div className="text-center max-w-2xl mx-auto">
+                <div className="flex justify-center mb-6">
+                  <div className="p-3 bg-blue-100 rounded-full">
+                    <Mail className="h-8 w-8 text-blue-600" />
+                  </div>
+                </div>
+                
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                  Fique por dentro das novidades!
+                </h2>
+                
+                <p className="text-lg text-gray-600 mb-8">
+                  Inscreva-se em nossa newsletter e receba os melhores artigos sobre tecnologia, 
+                  inovação e transformação digital diretamente no seu email.
+                </p>
+
+                {isSubscribed ? (
+                  <div className="flex items-center justify-center space-x-2 text-green-600 bg-green-50 px-6 py-4 rounded-lg">
+                    <CheckCircle className="h-5 w-5" />
+                    <span className="font-medium">Inscrição realizada com sucesso!</span>
+                  </div>
+                ) : (
+                  <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+                    <Input
+                      type="email"
+                      placeholder="Seu melhor email"
+                      value={newsletterEmail}
+                      onChange={(e) => setNewsletterEmail(e.target.value)}
+                      className="flex-1"
+                      disabled={isSubscribing}
+                    />
+                    <Button 
+                      type="submit" 
+                      disabled={isSubscribing}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      {isSubscribing ? 'Inscrevendo...' : 'Inscrever-se'}
+                    </Button>
+                  </form>
+                )}
+
+                <p className="text-sm text-gray-500 mt-4">
+                  Não enviamos spam. Você pode cancelar a inscrição a qualquer momento.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
