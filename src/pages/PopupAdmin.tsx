@@ -53,6 +53,7 @@ const PopupAdmin = () => {
 
   const fetchPopups = async () => {
     try {
+      setLoading(true);
       const tableId = getTableId('POPUP_CONFIGS');
       const response = await getBaserowRows(tableId, { size: 200 });
       const mappedPopups = (response.results || []).map((popup: any) => ({
@@ -71,6 +72,7 @@ const PopupAdmin = () => {
     } catch (error) {
       console.error('Erro ao buscar pop-ups:', error);
       toast.error('Erro ao carregar pop-ups');
+      setPopups([]);
     } finally {
       setLoading(false);
     }
@@ -84,6 +86,7 @@ const PopupAdmin = () => {
     e.preventDefault();
     
     try {
+      setLoading(true);
       const tableId = getTableId('POPUP_CONFIGS');
       const data = {
         title: formData.title,
@@ -108,10 +111,14 @@ const PopupAdmin = () => {
       setEditingPopup(null);
       setIsCreating(false);
       resetForm();
-      fetchPopups();
+      
+      // Atualizar a lista imediatamente
+      await fetchPopups();
     } catch (error) {
       console.error('Erro ao salvar pop-up:', error);
       toast.error('Erro ao salvar pop-up');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -119,13 +126,18 @@ const PopupAdmin = () => {
     if (!confirm('Tem certeza que deseja excluir este pop-up?')) return;
 
     try {
+      setLoading(true);
       const tableId = getTableId('POPUP_CONFIGS');
       await deleteBaserowRow(tableId, parseInt(id));
       toast.success('Pop-up excluído com sucesso!');
-      fetchPopups();
+      
+      // Atualizar a lista imediatamente
+      await fetchPopups();
     } catch (error) {
       console.error('Erro ao excluir pop-up:', error);
       toast.error('Erro ao excluir pop-up');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -182,7 +194,11 @@ const PopupAdmin = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Gerenciar Pop-ups</h1>
-        <Button onClick={handleCreate} className="bg-green-600 hover:bg-green-700">
+        <Button 
+          onClick={handleCreate} 
+          className="bg-green-600 hover:bg-green-700"
+          disabled={loading}
+        >
           <Plus className="h-4 w-4 mr-2" />
           Novo Pop-up
         </Button>
@@ -316,6 +332,15 @@ const PopupAdmin = () => {
 
       {/* Lista de Pop-ups */}
       <div className="grid gap-4">
+        {loading && (
+          <div className="text-center py-4">
+            <div className="inline-flex items-center text-gray-600">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600 mr-2"></div>
+              Atualizando lista...
+            </div>
+          </div>
+        )}
+        
         {popups.map((popup) => (
           <Card key={popup.id} className="relative">
             <CardHeader>
@@ -344,6 +369,7 @@ const PopupAdmin = () => {
                     size="sm"
                     variant="outline"
                     onClick={() => handleEdit(popup)}
+                    disabled={loading}
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
@@ -352,6 +378,7 @@ const PopupAdmin = () => {
                     variant="outline"
                     onClick={() => handleDelete(popup.id)}
                     className="text-red-600 hover:text-red-700"
+                    disabled={loading}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
