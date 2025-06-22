@@ -23,7 +23,7 @@ export interface Category {
 export const getAllCategories = async (): Promise<Category[]> => {
   const tableId = getTableId('CATEGORIES');
   const response = await getBaserowRows<Category>(tableId, {
-    size: 1000,
+    size: 200,
     order_by: 'name',
   });
   
@@ -36,7 +36,7 @@ export const getCategoriesByType = async (type: 'product' | 'blog'): Promise<Cat
   const filter = createFieldFilter('CATEGORIES', 'type', 'equal', type);
   
   const response = await getBaserowRows<Category>(tableId, {
-    size: 1000,
+    size: 200,
     filter,
     order_by: 'name',
   });

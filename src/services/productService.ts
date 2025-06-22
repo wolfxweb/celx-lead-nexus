@@ -41,12 +41,12 @@ export const getAllProducts = async (params: {
   search?: string;
 } = {}): Promise<{ products: BaserowProduct[], count: number }> => {
   const tableId = getTableId('PRODUCTS');
-  const queryParams: any = { size: params.limit || 20 };
+  const queryParams: any = { size: params.limit || 200 };
   
   if (params.offset) {
     // Baserow usa `page` e `size` para paginação.
     // É preciso calcular a página a partir do offset.
-    const page = Math.floor(params.offset / (params.limit || 20)) + 1;
+    const page = Math.floor(params.offset / (params.limit || 200)) + 1;
     queryParams.page = page;
   }
 
