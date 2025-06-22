@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import SEOHead from '@/components/SEOHead';
 
 const BlogAdmin = () => {
   const [newPost, setNewPost] = useState({
@@ -16,23 +17,40 @@ const BlogAdmin = () => {
     content: '',
     category: '',
     author: '',
-    tags: ''
+    tags: '',
+    metaDescription: '',
+    metaKeywords: ''
   });
+
+  const [editingPost, setEditingPost] = useState<any>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   const [posts, setPosts] = useState([
     {
       id: 1,
       title: 'O Futuro da Transformação Digital nas Empresas',
+      excerpt: 'A transformação digital não é mais uma opção, mas uma necessidade...',
+      content: 'Conteúdo completo do post...',
       status: 'published',
       author: 'Carlos Silva',
-      date: '2024-06-15'
+      date: '2024-06-15',
+      category: 'tecnologia',
+      tags: 'transformação digital, tecnologia, inovação',
+      metaDescription: 'Descubra como a transformação digital pode revolucionar sua empresa e impulsionar o crescimento no mercado atual.',
+      metaKeywords: 'transformação digital, tecnologia empresarial, inovação, digitalização'
     },
     {
       id: 2,
       title: 'Segurança Cibernética: Protegendo Seus Dados',
+      excerpt: 'As melhores práticas para manter sua empresa segura...',
+      content: 'Conteúdo completo do post sobre segurança...',
       status: 'published',
       author: 'Ana Costa',
-      date: '2024-06-10'
+      date: '2024-06-10',
+      category: 'seguranca',
+      tags: 'segurança, cibernética, proteção',
+      metaDescription: 'Aprenda as estratégias essenciais de segurança cibernética para proteger sua empresa contra ameaças digitais.',
+      metaKeywords: 'segurança cibernética, proteção de dados, cybersecurity, segurança digital'
     }
   ]);
 
@@ -41,20 +59,37 @@ const BlogAdmin = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const post = {
-      id: posts.length + 1,
-      title: newPost.title,
-      status: 'draft',
-      author: newPost.author,
-      date: new Date().toISOString().split('T')[0]
-    };
+    if (isEditing && editingPost) {
+      // Update existing post
+      setPosts(posts.map(post => 
+        post.id === editingPost.id 
+          ? { ...editingPost, ...newPost, id: editingPost.id }
+          : post
+      ));
+      
+      toast({
+        title: "Post atualizado com sucesso!",
+        description: "As alterações foram salvas.",
+      });
+      
+      setIsEditing(false);
+      setEditingPost(null);
+    } else {
+      // Create new post
+      const post = {
+        id: posts.length + 1,
+        ...newPost,
+        status: 'draft',
+        date: new Date().toISOString().split('T')[0]
+      };
 
-    setPosts([...posts, post]);
-    
-    toast({
-      title: "Post criado com sucesso!",
-      description: "O post foi salvo como rascunho.",
-    });
+      setPosts([...posts, post]);
+      
+      toast({
+        title: "Post criado com sucesso!",
+        description: "O post foi salvo como rascunho.",
+      });
+    }
 
     setNewPost({
       title: '',
@@ -62,7 +97,39 @@ const BlogAdmin = () => {
       content: '',
       category: '',
       author: '',
-      tags: ''
+      tags: '',
+      metaDescription: '',
+      metaKeywords: ''
+    });
+  };
+
+  const handleEdit = (post: any) => {
+    setEditingPost(post);
+    setNewPost({
+      title: post.title,
+      excerpt: post.excerpt,
+      content: post.content,
+      category: post.category,
+      author: post.author,
+      tags: post.tags,
+      metaDescription: post.metaDescription || '',
+      metaKeywords: post.metaKeywords || ''
+    });
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditingPost(null);
+    setNewPost({
+      title: '',
+      excerpt: '',
+      content: '',
+      category: '',
+      author: '',
+      tags: '',
+      metaDescription: '',
+      metaKeywords: ''
     });
   };
 
@@ -88,6 +155,12 @@ const BlogAdmin = () => {
 
   return (
     <div className="min-h-screen py-20">
+      <SEOHead 
+        title="Administração do Blog"
+        description="Gerencie o conteúdo do blog CELX - crie, edite e publique artigos"
+        keywords="blog admin, gestão de conteúdo, CELX, administração"
+      />
+      
       <div className="container mx-auto px-4 max-w-6xl">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
@@ -100,18 +173,20 @@ const BlogAdmin = () => {
 
         <Tabs defaultValue="create" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="create">Criar Post</TabsTrigger>
+            <TabsTrigger value="create">
+              {isEditing ? 'Editar Post' : 'Criar Post'}
+            </TabsTrigger>
             <TabsTrigger value="manage">Gerenciar Posts</TabsTrigger>
             <TabsTrigger value="comments">Comentários</TabsTrigger>
           </TabsList>
 
-          {/* Criar Post */}
+          {/* Criar/Editar Post */}
           <TabsContent value="create">
             <Card>
               <CardHeader>
-                <CardTitle>Novo Post</CardTitle>
+                <CardTitle>{isEditing ? 'Editar Post' : 'Novo Post'}</CardTitle>
                 <CardDescription>
-                  Crie um novo artigo para o blog
+                  {isEditing ? 'Edite o artigo selecionado' : 'Crie um novo artigo para o blog'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -148,6 +223,38 @@ const BlogAdmin = () => {
                       rows={10}
                       required
                     />
+                  </div>
+
+                  {/* SEO Fields */}
+                  <div className="border-t pt-6">
+                    <h3 className="text-lg font-semibold mb-4">Configurações SEO</h3>
+                    
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="metaDescription">Meta Descrição</Label>
+                        <Textarea
+                          id="metaDescription"
+                          value={newPost.metaDescription}
+                          onChange={(e) => setNewPost({...newPost, metaDescription: e.target.value})}
+                          placeholder="Descrição do post para mecanismos de busca (máx. 160 caracteres)"
+                          rows={3}
+                          maxLength={160}
+                        />
+                        <p className="text-sm text-gray-500 mt-1">
+                          {newPost.metaDescription.length}/160 caracteres
+                        </p>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="metaKeywords">Palavras-chave</Label>
+                        <Input
+                          id="metaKeywords"
+                          value={newPost.metaKeywords}
+                          onChange={(e) => setNewPost({...newPost, metaKeywords: e.target.value})}
+                          placeholder="Palavras-chave separadas por vírgula"
+                        />
+                      </div>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -188,11 +295,16 @@ const BlogAdmin = () => {
                   </div>
 
                   <div className="flex gap-4">
+                    {isEditing && (
+                      <Button type="button" variant="outline" onClick={handleCancelEdit}>
+                        Cancelar
+                      </Button>
+                    )}
                     <Button type="submit" variant="outline">
-                      Salvar como Rascunho
+                      {isEditing ? 'Atualizar como Rascunho' : 'Salvar como Rascunho'}
                     </Button>
                     <Button type="submit">
-                      Publicar Agora
+                      {isEditing ? 'Atualizar e Publicar' : 'Publicar Agora'}
                     </Button>
                   </div>
                 </form>
@@ -228,7 +340,11 @@ const BlogAdmin = () => {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleEdit(post)}
+                        >
                           Editar
                         </Button>
                         {post.status === 'draft' && (

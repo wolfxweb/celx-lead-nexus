@@ -1,15 +1,15 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search } from 'lucide-react';
+import { Search, Calendar, User } from 'lucide-react';
+import SEOHead from '@/components/SEOHead';
 
 const Blog = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('');
 
   // Mock data para posts do blog
   const posts = [
@@ -72,6 +72,12 @@ const Blog = () => {
 
   return (
     <div className="min-h-screen py-20">
+      <SEOHead 
+        title="Blog CELX - Insights sobre Tecnologia e Inovação"
+        description="Acompanhe as últimas tendências em transformação digital, segurança cibernética, cloud computing e inteligência artificial. Conteúdo especializado da CELX."
+        keywords="blog tecnologia, transformação digital, segurança cibernética, cloud computing, inteligência artificial, inovação empresarial"
+      />
+      
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-16">

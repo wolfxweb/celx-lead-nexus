@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowDown } from 'lucide-react';
+import SEOHead from '@/components/SEOHead';
 
 const BlogPost = () => {
   const { id } = useParams();
@@ -35,7 +35,7 @@ const BlogPost = () => {
     }
   ]);
 
-  // Mock data do post
+  // Mock data do post with SEO fields
   const post = {
     id: parseInt(id || '1'),
     title: 'O Futuro da Transformação Digital nas Empresas',
@@ -96,7 +96,9 @@ const BlogPost = () => {
     date: '2024-06-15',
     readTime: '5 min',
     tags: ['transformação digital', 'tecnologia', 'inovação', 'estratégia'],
-    image: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=400&fit=crop'
+    image: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=400&fit=crop',
+    metaDescription: 'Descubra como a transformação digital pode revolucionar sua empresa e impulsionar o crescimento no mercado atual. Estratégias, tecnologias e benefícios essenciais.',
+    metaKeywords: 'transformação digital, tecnologia empresarial, inovação, digitalização, automação, cloud computing, inteligência artificial'
   };
 
   const handleCommentSubmit = (e: React.FormEvent) => {
@@ -121,6 +123,14 @@ const BlogPost = () => {
 
   return (
     <div className="min-h-screen py-20">
+      <SEOHead 
+        title={post.title}
+        description={post.metaDescription}
+        keywords={post.metaKeywords}
+        image={post.image}
+        url={`https://celx.com.br/blog/${post.id}`}
+      />
+      
       <div className="container mx-auto px-4 max-w-4xl">
         {/* Breadcrumb */}
         <nav className="mb-8">
