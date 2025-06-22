@@ -5,6 +5,8 @@ import { CartProvider } from '@/contexts/CartContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import AdminLayout from '@/components/AdminLayout';
 import Header from '@/components/Header';
+import WhatsAppButton from '@/components/WhatsAppButton';
+import { CONTACT_CONFIG } from '@/config/contact';
 import Home from '@/pages/Home';
 import Produtos from '@/pages/Produtos';
 import Sobre from '@/pages/Sobre';
@@ -125,6 +127,12 @@ function App() {
                       />
                     </Routes>
                   </main>
+                  
+                  {/* WhatsApp Button - aparece em todas as páginas públicas */}
+                  <WhatsAppButton 
+                    phoneNumber={CONTACT_CONFIG.whatsapp.phoneNumber}
+                    message={CONTACT_CONFIG.whatsapp.defaultMessage}
+                  />
                 </div>
               }
             />
