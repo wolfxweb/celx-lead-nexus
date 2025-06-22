@@ -1,0 +1,17 @@
+Table Name,Field Name,Field Type,Required,Description
+POPUP_CONFIGS,title,text,true,Título do pop-up
+POPUP_CONFIGS,message,long_text,true,Mensagem principal do pop-up
+POPUP_CONFIGS,show_email_field,boolean,true,Se deve mostrar campo de email
+POPUP_CONFIGS,email_placeholder,text,false,Placeholder do campo email
+POPUP_CONFIGS,button_text,text,true,Texto do botão principal
+POPUP_CONFIGS,pdf_url,url,false,URL do PDF para download
+POPUP_CONFIGS,delay,number,true,Delay em segundos antes de mostrar
+POPUP_CONFIGS,pages,text,true,Páginas onde deve aparecer (separadas por vírgula)
+POPUP_CONFIGS,is_active,boolean,true,Se o pop-up está ativo
+POPUP_CONFIGS,created_at,date,true,Data de criação
+POPUP_CONFIGS,updated_at,date,true,Data de atualização
+POPUP_EMAILS,email,email,true,Email capturado
+POPUP_EMAILS,popup_id,number,true,ID do pop-up que capturou o email
+POPUP_EMAILS,page,text,true,Página onde o email foi capturado
+POPUP_EMAILS,timestamp,date,true,Data e hora da captura
+POPUP_EMAILS,created_at,date,true,Data de criação 

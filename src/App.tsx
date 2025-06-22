@@ -1,12 +1,14 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { CartProvider } from '@/contexts/CartContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import AdminLayout from '@/components/AdminLayout';
 import Header from '@/components/Header';
 import WhatsAppButton from '@/components/WhatsAppButton';
+import PopupModal from '@/components/PopupModal';
 import { CONTACT_CONFIG } from '@/config/contact';
+import { usePopup } from '@/hooks/usePopup';
 import Home from '@/pages/Home';
 import Produtos from '@/pages/Produtos';
 import Sobre from '@/pages/Sobre';
@@ -25,8 +27,69 @@ import MyAccount from '@/pages/MyAccount';
 import ProductAdmin from '@/pages/ProductAdmin';
 import OrderAdmin from '@/pages/OrderAdmin';
 import AdminDashboard from '@/pages/AdminDashboard';
+import PopupAdmin from '@/pages/PopupAdmin';
 import AuthTest from '@/components/AuthTest';
 import './index.css';
+
+// Componente para gerenciar pop-ups nas páginas públicas
+const PublicLayout = () => {
+  const location = useLocation();
+  const currentPage = location.pathname.replace('/', '') || 'home';
+  const { popupConfig, showPopup, closePopup, saveEmail } = usePopup(currentPage);
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      <main>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/produtos" element={<Produtos />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:id" element={<BlogPost />} />
+          <Route path="/sobre" element={<Sobre />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
+          
+          {/* E-commerce Routes */}
+          <Route path="/loja" element={<Store />} />
+          <Route path="/produto/:id" element={<ProductDetail />} />
+          <Route path="/carrinho" element={<Cart />} />
+          <Route path="/checkout" element={<Checkout />} />
+          
+          {/* Test Routes */}
+          <Route path="/auth-test" element={<AuthTest />} />
+          
+          {/* Protected User Routes */}
+          <Route
+            path="/minha-conta"
+            element={
+              <ProtectedRoute allowedRoles={['user', 'admin']}>
+                <MyAccount />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </main>
+      
+      {/* WhatsApp Button - aparece em todas as páginas públicas */}
+      <WhatsAppButton 
+        phoneNumber={CONTACT_CONFIG.whatsapp.phoneNumber}
+        message={CONTACT_CONFIG.whatsapp.defaultMessage}
+      />
+
+      {/* Pop-up Modal */}
+      {showPopup && popupConfig && (
+        <PopupModal
+          config={popupConfig}
+          currentPage={currentPage}
+          onClose={closePopup}
+          onEmailSubmit={saveEmail}
+        />
+      )}
+    </div>
+  );
+};
 
 function App() {
   return (
@@ -90,52 +153,19 @@ function App() {
               }
             />
 
-            {/* Public Routes with Header */}
             <Route
-              path="/*"
+              path="/admin/popups"
               element={
-                <div className="min-h-screen bg-gray-50">
-                  <Header />
-                  <main>
-                    <Routes>
-                      <Route path="/" element={<Home />} />
-                      <Route path="/produtos" element={<Produtos />} />
-                      <Route path="/blog" element={<Blog />} />
-                      <Route path="/blog/:id" element={<BlogPost />} />
-                      <Route path="/sobre" element={<Sobre />} />
-                      <Route path="/login" element={<Login />} />
-                      <Route path="/register" element={<Register />} />
-                      <Route path="/unauthorized" element={<Unauthorized />} />
-                      
-                      {/* E-commerce Routes */}
-                      <Route path="/loja" element={<Store />} />
-                      <Route path="/produto/:id" element={<ProductDetail />} />
-                      <Route path="/carrinho" element={<Cart />} />
-                      <Route path="/checkout" element={<Checkout />} />
-                      
-                      {/* Test Routes */}
-                      <Route path="/auth-test" element={<AuthTest />} />
-                      
-                      {/* Protected User Routes */}
-                      <Route
-                        path="/minha-conta"
-                        element={
-                          <ProtectedRoute allowedRoles={['user', 'admin']}>
-                            <MyAccount />
-                          </ProtectedRoute>
-                        }
-                      />
-                    </Routes>
-                  </main>
-                  
-                  {/* WhatsApp Button - aparece em todas as páginas públicas */}
-                  <WhatsAppButton 
-                    phoneNumber={CONTACT_CONFIG.whatsapp.phoneNumber}
-                    message={CONTACT_CONFIG.whatsapp.defaultMessage}
-                  />
-                </div>
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminLayout>
+                    <PopupAdmin />
+                  </AdminLayout>
+                </ProtectedRoute>
               }
             />
+
+            {/* Public Routes with Header */}
+            <Route path="/*" element={<PublicLayout />} />
           </Routes>
         </Router>
       </CartProvider>

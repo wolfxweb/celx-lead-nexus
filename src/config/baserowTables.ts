@@ -146,6 +146,38 @@ export const BASEROW_TABLES = {
       created_at: 'created_at',
       updated_at: 'updated_at',
     }
+  },
+
+  // Tabela de configurações de pop-up
+  POPUP_CONFIGS: {
+    id: parseInt(import.meta.env.VITE_BASEROW_POPUP_CONFIGS_TABLE_ID || '636'),
+    fields: {
+      id: 'id',
+      title: 'title',
+      message: 'message',
+      show_email_field: 'show_email_field',
+      email_placeholder: 'email_placeholder',
+      button_text: 'button_text',
+      pdf_url: 'pdf_url',
+      delay: 'delay',
+      pages: 'pages',
+      is_active: 'is_active',
+      created_at: 'created_at',
+      updated_at: 'updated_at',
+    }
+  },
+
+  // Tabela de emails capturados por pop-up
+  POPUP_EMAILS: {
+    id: parseInt(import.meta.env.VITE_BASEROW_POPUP_EMAILS_TABLE_ID || '637'),
+    fields: {
+      id: 'id',
+      email: 'email',
+      popup_id: 'popup_id',
+      page: 'page',
+      timestamp: 'timestamp',
+      created_at: 'created_at',
+    }
   }
 };
 

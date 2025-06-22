@@ -1,0 +1,4 @@
+title,message,show_email_field,email_placeholder,button_text,pdf_url,delay,pages,is_active
+"E-book Gratuito: Transformação Digital","Baixe nosso e-book exclusivo com estratégias comprovadas para transformar seu negócio digitalmente. Aprenda técnicas que já ajudaram mais de 500 empresas a crescer.",true,"Digite seu melhor email","Baixar E-book Gratuito","https://exemplo.com/ebook-transformacao-digital.pdf",10,"home,sobre",true
+"Consultoria Gratuita","Quer saber como podemos ajudar sua empresa? Agende uma consultoria gratuita de 30 minutos e descubra como a tecnologia pode impulsionar seus resultados.",false,"","Agendar Consultoria","",5,"produtos,loja",true
+"Guia de Automação","Descubra como automatizar seus processos e economizar até 40% do tempo da sua equipe. Baixe nosso guia completo de automação.",true,"Seu email corporativo","Baixar Guia","https://exemplo.com/guia-automacao.pdf",15,"blog",true 

@@ -8,7 +8,8 @@ import {
   FileText, 
   Settings,
   LogOut,
-  Home
+  Home,
+  MessageSquare
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -51,6 +52,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       href: '/blog-admin',
       icon: FileText,
       current: location.pathname === '/blog-admin'
+    },
+    {
+      name: 'Gerenciar Pop-ups',
+      href: '/admin/popups',
+      icon: MessageSquare,
+      current: location.pathname === '/admin/popups'
     }
   ];
 
