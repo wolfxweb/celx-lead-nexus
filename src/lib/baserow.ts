@@ -101,7 +101,23 @@ export const baserowRequest = async <T>(
     throw new Error(errorMessage);
   }
 
-  return response.json();
+  // Para operações DELETE, a resposta pode estar vazia
+  if (options.method === 'DELETE') {
+    return {} as T;
+  }
+
+  // Verificar se há conteúdo antes de tentar fazer parse JSON
+  const contentType = response.headers.get('content-type');
+  if (!contentType || !contentType.includes('application/json')) {
+    return {} as T;
+  }
+
+  try {
+    return await response.json();
+  } catch (e) {
+    // Se não conseguir fazer parse do JSON, retorna objeto vazio
+    return {} as T;
+  }
 };
 
 // Função para autenticar

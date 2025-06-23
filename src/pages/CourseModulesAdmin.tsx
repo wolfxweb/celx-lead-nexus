@@ -201,9 +201,16 @@ const CourseModulesAdmin: React.FC = () => {
   const handleDeleteModule = async (moduleId: number) => {
     try {
       await deleteModule(moduleId);
-      await fetchCourseData();
+      // Só remove da lista local após confirmar que foi deletado no servidor
+      setModules(prevModules => prevModules.filter(module => module.id !== moduleId));
+      // Se o módulo deletado era o selecionado, limpa a seleção
+      if (selectedModuleId === moduleId) {
+        setSelectedModuleId(null);
+        setLessons([]);
+      }
       toast({ title: "Módulo excluído!" });
     } catch (error) {
+      console.error('Erro ao excluir módulo:', error);
       toast({ title: "Erro ao excluir módulo", variant: "destructive" });
     }
   };
@@ -211,9 +218,11 @@ const CourseModulesAdmin: React.FC = () => {
   const handleDeleteLesson = async (lessonId: number) => {
     try {
       await deleteLesson(lessonId);
-      await fetchCourseData();
+      // Só remove da lista local após confirmar que foi deletada no servidor
+      setLessons(prevLessons => prevLessons.filter(lesson => lesson.id !== lessonId));
       toast({ title: "Aula excluída!" });
     } catch (error) {
+      console.error('Erro ao excluir aula:', error);
       toast({ title: "Erro ao excluir aula", variant: "destructive" });
     }
   };
@@ -415,6 +424,7 @@ const CourseModulesAdmin: React.FC = () => {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleDeleteModule(module.id)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -640,6 +650,7 @@ const CourseModulesAdmin: React.FC = () => {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleDeleteLesson(lesson.id)}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
