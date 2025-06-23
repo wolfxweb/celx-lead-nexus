@@ -33,15 +33,14 @@ export const getAllCategories = async (): Promise<Category[]> => {
 // Função para obter categorias por tipo
 export const getCategoriesByType = async (type: 'product' | 'blog'): Promise<Category[]> => {
   const tableId = getTableId('CATEGORIES');
-  const filter = createFieldFilter('CATEGORIES', 'type', 'equal', type);
   
   const response = await getBaserowRows<Category>(tableId, {
     size: 200,
-    filter,
     order_by: 'name',
   });
   
-  return response.results;
+  // Filtrar localmente por tipo
+  return response.results.filter(category => category.type === type);
 };
 
 // Função para obter categorias de produtos
@@ -81,17 +80,19 @@ export const deleteCategory = async (id: number): Promise<void> => {
 // Função para buscar categorias por nome
 export const searchCategories = async (searchTerm: string, type?: 'product' | 'blog'): Promise<Category[]> => {
   const tableId = getTableId('CATEGORIES');
-  const params: any = {
+  const params = {
     search: searchTerm,
     size: 100,
     order_by: 'name',
   };
 
-  if (type) {
-    params.filter = createFieldFilter('CATEGORIES', 'type', 'equal', type);
-  }
-
   const response = await getBaserowRows<Category>(tableId, params);
+  
+  // Filtrar por tipo localmente se especificado
+  if (type) {
+    return response.results.filter(category => category.type === type);
+  }
+  
   return response.results;
 };
 
@@ -99,15 +100,16 @@ export const searchCategories = async (searchTerm: string, type?: 'product' | 'b
 export const isCategoryInUse = async (categoryId: number, type: 'product' | 'blog'): Promise<boolean> => {
   try {
     const tableId = getTableId(type === 'product' ? 'PRODUCTS' : 'BLOG_POSTS');
-    const filter = createFieldFilter(
-      type === 'product' ? 'PRODUCTS' : 'BLOG_POSTS',
-      'category_id',
-      'equal',
-      categoryId
-    );
-
-    const response = await getBaserowRows(tableId, { filter, size: 1 });
-    return response.count > 0;
+    
+    const response = await getBaserowRows(tableId, { size: 1 });
+    
+    // Filtrar localmente
+    const items = response.results.filter((item: any) => {
+      const itemCategoryId = parseInt(item.category_id);
+      return itemCategoryId === categoryId;
+    });
+    
+    return items.length > 0;
   } catch (error) {
     console.error('Erro ao verificar uso da categoria:', error);
     return false;
@@ -132,18 +134,19 @@ export const getCategoryStats = async (): Promise<{
 // Função para validar slug único
 export const isSlugUnique = async (slug: string, excludeId?: number): Promise<boolean> => {
   const tableId = getTableId('CATEGORIES');
-  const filter = createFieldFilter('CATEGORIES', 'slug', 'equal', slug);
   const response = await getBaserowRows<Category>(tableId, {
-    filter,
-    size: 1,
+    size: 100,
   });
   
-  if (response.results.length === 0) {
+  // Filtrar localmente por slug
+  const matchingCategories = response.results.filter(category => category.slug === slug);
+  
+  if (matchingCategories.length === 0) {
     return true;
   }
   
   if (excludeId) {
-    return response.results[0].id === excludeId;
+    return matchingCategories[0].id === excludeId;
   }
   
   return false;

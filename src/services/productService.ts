@@ -31,6 +31,8 @@ export interface BaserowProduct {
   rating: string; // Vem como string da API
   created_at: string;
   updated_at: string;
+  product_type: string;
+  linked_course_id: string;
 }
 
 // Função para obter todos os produtos

@@ -25,6 +25,8 @@ import Cart from '@/pages/Cart';
 import Checkout from '@/pages/Checkout';
 import MyAccount from '@/pages/MyAccount';
 import ProductAdmin from '@/pages/ProductAdmin';
+import CourseAdmin from '@/pages/CourseAdmin';
+import CourseModulesAdmin from '@/pages/CourseModulesAdmin';
 import OrderAdmin from '@/pages/OrderAdmin';
 import AdminDashboard from '@/pages/AdminDashboard';
 import PopupAdmin from '@/pages/PopupAdmin';
@@ -32,6 +34,7 @@ import AuthTest from '@/components/AuthTest';
 import MeusCursos from './pages/MeusCursos';
 import CursoDetalhes from './pages/CursoDetalhes';
 import UserLayout from '@/components/UserLayout';
+import TestCourseAPI from '@/components/TestCourseAPI';
 import './index.css';
 
 // Componente para gerenciar pop-ups nas páginas públicas
@@ -157,6 +160,28 @@ function App() {
             />
             
             <Route
+              path="/admin/cursos"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminLayout>
+                    <CourseAdmin />
+                  </AdminLayout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/admin/cursos/:courseId/modulos"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminLayout>
+                    <CourseModulesAdmin />
+                  </AdminLayout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
               path="/admin/pedidos"
               element={
                 <ProtectedRoute allowedRoles={['admin']}>
@@ -219,6 +244,9 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
+            {/* Rota temporária para teste da API */}
+            <Route path="/test-course-api" element={<TestCourseAPI />} />
 
             {/* Public Routes with Header */}
             <Route path="/*" element={<PublicLayout />} />

@@ -9,7 +9,8 @@ import {
   Settings,
   LogOut,
   Home,
-  MessageSquare
+  MessageSquare,
+  BookOpen
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -34,6 +35,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       href: '/admin/produtos',
       icon: Package,
       current: location.pathname === '/admin/produtos'
+    },
+    {
+      name: 'Gerenciar Cursos',
+      href: '/admin/cursos',
+      icon: BookOpen,
+      current: location.pathname === '/admin/cursos'
     },
     {
       name: 'Gerenciar Pedidos',

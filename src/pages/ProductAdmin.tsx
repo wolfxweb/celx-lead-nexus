@@ -33,6 +33,8 @@ import {
   type BaserowProduct
 } from '@/services/productService';
 
+import { getAllCourses, type Course } from '@/services/courseService';
+
 const ProductAdmin: React.FC = () => {
   const [products, setProducts] = useState<BaserowProduct[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
@@ -55,6 +57,11 @@ const ProductAdmin: React.FC = () => {
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const [activeTab, setActiveTab] = useState('products');
 
+  // --> NOVOS ESTADOS
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [isLoadingCourses, setIsLoadingCourses] = useState(true);
+  // <-- FIM NOVOS ESTADOS
+
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -71,7 +78,11 @@ const ProductAdmin: React.FC = () => {
     fileSize: '',
     fileType: '',
     isActive: 'true',
-    isFeatured: 'false'
+    isFeatured: 'false',
+    // --> NOVOS CAMPOS
+    product_type: 'Download',
+    linked_course_id: '',
+    // <-- FIM NOVOS CAMPOS
   });
 
   useEffect(() => {
@@ -99,6 +110,25 @@ const ProductAdmin: React.FC = () => {
     }
   };
 
+  // --> NOVA FUNÇÃO
+  const fetchCourses = async () => {
+    try {
+      setIsLoadingCourses(true);
+      const fetchedCourses = await getAllCourses();
+      setCourses(fetchedCourses);
+    } catch (error) {
+      console.error("Erro ao buscar cursos:", error);
+      toast({
+        title: "Erro ao buscar cursos",
+        description: "Não foi possível carregar a lista de cursos.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingCourses(false);
+    }
+  };
+  // <-- FIM NOVA FUNÇÃO
+
   // Hook para buscar categorias do Baserow
   const fetchCategories = async () => {
     try {
@@ -119,6 +149,7 @@ const ProductAdmin: React.FC = () => {
   useEffect(() => {
     fetchCategories();
     fetchProducts();
+    fetchCourses();
   }, [toast]);
 
   const filterProducts = () => {
@@ -151,7 +182,7 @@ const ProductAdmin: React.FC = () => {
     e.preventDefault();
     
     try {
-      const productData = {
+      const productData: any = { // Usar 'any' temporariamente para flexibilidade
         name: formData.name,
         description: formData.description,
         short_description: formData.shortDescription,
@@ -162,13 +193,24 @@ const ProductAdmin: React.FC = () => {
         image: formData.image,
         images: formData.images,
         video_url: formData.video,
-        file_size: formData.fileSize,
-        file_type: formData.fileType,
         is_active: formData.isActive,
         is_featured: formData.isFeatured,
         sales_count: editingProduct?.sales_count || '0',
         rating: editingProduct?.rating || '0',
+        product_type: formData.product_type,
       };
+
+      if (formData.product_type === 'Curso') {
+        productData.linked_course_id = formData.linked_course_id;
+        // Limpar campos de download se for curso
+        productData.file_size = '';
+        productData.file_type = '';
+      } else {
+        productData.file_size = formData.fileSize;
+        productData.file_type = formData.fileType;
+        // Limpar campo de curso se for download
+        productData.linked_course_id = '';
+      }
 
       if (editingProduct) {
         await updateProduct(editingProduct.id, productData);
@@ -205,7 +247,10 @@ const ProductAdmin: React.FC = () => {
       fileSize: product.file_size,
       fileType: product.file_type,
       isActive: product.is_active,
-      isFeatured: product.is_featured
+      isFeatured: product.is_featured,
+      // --> NOVOS CAMPOS
+      product_type: product.product_type || 'Download',
+      linked_course_id: product.linked_course_id || '',
     });
     setIsDialogOpen(true);
   };
@@ -238,7 +283,10 @@ const ProductAdmin: React.FC = () => {
       fileSize: '',
       fileType: '',
       isActive: 'true',
-      isFeatured: 'false'
+      isFeatured: 'false',
+      // --> NOVOS CAMPOS
+      product_type: 'Download',
+      linked_course_id: '',
     });
     setEditingProduct(null);
   };
@@ -411,17 +459,17 @@ const ProductAdmin: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="category">Categoria *</Label>
-                  <Select value={formData.category_id} onValueChange={(value) => setFormData({...formData, category_id: value})}>
+                  <Label htmlFor="product_type">Tipo de Produto</Label>
+                  <Select
+                    value={formData.product_type}
+                    onValueChange={(value) => setFormData({ ...formData, product_type: value })}
+                  >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione uma categoria" />
+                      <SelectValue placeholder="Selecione o tipo" />
                     </SelectTrigger>
                     <SelectContent>
-                      {productCategories.map(category => (
-                        <SelectItem key={category.slug} value={category.slug}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="Download">Produto Digital (Download)</SelectItem>
+                      <SelectItem value="Curso">Curso Online</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -438,15 +486,72 @@ const ProductAdmin: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Descrição Completa *</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  rows={4}
-                  required
-                />
+                <Label htmlFor="description">Descrição Completa</Label>
+                <Textarea id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={5} />
               </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="category_id">Categoria</Label>
+                  <Select
+                    value={formData.category_id}
+                    onValueChange={(value) => setFormData({ ...formData, category_id: value })}
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione uma categoria" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {isLoadingCategories ? (
+                        <SelectItem value="loading" disabled>Carregando categorias...</SelectItem>
+                      ) : (
+                        productCategories.map(category => (
+                          <SelectItem key={category.id} value={String(category.id)}>
+                            {category.name}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="tags">Tags (separadas por ;)</Label>
+                  <Input id="tags" value={formData.tags} onChange={(e) => setFormData({ ...formData, tags: e.target.value })} placeholder="ex: novo;digital;importante" />
+                </div>
+              </div>
+
+              {formData.product_type === 'Curso' && (
+                <div className="space-y-2">
+                  <Label htmlFor="linked_course_id">Vincular a um Curso Existente</Label>
+                  <Select
+                    value={formData.linked_course_id}
+                    onValueChange={(value) => setFormData({ ...formData, linked_course_id: value })}
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um curso..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {isLoadingCourses ? (
+                        <SelectItem value="loading" disabled>Carregando cursos...</SelectItem>
+                      ) : courses.length === 0 ? (
+                        <SelectItem value="no-courses" disabled>Nenhum curso disponível</SelectItem>
+                      ) : (
+                        courses.map(course => (
+                          <SelectItem key={course.id} value={String(course.id)}>
+                            {course.title}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {courses.length === 0 && !isLoadingCourses && (
+                    <p className="text-sm text-muted-foreground">
+                      Nenhum curso encontrado. <a href="/admin/cursos" className="text-primary hover:underline">Criar um curso primeiro</a>.
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
@@ -468,15 +573,6 @@ const ProductAdmin: React.FC = () => {
                     step="0.01"
                     value={formData.originalPrice}
                     onChange={(e) => setFormData({...formData, originalPrice: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="tags">Tags (separadas por vírgula)</Label>
-                  <Input
-                    id="tags"
-                    value={formData.tags}
-                    onChange={(e) => setFormData({...formData, tags: e.target.value})}
-                    placeholder="tag1, tag2, tag3"
                   />
                 </div>
               </div>
@@ -537,26 +633,26 @@ const ProductAdmin: React.FC = () => {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="fileSize">Tamanho do Arquivo</Label>
-                  <Input
-                    id="fileSize"
-                    value={formData.fileSize}
-                    onChange={(e) => setFormData({...formData, fileSize: e.target.value})}
-                    placeholder="ex: 2.5 MB"
-                  />
+              {formData.product_type === 'Download' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="fileSize">Tamanho do Arquivo (ex: 15MB)</Label>
+                    <Input
+                      id="fileSize"
+                      value={formData.fileSize}
+                      onChange={(e) => setFormData({ ...formData, fileSize: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="fileType">Tipo do Arquivo (ex: PDF, ZIP)</Label>
+                    <Input
+                      id="fileType"
+                      value={formData.fileType}
+                      onChange={(e) => setFormData({ ...formData, fileType: e.target.value })}
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="fileType">Tipo do Arquivo</Label>
-                  <Input
-                    id="fileType"
-                    value={formData.fileType}
-                    onChange={(e) => setFormData({...formData, fileType: e.target.value})}
-                    placeholder="ex: PDF, ZIP, MP4"
-                  />
-                </div>
-              </div>
+              )}
 
               <div className="flex items-center space-x-6">
                 <div className="flex items-center space-x-2">

@@ -58,6 +58,8 @@ export const BASEROW_TABLES = {
       rating: 'rating',
       created_at: 'created_at',
       updated_at: 'updated_at',
+      product_type: 'product_type',
+      linked_course_id: 'linked_course_id',
     }
   },
   
@@ -241,33 +243,32 @@ const COURSE_TABLES = {
   }
 };
 
-// Renomeia o objeto original e depois faz o merge
-const MAIN_TABLES = BASEROW_TABLES;
-Object.assign(MAIN_TABLES, COURSE_TABLES);
+// Merge dos objetos de tabelas
+export const ALL_TABLES = {
+  ...BASEROW_TABLES,
+  ...COURSE_TABLES,
+};
+
+// Tipo para os nomes das tabelas
+export type TableName = keyof typeof ALL_TABLES;
 
 // Função para obter ID da tabela
-export const getTableId = (tableName: keyof typeof MAIN_TABLES): number => {
-  return MAIN_TABLES[tableName].id;
+export const getTableId = (tableName: TableName): number => {
+  return ALL_TABLES[tableName].id;
 };
 
-// Função para obter campo da tabela
+// Função para obter o nome de um campo
 export const getFieldId = (
-  tableName: keyof typeof MAIN_TABLES, 
+  tableName: TableName, 
   fieldName: string
 ): string => {
-  const table = MAIN_TABLES[tableName];
-  const field = table.fields[fieldName as keyof typeof table.fields];
-  
-  if (!field) {
-    throw new Error(`Campo '${fieldName}' não encontrado na tabela '${tableName}'`);
-  }
-  
-  return field;
+  const tableFields = (ALL_TABLES[tableName] as any).fields;
+  return tableFields[fieldName] || fieldName;
 };
 
-// Função para criar filtro de campo
+// Função para criar um filtro de forma segura
 export const createFieldFilter = (
-  tableName: keyof typeof MAIN_TABLES,
+  tableName: TableName,
   fieldName: string,
   operator: 'equal' | 'contains' | 'greater_than' | 'less_than',
   value: string | number
