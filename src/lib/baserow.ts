@@ -153,20 +153,26 @@ export const getBaserowRows = async <T = BaserowRow>(
     page?: number;
     size?: number;
     search?: string;
-    filter?: string;
-    order_by?: string;
+    filter?: Record<string, string | number>;
+    orderBy?: string;
   } = {}
 ): Promise<BaserowResponse<T>> => {
   const searchParams = new URLSearchParams({ user_field_names: 'true' });
   
-  if (params.page) searchParams.append('page', params.page.toString());
-  if (params.size) searchParams.append('size', params.size.toString());
+  if (params.page) searchParams.append('page', String(params.page));
+  if (params.size) searchParams.append('size', String(params.size));
   if (params.search) searchParams.append('search', params.search);
   if (params.filter) {
-     const [filterKey, filterValue] = params.filter.split('=');
-     searchParams.append(filterKey, filterValue);
+    for (const fieldName in params.filter) {
+      if (Object.prototype.hasOwnProperty.call(params.filter, fieldName)) {
+        const value = params.filter[fieldName];
+        // O padrão é 'equal', mas pode ser estendido no futuro
+        const filterParam = `filter__field_${fieldName}__equal`;
+        searchParams.append(filterParam, String(value));
+      }
+    }
   }
-  if (params.order_by) searchParams.append('order_by', params.order_by);
+  if (params.orderBy) searchParams.append('order_by', params.orderBy);
 
   const queryString = searchParams.toString();
   const endpoint = `/database/rows/table/${tableId}/?${queryString}`;

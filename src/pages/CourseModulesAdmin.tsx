@@ -26,6 +26,7 @@ import {
   createLesson, 
   updateLesson, 
   deleteLesson,
+  debugModules,
   type Course, 
   type CourseModule, 
   type CourseLesson 
