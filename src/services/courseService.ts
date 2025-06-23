@@ -188,14 +188,14 @@ const buildPayload = (data: Record<string, any>, fieldMapping: Record<string, st
       const baserowField = fieldMapping[key];
 
       if (key === 'is_free_preview' || key === 'is_published' || key === 'is_resolved') {
-        payload[baserowField] = Boolean(value);
+        payload[baserowField] = value === true || value === 'true' ? 'true' : 'false';
       } else if (value !== undefined && value !== null && value !== '') {
         payload[baserowField] = value;
       }
     }
   }
    if (fieldMapping['is_free_preview'] && payload[fieldMapping['is_free_preview']] === undefined) {
-    payload[fieldMapping['is_free_preview']] = false;
+    payload[fieldMapping['is_free_preview']] = 'false';
   }
   return payload;
 }

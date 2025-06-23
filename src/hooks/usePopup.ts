@@ -29,7 +29,7 @@ export const usePopup = (currentPage: string) => {
       
       // Buscar todos os pop-ups ativos
       const response = await getBaserowRows(tableId, {
-        filter: `is_active=true`,
+        filter: { is_active: 'true' },
         size: 50
       });
 

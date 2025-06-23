@@ -137,7 +137,7 @@ const CourseModulesAdmin: React.FC = () => {
         title: lessonFormData.title,
         content_type: lessonFormData.content_type,
         order: parseInt(lessonFormData.order),
-        is_free_preview: lessonFormData.is_free_preview === 'true',
+        is_free_preview: lessonFormData.is_free_preview,
       };
 
       // Adicionar campos opcionais apenas se tiverem valor
