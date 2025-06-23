@@ -246,6 +246,38 @@ const CourseModulesAdmin: React.FC = () => {
     }
   };
 
+  const testCreateLesson = async () => {
+    if (!selectedModuleId) {
+      toast({ title: "Selecione um módulo primeiro", variant: "destructive" });
+      return;
+    }
+
+    try {
+      console.log('🧪 Testando criação de aula...');
+      const testLessonData = {
+        module_id: selectedModuleId,
+        title: 'Aula de Teste',
+        content_type: 'text' as const,
+        video_url: '',
+        pdf_file: '',
+        text_content: 'Esta é uma aula de teste criada via botão de teste.',
+        quiz_data: '',
+        order: 1,
+        is_free_preview: false,
+      };
+
+      console.log('🧪 Dados de teste:', testLessonData);
+      const result = await createLesson(testLessonData);
+      console.log('🧪 Resultado:', result);
+      
+      toast({ title: "Aula de teste criada com sucesso!" });
+      await fetchCourseData();
+    } catch (error) {
+      console.error('🧪 Erro no teste:', error);
+      toast({ title: "Erro no teste de criação", variant: "destructive" });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto py-6">
@@ -326,7 +358,6 @@ const CourseModulesAdmin: React.FC = () => {
                           required 
                         />
                       </div>
-
                       <div className="space-y-2">
                         <Label htmlFor="module-description">Descrição</Label>
                         <Textarea 
@@ -336,7 +367,6 @@ const CourseModulesAdmin: React.FC = () => {
                           rows={3} 
                         />
                       </div>
-
                       <div className="space-y-2">
                         <Label htmlFor="module-order">Ordem</Label>
                         <Input 
@@ -347,7 +377,6 @@ const CourseModulesAdmin: React.FC = () => {
                           min="1"
                         />
                       </div>
-
                       <div className="flex justify-end space-x-2">
                         <Button type="button" variant="outline" onClick={() => setIsModuleDialogOpen(false)}>
                           Cancelar
@@ -428,149 +457,150 @@ const CourseModulesAdmin: React.FC = () => {
                   </CardDescription>
                 </div>
                 {modules.length > 0 && (
-                  <Dialog open={isLessonDialogOpen} onOpenChange={setIsLessonDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button onClick={resetLessonForm}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Nova Aula
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle>{editingLesson ? 'Editar Aula' : 'Adicionar Nova Aula'}</DialogTitle>
-                      </DialogHeader>
-                      <form onSubmit={handleLessonSubmit} className="grid gap-6 py-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="lesson-module">Módulo</Label>
-                          <Select
-                            value={selectedModuleId?.toString() || ''}
-                            onValueChange={(value) => setSelectedModuleId(parseInt(value))}
-                            required
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione um módulo" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {modules.map(module => (
-                                <SelectItem key={module.id} value={String(module.id)}>
-                                  {module.title}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="lesson-title">Título da Aula</Label>
-                          <Input 
-                            id="lesson-title" 
-                            value={lessonFormData.title} 
-                            onChange={(e) => setLessonFormData({ ...lessonFormData, title: e.target.value })} 
-                            required 
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="lesson-content-type">Tipo de Conteúdo</Label>
-                          <Select
-                            value={lessonFormData.content_type}
-                            onValueChange={(value: 'video' | 'pdf' | 'text' | 'quiz') => 
-                              setLessonFormData({ ...lessonFormData, content_type: value })
-                            }
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="video">Vídeo</SelectItem>
-                              <SelectItem value="pdf">PDF</SelectItem>
-                              <SelectItem value="text">Texto</SelectItem>
-                              <SelectItem value="quiz">Quiz</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        {lessonFormData.content_type === 'video' && (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={testCreateLesson}
+                      disabled={!selectedModuleId}
+                    >
+                      🧪 Teste
+                    </Button>
+                    <Dialog open={isLessonDialogOpen} onOpenChange={setIsLessonDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button onClick={resetLessonForm}>
+                          <Plus className="mr-2 h-4 w-4" />
+                          Nova Aula
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle>{editingLesson ? 'Editar Aula' : 'Adicionar Nova Aula'}</DialogTitle>
+                        </DialogHeader>
+                        <form onSubmit={handleLessonSubmit} className="grid gap-6 py-4">
                           <div className="space-y-2">
-                            <Label htmlFor="lesson-video">URL do Vídeo</Label>
+                            <Label htmlFor="lesson-module">Módulo</Label>
+                            <Select
+                              value={selectedModuleId?.toString() || ''}
+                              onValueChange={(value) => setSelectedModuleId(parseInt(value))}
+                              required
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione um módulo" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {modules.map(module => (
+                                  <SelectItem key={module.id} value={String(module.id)}>
+                                    {module.title}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="lesson-title">Título da Aula</Label>
                             <Input 
-                              id="lesson-video" 
-                              value={lessonFormData.video_url} 
-                              onChange={(e) => setLessonFormData({ ...lessonFormData, video_url: e.target.value })} 
-                              placeholder="https://www.youtube.com/embed/VIDEO_ID"
+                              id="lesson-title" 
+                              value={lessonFormData.title} 
+                              onChange={(e) => setLessonFormData({ ...lessonFormData, title: e.target.value })} 
+                              required 
                             />
                           </div>
-                        )}
-
-                        {lessonFormData.content_type === 'pdf' && (
                           <div className="space-y-2">
-                            <Label htmlFor="lesson-pdf">URL do PDF</Label>
-                            <Input 
-                              id="lesson-pdf" 
-                              value={lessonFormData.pdf_file} 
-                              onChange={(e) => setLessonFormData({ ...lessonFormData, pdf_file: e.target.value })} 
-                              placeholder="https://exemplo.com/arquivo.pdf"
-                            />
+                            <Label htmlFor="lesson-content-type">Tipo de Conteúdo</Label>
+                            <Select
+                              value={lessonFormData.content_type}
+                              onValueChange={(value: 'video' | 'pdf' | 'text' | 'quiz') => 
+                                setLessonFormData({ ...lessonFormData, content_type: value })
+                              }
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="video">Vídeo</SelectItem>
+                                <SelectItem value="pdf">PDF</SelectItem>
+                                <SelectItem value="text">Texto</SelectItem>
+                                <SelectItem value="quiz">Quiz</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
-                        )}
-
-                        {lessonFormData.content_type === 'text' && (
-                          <div className="space-y-2">
-                            <Label htmlFor="lesson-text">Conteúdo em Texto</Label>
-                            <Textarea 
-                              id="lesson-text" 
-                              value={lessonFormData.text_content} 
-                              onChange={(e) => setLessonFormData({ ...lessonFormData, text_content: e.target.value })} 
-                              rows={6} 
-                            />
+                          {lessonFormData.content_type === 'video' && (
+                            <div className="space-y-2">
+                              <Label htmlFor="lesson-video">URL do Vídeo</Label>
+                              <Input 
+                                id="lesson-video" 
+                                value={lessonFormData.video_url} 
+                                onChange={(e) => setLessonFormData({ ...lessonFormData, video_url: e.target.value })} 
+                                placeholder="https://www.youtube.com/embed/VIDEO_ID"
+                              />
+                            </div>
+                          )}
+                          {lessonFormData.content_type === 'pdf' && (
+                            <div className="space-y-2">
+                              <Label htmlFor="lesson-pdf">URL do PDF</Label>
+                              <Input 
+                                id="lesson-pdf" 
+                                value={lessonFormData.pdf_file} 
+                                onChange={(e) => setLessonFormData({ ...lessonFormData, pdf_file: e.target.value })} 
+                                placeholder="https://exemplo.com/arquivo.pdf"
+                              />
+                            </div>
+                          )}
+                          {lessonFormData.content_type === 'text' && (
+                            <div className="space-y-2">
+                              <Label htmlFor="lesson-text">Conteúdo em Texto</Label>
+                              <Textarea 
+                                id="lesson-text" 
+                                value={lessonFormData.text_content} 
+                                onChange={(e) => setLessonFormData({ ...lessonFormData, text_content: e.target.value })} 
+                                rows={6} 
+                              />
+                            </div>
+                          )}
+                          {lessonFormData.content_type === 'quiz' && (
+                            <div className="space-y-2">
+                              <Label htmlFor="lesson-quiz">Dados do Quiz (JSON)</Label>
+                              <Textarea 
+                                id="lesson-quiz" 
+                                value={lessonFormData.quiz_data} 
+                                onChange={(e) => setLessonFormData({ ...lessonFormData, quiz_data: e.target.value })} 
+                                rows={6} 
+                                placeholder='{"questions": [{"question": "Pergunta 1", "options": ["A", "B", "C"], "correct": 0}]}'
+                              />
+                            </div>
+                          )}
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="lesson-order">Ordem</Label>
+                              <Input 
+                                id="lesson-order" 
+                                type="number" 
+                                value={lessonFormData.order} 
+                                onChange={(e) => setLessonFormData({ ...lessonFormData, order: e.target.value })} 
+                                min="1"
+                              />
+                            </div>
+                            <div className="flex items-center space-x-2 pt-6">
+                              <Switch 
+                                id="lesson-free" 
+                                checked={lessonFormData.is_free_preview === 'true'} 
+                                onCheckedChange={(checked) => setLessonFormData({ ...lessonFormData, is_free_preview: String(checked) })} 
+                              />
+                              <Label htmlFor="lesson-free">Aula Gratuita (Preview)</Label>
+                            </div>
                           </div>
-                        )}
-
-                        {lessonFormData.content_type === 'quiz' && (
-                          <div className="space-y-2">
-                            <Label htmlFor="lesson-quiz">Dados do Quiz (JSON)</Label>
-                            <Textarea 
-                              id="lesson-quiz" 
-                              value={lessonFormData.quiz_data} 
-                              onChange={(e) => setLessonFormData({ ...lessonFormData, quiz_data: e.target.value })} 
-                              rows={6} 
-                              placeholder='{"questions": [{"question": "Pergunta 1", "options": ["A", "B", "C"], "correct": 0}]}'
-                            />
+                          <div className="flex justify-end space-x-2">
+                            <Button type="button" variant="outline" onClick={() => setIsLessonDialogOpen(false)}>
+                              Cancelar
+                            </Button>
+                            <Button type="submit">
+                              {editingLesson ? 'Atualizar' : 'Criar'} Aula
+                            </Button>
                           </div>
-                        )}
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="lesson-order">Ordem</Label>
-                            <Input 
-                              id="lesson-order" 
-                              type="number" 
-                              value={lessonFormData.order} 
-                              onChange={(e) => setLessonFormData({ ...lessonFormData, order: e.target.value })} 
-                              min="1"
-                            />
-                          </div>
-                          <div className="flex items-center space-x-2 pt-6">
-                            <Switch 
-                              id="lesson-free" 
-                              checked={lessonFormData.is_free_preview === 'true'} 
-                              onCheckedChange={(checked) => setLessonFormData({ ...lessonFormData, is_free_preview: String(checked) })} 
-                            />
-                            <Label htmlFor="lesson-free">Aula Gratuita (Preview)</Label>
-                          </div>
-                        </div>
-
-                        <div className="flex justify-end space-x-2">
-                          <Button type="button" variant="outline" onClick={() => setIsLessonDialogOpen(false)}>
-                            Cancelar
-                          </Button>
-                          <Button type="submit">
-                            {editingLesson ? 'Atualizar' : 'Criar'} Aula
-                          </Button>
-                        </div>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                 )}
               </div>
             </CardHeader>

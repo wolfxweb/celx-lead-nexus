@@ -1,4 +1,4 @@
-import { getBaserowRows, createBaserowRow, updateBaserowRow, deleteBaserowRow } from '@/lib/baserow';
+import { getBaserowRows, createBaserowRow, updateBaserowRow, deleteBaserowRow, BASEROW_CONFIG } from '@/lib/baserow';
 import { getTableId, ALL_TABLES, createFieldFilter } from '@/config/baserowTables';
 
 // Acessa os campos através do objeto exportado que já fez o merge
@@ -271,6 +271,11 @@ export const createModule = async (moduleData: Omit<CourseModule, 'id' | 'create
  */
 export const createLesson = async (lessonData: Omit<CourseLesson, 'id' | 'created_at' | 'updated_at'>): Promise<CourseLesson> => {
   try {
+    console.log('🔍 Iniciando criação de aula...');
+    console.log('🔍 Dados recebidos:', lessonData);
+    console.log('🔍 LESSONS_TABLE_ID:', LESSONS_TABLE_ID);
+    console.log('🔍 Campos disponíveis:', ALL_TABLES.COURSE_LESSONS.fields);
+    
     // Mapear os dados para os nomes dos campos do Baserow
     const baserowData = {
       [ALL_TABLES.COURSE_LESSONS.fields.module_id]: lessonData.module_id,
@@ -284,12 +289,18 @@ export const createLesson = async (lessonData: Omit<CourseLesson, 'id' | 'create
       [ALL_TABLES.COURSE_LESSONS.fields.is_free_preview]: lessonData.is_free_preview,
     };
     
-    console.log('Enviando dados da aula para Baserow:', baserowData);
+    console.log('📤 Enviando dados da aula para Baserow:', baserowData);
+    
     const response = await createBaserowRow<any>(LESSONS_TABLE_ID, baserowData);
-    console.log('Resposta do Baserow:', response);
-    return mapToLesson(response);
+    console.log('✅ Resposta do Baserow:', response);
+    
+    const mappedResponse = mapToLesson(response);
+    console.log('✅ Aula mapeada:', mappedResponse);
+    
+    return mappedResponse;
   } catch (error) {
-    console.error('Erro ao criar aula:', error);
+    console.error('❌ Erro detalhado ao criar aula:', error);
+    console.error('❌ Stack trace:', error instanceof Error ? error.stack : 'N/A');
     throw new Error('Não foi possível criar a aula.');
   }
 };

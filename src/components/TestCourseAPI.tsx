@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getAllCourses, createModule, getCourseModules } from '@/services/courseService';
+import { getAllCourses, createModule, getCourseModules, createLesson } from '@/services/courseService';
 import { getBaserowRows } from '@/lib/baserow';
 
 const TestCourseAPI: React.FC = () => {
@@ -132,6 +132,77 @@ const TestCourseAPI: React.FC = () => {
     }
   };
 
+  const testDirectLessonsAPI = async () => {
+    try {
+      setLoading(true);
+      const lessonsTableId = parseInt(import.meta.env.VITE_BASEROW_COURSE_LESSONS_TABLE_ID || '0');
+      
+      console.log('Testando acesso direto à tabela de aulas, ID:', lessonsTableId);
+      
+      const response = await getBaserowRows(lessonsTableId);
+      console.log('Resposta completa da API de aulas:', response);
+      
+      setDirectTestResult(`Tabela de aulas acessível.\nTotal de registros: ${response.results.length}\n\nRegistros encontrados:\n${response.results.map((item: any) => `- ID: ${item.id}, Título: ${item.title || 'N/A'}, Module ID: ${item.module_id || 'N/A'}`).join('\n')}`);
+      
+    } catch (err) {
+      setDirectTestResult(`Erro ao acessar tabela de aulas: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
+      console.error('Erro detalhado:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const testCreateLesson = async () => {
+    if (courses.length === 0) {
+      setTestResult('Nenhum curso disponível para testar');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const courseId = courses[0].id;
+      
+      // Primeiro, buscar ou criar um módulo
+      let modules = await getCourseModules(courseId);
+      let moduleId;
+      
+      if (modules.length === 0) {
+        // Criar um módulo se não existir
+        const newModule = await createModule({
+          course_id: courseId,
+          title: 'Módulo de Teste para Aula',
+          description: 'Módulo criado automaticamente para teste de aula',
+          order: 1,
+        });
+        moduleId = newModule.id;
+      } else {
+        moduleId = modules[0].id;
+      }
+      
+      console.log('Criando aula para módulo ID:', moduleId);
+      
+      const newLesson = await createLesson({
+        module_id: moduleId,
+        title: 'Aula de Teste',
+        content_type: 'text',
+        video_url: '',
+        pdf_file: '',
+        text_content: 'Esta é uma aula de teste criada via API de teste.',
+        quiz_data: '',
+        order: 1,
+        is_free_preview: false,
+      });
+
+      setTestResult(`Aula criada com sucesso! ID: ${newLesson.id}, Módulo: ${moduleId}`);
+      
+    } catch (err) {
+      setTestResult(`Erro ao criar aula: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
+      console.error('Erro detalhado:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">Teste da API de Cursos</h1>
@@ -159,6 +230,14 @@ const TestCourseAPI: React.FC = () => {
           className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 disabled:opacity-50"
         >
           {loading ? 'Testando...' : 'Testar Módulos Direto'}
+        </button>
+        
+        <button
+          onClick={testDirectLessonsAPI}
+          disabled={loading}
+          className="bg-pink-500 text-white px-4 py-2 rounded hover:bg-pink-600 disabled:opacity-50"
+        >
+          {loading ? 'Testando...' : 'Testar Aulas Direto'}
         </button>
       </div>
 
@@ -204,6 +283,14 @@ const TestCourseAPI: React.FC = () => {
           className="bg-teal-500 text-white px-4 py-2 rounded hover:bg-teal-600 disabled:opacity-50"
         >
           {loading ? 'Testando...' : 'Testar Listagem de Módulos'}
+        </button>
+        
+        <button
+          onClick={testCreateLesson}
+          disabled={loading || courses.length === 0}
+          className="bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600 disabled:opacity-50"
+        >
+          {loading ? 'Testando...' : 'Testar Criação de Aula'}
         </button>
       </div>
 
