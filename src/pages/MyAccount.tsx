@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { mockProducts } from '@/data/products';
+import { toast } from '@/components/ui/use-toast';
 
 // Mock purchased products data
 const mockPurchasedProducts = [
@@ -42,11 +43,21 @@ const MyAccount: React.FC = () => {
     return date.toLocaleDateString('pt-BR');
   };
 
-  const handleDownload = (productId: string, downloadUrl: string) => {
-    // Simulate download
-    console.log(`Downloading ${productId} from ${downloadUrl}`);
-    // In a real app, this would trigger the actual download
-    alert('Download iniciado!');
+  const handleDownload = async (productId: string, downloadUrl: string) => {
+    try {
+      // Simular download
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `produto-${productId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({ title: "Download iniciado!" });
+    } catch (error) {
+      console.error('Erro no download:', error);
+      toast({ title: "Erro no download", variant: "destructive" });
+    }
   };
 
   const handleLogout = () => {

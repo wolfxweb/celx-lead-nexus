@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -21,7 +20,6 @@ const ProdutoAnalytics = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Lead capturado:', leadForm);
     toast({
       title: "Interesse registrado!",
       description: "Entraremos em contato em breve para apresentar a solução.",

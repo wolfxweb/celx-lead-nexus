@@ -8,27 +8,25 @@ const DebugFieldsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    const fetchFields = async () => {
-      try {
-        console.log('--- [DEBUG PAGE] Iniciando busca de campos... ---');
-        const lessonsTableId = ALL_TABLES.COURSE_LESSONS.id;
-        if (!lessonsTableId) {
-          throw new Error('ID da tabela de aulas (COURSE_LESSONS) não encontrado ou é zero. Verifique o .env');
-        }
-        console.log(`--- [DEBUG PAGE] Buscando campos para a tabela ID: ${lessonsTableId} ---`);
-        const result = await getBaserowFields(lessonsTableId);
-        console.log('--- [DEBUG PAGE] Campos recebidos: ---', result);
-        setFields(result);
-      } catch (err: any) {
-        console.error('--- [DEBUG PAGE] Erro ao buscar campos: ---', err);
-        setError(err.message || 'Ocorreu um erro desconhecido.');
-      } finally {
-        setLoading(false);
+  const handleFetchFields = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const lessonsTableId = ALL_TABLES.COURSE_LESSONS.id;
+      if (!lessonsTableId) {
+        throw new Error('ID da tabela de aulas (COURSE_LESSONS) não encontrado ou é zero. Verifique o .env');
       }
-    };
+      const result = await getBaserowFields(lessonsTableId);
+      setFields(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro desconhecido');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchFields();
+  useEffect(() => {
+    handleFetchFields();
   }, []);
 
   return (

@@ -1,4 +1,4 @@
-import { createBaserowRow, getBaserowRows } from '@/lib/baserow';
+import { createBaserowRow, getBaserowRows, updateBaserowRow } from '@/lib/baserow';
 import { getTableId } from '@/config/baserowTables';
 
 // Interface para os dados da newsletter
@@ -194,4 +194,14 @@ const subscribeToBaserow = async (email: string, name?: string, source: string =
   
   return await createBaserowRow(tableId, subscriptionData);
 };
-*/ 
+*/
+
+export const cancelSubscription = async (subscriptionId: number): Promise<void> => {
+  try {
+    const tableId = getTableId('NEWSLETTER_SUBSCRIPTIONS');
+    await updateBaserowRow(tableId, subscriptionId, { status: 'cancelled' });
+  } catch (error) {
+    console.error('Erro ao cancelar inscrição:', error);
+    throw new Error('Não foi possível cancelar a inscrição.');
+  }
+}; 

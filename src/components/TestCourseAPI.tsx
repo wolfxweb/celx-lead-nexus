@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getAllCourses, createModule, getCourseModules, createLesson } from '@/services/courseService';
+import { getAllCourses, createModule, getCourseModules, createLesson, getModuleLessons } from '@/services/courseService';
 import { getBaserowRows } from '@/lib/baserow';
 
 const TestCourseAPI: React.FC = () => {
@@ -29,14 +29,14 @@ const TestCourseAPI: React.FC = () => {
   const testDirectAPI = async () => {
     try {
       setLoading(true);
-      const coursesTableId = parseInt(import.meta.env.VITE_BASEROW_COURSES_TABLE_ID || '0');
-      const modulesTableId = parseInt(import.meta.env.VITE_BASEROW_COURSE_MODULES_TABLE_ID || '0');
+      const modulesTableId = parseInt(import.meta.env.VITE_BASEROW_COURSES_TABLE_ID || '0');
+      const lessonsTableId = parseInt(import.meta.env.VITE_BASEROW_COURSE_MODULES_TABLE_ID || '0');
       
-      setDirectTestResult(`Testando tabelas...\nCourses Table ID: ${coursesTableId}\nModules Table ID: ${modulesTableId}`);
+      setDirectTestResult(`Testando tabelas...\nCourses Table ID: ${modulesTableId}\nModules Table ID: ${lessonsTableId}`);
       
       // Testar acesso direto à tabela de cursos
       try {
-        const coursesResponse = await getBaserowRows(coursesTableId);
+        const coursesResponse = await getBaserowRows(modulesTableId);
         setDirectTestResult(prev => prev + `\n✅ Tabela de cursos acessível. Registros: ${coursesResponse.results.length}`);
       } catch (err) {
         setDirectTestResult(prev => prev + `\n❌ Erro ao acessar tabela de cursos: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
@@ -44,7 +44,7 @@ const TestCourseAPI: React.FC = () => {
       
       // Testar acesso direto à tabela de módulos
       try {
-        const modulesResponse = await getBaserowRows(modulesTableId);
+        const modulesResponse = await getBaserowRows(lessonsTableId);
         setDirectTestResult(prev => prev + `\n✅ Tabela de módulos acessível. Registros: ${modulesResponse.results.length}`);
       } catch (err) {
         setDirectTestResult(prev => prev + `\n❌ Erro ao acessar tabela de módulos: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
@@ -78,7 +78,6 @@ const TestCourseAPI: React.FC = () => {
       
       // Recarregar os módulos do curso
       const modules = await getCourseModules(courseId);
-      console.log('Módulos do curso:', modules);
       
     } catch (err) {
       setTestResult(`Erro ao criar módulo: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
@@ -96,17 +95,36 @@ const TestCourseAPI: React.FC = () => {
     try {
       setLoading(true);
       const courseId = courses[0].id;
-      
-      console.log('Testando getCourseModules para curso ID:', courseId);
-      
       const modules = await getCourseModules(courseId);
-      console.log('Módulos retornados:', modules);
-      
-      setTestResult(`Módulos encontrados: ${modules.length}\n${modules.map(m => `- ${m.title} (ID: ${m.id})`).join('\n')}`);
-      
+      setTestResult(`Módulos encontrados: ${modules.length}`);
     } catch (err) {
       setTestResult(`Erro ao buscar módulos: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
-      console.error('Erro detalhado:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const testGetModuleLessons = async () => {
+    if (courses.length === 0) {
+      setTestResult('Nenhum curso disponível para testar');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const courseId = courses[0].id;
+      const modules = await getCourseModules(courseId);
+      
+      if (modules.length === 0) {
+        setTestResult('Nenhum módulo encontrado para testar aulas');
+        return;
+      }
+
+      const moduleId = modules[0].id;
+      const lessons = await getModuleLessons(moduleId);
+      setTestResult(`Aulas encontradas para o módulo ${moduleId}: ${lessons.length}`);
+    } catch (err) {
+      setTestResult(`Erro ao buscar aulas: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
     } finally {
       setLoading(false);
     }
@@ -117,16 +135,12 @@ const TestCourseAPI: React.FC = () => {
       setLoading(true);
       const modulesTableId = parseInt(import.meta.env.VITE_BASEROW_COURSE_MODULES_TABLE_ID || '0');
       
-      console.log('Testando acesso direto à tabela de módulos, ID:', modulesTableId);
-      
       const response = await getBaserowRows(modulesTableId);
-      console.log('Resposta completa da API de módulos:', response);
       
       setDirectTestResult(`Tabela de módulos acessível.\nTotal de registros: ${response.results.length}\n\nRegistros encontrados:\n${response.results.map((item: any) => `- ID: ${item.id}, Título: ${item.title || 'N/A'}, Course ID: ${item.course_id || 'N/A'}`).join('\n')}`);
       
     } catch (err) {
       setDirectTestResult(`Erro ao acessar tabela de módulos: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
-      console.error('Erro detalhado:', err);
     } finally {
       setLoading(false);
     }
@@ -137,16 +151,12 @@ const TestCourseAPI: React.FC = () => {
       setLoading(true);
       const lessonsTableId = parseInt(import.meta.env.VITE_BASEROW_COURSE_LESSONS_TABLE_ID || '0');
       
-      console.log('Testando acesso direto à tabela de aulas, ID:', lessonsTableId);
-      
       const response = await getBaserowRows(lessonsTableId);
-      console.log('Resposta completa da API de aulas:', response);
       
       setDirectTestResult(`Tabela de aulas acessível.\nTotal de registros: ${response.results.length}\n\nRegistros encontrados:\n${response.results.map((item: any) => `- ID: ${item.id}, Título: ${item.title || 'N/A'}, Module ID: ${item.module_id || 'N/A'}`).join('\n')}`);
       
     } catch (err) {
       setDirectTestResult(`Erro ao acessar tabela de aulas: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
-      console.error('Erro detalhado:', err);
     } finally {
       setLoading(false);
     }
@@ -179,8 +189,6 @@ const TestCourseAPI: React.FC = () => {
         moduleId = modules[0].id;
       }
       
-      console.log('Criando aula para módulo ID:', moduleId);
-      
       const newLesson = await createLesson({
         module_id: moduleId,
         title: 'Aula de Teste',
@@ -197,7 +205,6 @@ const TestCourseAPI: React.FC = () => {
       
     } catch (err) {
       setTestResult(`Erro ao criar aula: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
-      console.error('Erro detalhado:', err);
     } finally {
       setLoading(false);
     }
@@ -283,6 +290,14 @@ const TestCourseAPI: React.FC = () => {
           className="bg-teal-500 text-white px-4 py-2 rounded hover:bg-teal-600 disabled:opacity-50"
         >
           {loading ? 'Testando...' : 'Testar Listagem de Módulos'}
+        </button>
+        
+        <button
+          onClick={testGetModuleLessons}
+          disabled={loading || courses.length === 0}
+          className="bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600 disabled:opacity-50"
+        >
+          {loading ? 'Testando...' : 'Testar Listagem de Aulas'}
         </button>
         
         <button

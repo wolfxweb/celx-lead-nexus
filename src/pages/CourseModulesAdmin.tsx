@@ -154,8 +154,6 @@ const CourseModulesAdmin: React.FC = () => {
         lessonData.quiz_data = lessonFormData.quiz_data;
       }
 
-      console.log('📤 Dados da aula a serem enviados:', lessonData);
-
       if (editingLesson) {
         await updateLesson(editingLesson.id, lessonData);
         toast({ title: "Aula atualizada!" });
@@ -186,13 +184,13 @@ const CourseModulesAdmin: React.FC = () => {
   const handleEditLesson = (lesson: CourseLesson) => {
     setEditingLesson(lesson);
     setLessonFormData({
-      title: lesson.title,
-      content_type: lesson.content_type,
-      video_url: lesson.video_url,
-      pdf_file: lesson.pdf_file,
-      text_content: lesson.text_content,
-      quiz_data: lesson.quiz_data,
-      order: String(lesson.order),
+      title: lesson.title || '',
+      content_type: lesson.content_type || 'video',
+      video_url: lesson.video_url || '',
+      pdf_file: lesson.pdf_file || '',
+      text_content: lesson.text_content || '',
+      quiz_data: lesson.quiz_data || '',
+      order: String(lesson.order || 1),
       is_free_preview: lesson.is_free_preview ? 'true' : 'false',
     });
     setIsLessonDialogOpen(true);

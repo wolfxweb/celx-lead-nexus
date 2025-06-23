@@ -40,18 +40,11 @@ const CourseAdmin: React.FC = () => {
   const fetchCourses = async () => {
     try {
       setIsLoadingCourses(true);
-      console.log('Buscando cursos...');
       const fetchedCourses = await getAllCourses();
-      console.log('Cursos encontrados:', fetchedCourses);
       setCourses(fetchedCourses);
-      setFilteredCourses(fetchedCourses);
     } catch (error) {
       console.error('Erro ao buscar cursos:', error);
-      toast({
-        title: "Erro ao buscar cursos",
-        description: "Não foi possível carregar os cursos.",
-        variant: "destructive",
-      });
+      toast({ title: "Erro ao carregar cursos", variant: "destructive" });
     } finally {
       setIsLoadingCourses(false);
     }
@@ -107,10 +100,10 @@ const CourseAdmin: React.FC = () => {
   const handleEdit = (course: Course) => {
     setEditingCourse(course);
     setFormData({
-      title: course.title,
-      description: course.description,
-      cover_image: course.cover_image,
-      instructor_id: course.instructor_id,
+      title: course.title || '',
+      description: course.description || '',
+      cover_image: course.cover_image || '',
+      instructor_id: course.instructor_id || '',
       is_published: course.is_published ? 'true' : 'false',
     });
     setIsDialogOpen(true);

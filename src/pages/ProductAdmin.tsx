@@ -93,18 +93,11 @@ const ProductAdmin: React.FC = () => {
   const fetchProducts = async () => {
     try {
       setIsLoadingProducts(true);
-      console.log('Buscando produtos...');
       const { products: fetchedProducts } = await getAllProducts();
-      console.log('Produtos encontrados:', fetchedProducts);
       setProducts(fetchedProducts);
-      setFilteredProducts(fetchedProducts);
     } catch (error) {
       console.error('Erro ao buscar produtos:', error);
-      toast({
-        title: "Erro ao buscar produtos",
-        description: "Não foi possível carregar os produtos.",
-        variant: "destructive",
-      });
+      toast({ title: "Erro ao carregar produtos", variant: "destructive" });
     } finally {
       setIsLoadingProducts(false);
     }
@@ -234,20 +227,20 @@ const ProductAdmin: React.FC = () => {
   const handleEdit = (product: BaserowProduct) => {
     setEditingProduct(product);
     setFormData({
-      name: product.name,
-      description: product.description,
-      shortDescription: product.short_description,
-      price: product.price,
-      originalPrice: product.original_price,
-      category_id: product.category_id,
-      tags: product.tags,
-      image: product.image,
-      images: product.images,
-      video: product.video_url,
-      fileSize: product.file_size,
-      fileType: product.file_type,
-      isActive: product.is_active,
-      isFeatured: product.is_featured,
+      name: product.name || '',
+      description: product.description || '',
+      shortDescription: product.short_description || '',
+      price: product.price || '',
+      originalPrice: product.original_price || '',
+      category_id: product.category_id || '',
+      tags: product.tags || '',
+      image: product.image || '',
+      images: product.images || '',
+      video: product.video_url || '',
+      fileSize: product.file_size || '',
+      fileType: product.file_type || '',
+      isActive: product.is_active || 'true',
+      isFeatured: product.is_featured || 'false',
       // --> NOVOS CAMPOS
       product_type: product.product_type || 'Download',
       linked_course_id: product.linked_course_id || '',
@@ -397,34 +390,36 @@ const ProductAdmin: React.FC = () => {
     resetCategoryForm();
   };
 
-  // Cálculos de estatísticas com debug
-  const totalRevenue = products.reduce((sum, product) => {
-    const price = parseFloat(product.price) || 0;
-    const sales = parseFloat(product.sales_count) || 0;
-    const revenue = price * sales;
-    console.log(`Produto ${product.name}: Preço=${price}, Vendas=${sales}, Receita=${revenue}`);
-    return sum + revenue;
-  }, 0);
-  
-  const totalSales = products.reduce((sum, product) => {
-    const sales = parseFloat(product.sales_count) || 0;
-    console.log(`Produto ${product.name}: Vendas=${sales}`);
-    return sum + sales;
-  }, 0);
-  
-  const averageRating = products.length > 0 
-    ? products.reduce((sum, product) => {
-        const rating = parseFloat(product.rating) || 0;
-        console.log(`Produto ${product.name}: Avaliação=${rating}`);
-        return sum + rating;
-      }, 0) / products.length 
-    : 0;
+  // Função para calcular estatísticas dos produtos
+  const calculateProductStats = () => {
+    let totalRevenue = 0;
+    let totalSales = 0;
+    let totalRating = 0;
+    let ratedProducts = 0;
 
-  console.log('=== ESTATÍSTICAS FINAIS ===');
-  console.log('Total de Receita:', totalRevenue);
-  console.log('Total de Vendas:', totalSales);
-  console.log('Avaliação Média:', averageRating);
-  console.log('Número de Produtos:', products.length);
+    products.forEach(product => {
+      const price = parseFloat(product.price) || 0;
+      const sales = parseInt(product.sales_count) || 0;
+      const rating = parseFloat(product.rating) || 0;
+
+      totalRevenue += price * sales;
+      totalSales += sales;
+
+      if (rating > 0) {
+        totalRating += rating;
+        ratedProducts++;
+      }
+    });
+
+    const averageRating = ratedProducts > 0 ? totalRating / ratedProducts : 0;
+
+    return {
+      totalRevenue,
+      totalSales,
+      averageRating,
+      productCount: products.length
+    };
+  };
 
   return (
     <div className="p-8">
@@ -720,7 +715,7 @@ const ProductAdmin: React.FC = () => {
                   <DollarSign className="w-8 h-8 text-green-600" />
                   <div>
                     <p className="text-sm text-gray-600">Receita Total</p>
-                    <p className="text-2xl font-bold">{formatPrice(totalRevenue.toString())}</p>
+                    <p className="text-2xl font-bold">{formatPrice(calculateProductStats().totalRevenue.toString())}</p>
                   </div>
                 </div>
               </CardContent>
@@ -732,7 +727,7 @@ const ProductAdmin: React.FC = () => {
                   <Users className="w-8 h-8 text-purple-600" />
                   <div>
                     <p className="text-sm text-gray-600">Total de Vendas</p>
-                    <p className="text-2xl font-bold">{totalSales}</p>
+                    <p className="text-2xl font-bold">{calculateProductStats().totalSales}</p>
                   </div>
                 </div>
               </CardContent>
@@ -744,7 +739,7 @@ const ProductAdmin: React.FC = () => {
                   <Star className="w-8 h-8 text-yellow-600" />
                   <div>
                     <p className="text-sm text-gray-600">Avaliação Média</p>
-                    <p className="text-2xl font-bold">{averageRating.toFixed(1)}</p>
+                    <p className="text-2xl font-bold">{calculateProductStats().averageRating.toFixed(1)}</p>
                   </div>
                 </div>
               </CardContent>

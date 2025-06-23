@@ -95,10 +95,8 @@ const Produtos = () => {
     }
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleLeadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    console.log('Lead capturado:', leadForm);
     
     toast({
       title: "Lead enviado com sucesso!",
@@ -265,7 +263,7 @@ const Produtos = () => {
             </div>
             
             <CardContent className="p-8">
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleLeadSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <Label htmlFor="nome" className="text-sm font-semibold text-gray-700">Nome Completo *</Label>

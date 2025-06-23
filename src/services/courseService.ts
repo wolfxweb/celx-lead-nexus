@@ -236,7 +236,6 @@ export const createModule = async (moduleData: Omit<CourseModule, 'id' | 'create
 export const createLesson = async (lessonData: Omit<CourseLesson, 'id' | 'created_at' | 'updated_at'>): Promise<CourseLesson> => {
   try {
     const payload = buildPayload(lessonData, ALL_TABLES.COURSE_LESSONS.fields);
-    console.log('Enviando payload para criar aula:', payload);
     const newLesson = await createBaserowRow<any>(LESSONS_TABLE_ID, payload);
     return mapToLesson(newLesson);
   } catch (error: any) {
@@ -297,7 +296,6 @@ export const updateModule = async (id: number, moduleData: Partial<Omit<CourseMo
 export const updateLesson = async (id: number, lessonData: Partial<Omit<CourseLesson, 'id' | 'created_at' | 'updated_at'>>): Promise<CourseLesson> => {
   try {
     const payload = buildPayload(lessonData, ALL_TABLES.COURSE_LESSONS.fields);
-    console.log(`Enviando payload para atualizar aula ${id}:`, payload);
     const updatedLesson = await updateBaserowRow<any>(LESSONS_TABLE_ID, id, payload);
     return mapToLesson(updatedLesson);
   } catch (error: any) {
@@ -348,9 +346,7 @@ export const deleteLesson = async (id: number): Promise<void> => {
  */
 export const debugGetTableFields = async (tableId: number): Promise<any[]> => {
   try {
-    console.log(`Buscando campos para a tabela ID: ${tableId}`);
     const fields = await getBaserowFields(tableId);
-    console.log(`Campos encontrados para a tabela ${tableId}:`, fields);
     return fields;
   } catch (error) {
     console.error(`Erro ao buscar campos para a tabela ${tableId}:`, error);

@@ -201,7 +201,6 @@ export const createBaserowRow = async <T = BaserowRow>(
   tableId: number,
   data: Record<string, any>
 ): Promise<T> => {
-  console.log(`[DEBUG] createBaserowRow: Chamando API para tableId: ${tableId}`);
   const endpoint = `/database/rows/table/${tableId}/?user_field_names=true`;
   return baserowRequest<T>(endpoint, {
     method: 'POST',
