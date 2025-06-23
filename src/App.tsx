@@ -35,6 +35,7 @@ import MeusCursos from './pages/MeusCursos';
 import CursoDetalhes from './pages/CursoDetalhes';
 import UserLayout from '@/components/UserLayout';
 import TestCourseAPI from '@/components/TestCourseAPI';
+import DebugFieldsPage from './pages/DebugFieldsPage';
 import './index.css';
 
 // Componente para gerenciar pop-ups nas páginas públicas
@@ -136,6 +137,9 @@ function App() {
       <CartProvider>
         <Router>
           <Routes>
+            {/* Adicionar a Rota de Debug */}
+            <Route path="/debug-fields" element={<DebugFieldsPage />} />
+
             {/* Admin Routes with AdminLayout */}
             <Route
               path="/admin"

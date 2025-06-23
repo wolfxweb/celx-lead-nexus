@@ -1,5 +1,5 @@
 id,module_id,title,content_type,video_url,pdf_file,text_content,quiz_data,order,is_free_preview,created_at,updated_at
-1,1,"Aula 1: O que é Automação?","video","https://www.youtube.com/watch?v=example",,"","",1,"true","2024-07-25T10:03:00Z","2024-07-25T10:03:00Z"
-2,1,"Aula 2: Configurando seu Ambiente","text",,,"Configure seu ambiente de desenvolvimento seguindo estes passos...","",2,"false","2024-07-25T10:04:00Z","2024-07-25T10:04:00Z"
-3,2,"Aula 3: Usando a Ferramenta X","pdf",,"[{""url"":""https://example.com/aula3.pdf""}]","",3,"false","2024-07-25T10:05:00Z","2024-07-25T10:05:00Z"
-4,2,"Aula 4: Quiz do Módulo 2","quiz",,,,"[{""question"":""Qual ferramenta é melhor para X?"",""options"":[""A"",""B""],""answer"":""A""}]",4,"false","2024-07-25T10:06:00Z","2024-07-25T10:06:00Z" 
+1,1,"Aula 1: O que é Automação?","video","https://www.youtube.com/watch?v=example",,"","",1,true,"2024-07-25T10:03:00Z","2024-07-25T10:03:00Z"
+2,1,"Aula 2: Configurando seu Ambiente","text",,,"Configure seu ambiente de desenvolvimento seguindo estes passos...","",2,false,"2024-07-25T10:04:00Z","2024-07-25T10:04:00Z"
+3,2,"Aula 3: Usando a Ferramenta X","pdf",,""[{""url"":""https://example.com/aula3.pdf""}]"","",3,false,"2024-07-25T10:05:00Z","2024-07-25T10:05:00Z"
+4,2,"Aula 4: Quiz do Módulo 2","quiz",,,,""[{""question"":""Qual ferramenta é melhor para X?"",""options"":[""A"",""B""],""answer"":""A""}]"",4,false,"2024-07-25T10:06:00Z","2024-07-25T10:06:00Z" 

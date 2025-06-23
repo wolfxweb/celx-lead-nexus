@@ -3,7 +3,12 @@ import { useParams, Link } from 'react-router-dom';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, HelpCircle, FileText, Video, MessageSquare } from 'lucide-react';
+import { CheckCircle, HelpCircle, FileText, Video, MessageSquare, Loader2 } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { createLessonDoubt } from '@/services/courseService';
+// Mock - Supondo que você tenha um jeito de pegar o usuário logado
+const MOCK_USER_ID = 1; 
 
 // --- Tipos de Dados ---
 interface Lesson {
@@ -53,6 +58,10 @@ const lessonContent: { [key: number]: LessonContentData } = {
 // --- Componente ---
 const CursoDetalhes = () => {
   const [activeLesson, setActiveLesson] = useState<LessonContentData>(lessonContent[1]);
+  const [activeLessonId, setActiveLessonId] = useState<number>(1);
+  const [doubtText, setDoubtText] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   const getIcon = (type: Lesson['type']) => {
     switch (type) {
@@ -67,6 +76,31 @@ const CursoDetalhes = () => {
   const handleLessonClick = (lessonId: number) => {
     if (lessonContent[lessonId]) {
       setActiveLesson(lessonContent[lessonId]);
+      setActiveLessonId(lessonId);
+    }
+  };
+
+  const handleDoubtSubmit = async () => {
+    if (doubtText.trim() === '') {
+      toast({ title: "Por favor, escreva sua dúvida.", variant: "destructive" });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    try {
+      await createLessonDoubt({
+        lesson_id: activeLessonId,
+        user_id: MOCK_USER_ID, // Substituir pelo ID do usuário real
+        doubt_text: doubtText,
+      });
+
+      toast({ title: "Dúvida enviada com sucesso!" });
+      setDoubtText('');
+    } catch (error) {
+      console.error(error);
+      toast({ title: "Erro ao enviar dúvida.", description: "Tente novamente mais tarde.", variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -127,8 +161,18 @@ const CursoDetalhes = () => {
           <Card>
             <CardHeader><CardTitle>Faça sua pergunta</CardTitle></CardHeader>
             <CardContent>
-              <textarea className="w-full p-2 border rounded" rows="4" placeholder="Digite sua dúvida aqui..."></textarea>
-              <Button className="mt-4">Enviar Dúvida</Button>
+              <Textarea
+                className="w-full p-2 border rounded"
+                rows={4}
+                placeholder="Digite sua dúvida aqui..."
+                value={doubtText}
+                onChange={(e) => setDoubtText(e.target.value)}
+                disabled={isSubmitting}
+              />
+              <Button className="mt-4" onClick={handleDoubtSubmit} disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                {isSubmitting ? 'Enviando...' : 'Enviar Dúvida'}
+              </Button>
             </CardContent>
           </Card>
         </div>

@@ -13,6 +13,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { getBaserowFields } from '@/lib/baserow';
+import { ALL_TABLES } from '@/config/baserowTables';
 
 import { 
   getCourse, 
@@ -129,17 +131,30 @@ const CourseModulesAdmin: React.FC = () => {
     }
 
     try {
-      const lessonData = {
+      // Criar objeto base com campos obrigatórios
+      const lessonData: any = {
         module_id: selectedModuleId,
         title: lessonFormData.title,
         content_type: lessonFormData.content_type,
-        video_url: lessonFormData.video_url,
-        pdf_file: lessonFormData.pdf_file,
-        text_content: lessonFormData.text_content,
-        quiz_data: lessonFormData.quiz_data,
         order: parseInt(lessonFormData.order),
         is_free_preview: lessonFormData.is_free_preview === 'true',
       };
+
+      // Adicionar campos opcionais apenas se tiverem valor
+      if (lessonFormData.video_url.trim() !== '') {
+        lessonData.video_url = lessonFormData.video_url;
+      }
+      if (lessonFormData.pdf_file.trim() !== '') {
+        lessonData.pdf_file = lessonFormData.pdf_file;
+      }
+      if (lessonFormData.text_content.trim() !== '') {
+        lessonData.text_content = lessonFormData.text_content;
+      }
+      if (lessonFormData.quiz_data.trim() !== '') {
+        lessonData.quiz_data = lessonFormData.quiz_data;
+      }
+
+      console.log('📤 Dados da aula a serem enviados:', lessonData);
 
       if (editingLesson) {
         await updateLesson(editingLesson.id, lessonData);
@@ -467,12 +482,11 @@ const CourseModulesAdmin: React.FC = () => {
                     </Button>
                     <Dialog open={isLessonDialogOpen} onOpenChange={setIsLessonDialogOpen}>
                       <DialogTrigger asChild>
-                        <Button onClick={resetLessonForm}>
-                          <Plus className="mr-2 h-4 w-4" />
-                          Nova Aula
+                        <Button>
+                          <Plus className="mr-2 h-4 w-4" /> Adicionar Aula
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+                      <DialogContent className="sm:max-w-[625px]">
                         <DialogHeader>
                           <DialogTitle>{editingLesson ? 'Editar Aula' : 'Adicionar Nova Aula'}</DialogTitle>
                         </DialogHeader>
@@ -600,6 +614,18 @@ const CourseModulesAdmin: React.FC = () => {
                         </form>
                       </DialogContent>
                     </Dialog>
+                    <Button 
+                      variant="outline" 
+                      onClick={async () => {
+                        try {
+                          toast({ title: 'Buscando campos...', description: 'Verifique o console do navegador.' });
+                          await getBaserowFields(ALL_TABLES.COURSE_LESSONS.id);
+                        } catch (e) {
+                          toast({ title: 'Erro no Debug', description: 'Não foi possível buscar os campos.', variant: 'destructive' });
+                        }
+                      }}>
+                      Debug Fields
+                    </Button>
                   </div>
                 )}
               </div>
@@ -684,4 +710,4 @@ const CourseModulesAdmin: React.FC = () => {
   );
 };
 
-export default CourseModulesAdmin; 
+export default CourseModulesAdmin;

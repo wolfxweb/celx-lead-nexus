@@ -1,11 +1,18 @@
-import { getBaserowRows, createBaserowRow, updateBaserowRow, deleteBaserowRow, BASEROW_CONFIG } from '@/lib/baserow';
-import { getTableId, ALL_TABLES, createFieldFilter } from '@/config/baserowTables';
+import {
+  getBaserowRows,
+  createBaserowRow,
+  updateBaserowRow,
+  deleteBaserowRow,
+  getBaserowFields,
+  type BaserowField
+} from '@/lib/baserow';
+import { ALL_TABLES } from '@/config/baserowTables';
 
 // Acessa os campos através do objeto exportado que já fez o merge
-const fields = ALL_TABLES.COURSES.fields;
-const COURSES_TABLE_ID = getTableId('COURSES');
-const MODULES_TABLE_ID = getTableId('COURSE_MODULES');
-const LESSONS_TABLE_ID = getTableId('COURSE_LESSONS');
+const { COURSE_LESSONS: lessonFields, COURSE_MODULES: moduleFields, ...restFields } = ALL_TABLES;
+const COURSES_TABLE_ID = ALL_TABLES.COURSES.id;
+const MODULES_TABLE_ID = ALL_TABLES.COURSE_MODULES.id;
+const LESSONS_TABLE_ID = ALL_TABLES.COURSE_LESSONS.id;
 
 // Definindo a interface para um curso, baseado nos campos da tabela
 export interface Course {
@@ -47,53 +54,71 @@ export interface CourseLesson {
   updated_at: string;
 }
 
+// Interface para dúvidas de aula
+export interface LessonDoubt {
+  id: number;
+  lesson_id: number;
+  user_id: number;
+  doubt_text: string;
+  answer_text?: string;
+  answered_by_id?: number;
+  is_resolved: boolean;
+  created_at: string;
+  answered_at?: string;
+}
+
 // Mapeia a resposta da API para a interface Course
 // A API Baserow retorna os dados com os nomes dos campos como chaves
-const mapToCourse = (data: any): Course => {
-  console.log('🔄 mapToCourse - dados recebidos:', data);
-  console.log('🔄 mapToCourse - campos disponíveis:', fields);
-  
-  const result = {
-    id: data.id,
-    title: data[fields.title],
-    description: data[fields.description],
-    cover_image: data[fields.cover_image],
-    instructor_id: data[fields.instructor_id],
-    product_id: data[fields.product_id],
-    is_published: data[fields.is_published],
-    created_at: data[fields.created_at],
-    updated_at: data[fields.updated_at],
-  };
-  
-  console.log('🔄 mapToCourse - resultado:', result);
-  return result;
-};
+const mapToCourse = (data: any): Course => ({
+  id: data.id,
+  title: data[ALL_TABLES.COURSES.fields.title] || '',
+  description: data[ALL_TABLES.COURSES.fields.description] || '',
+  cover_image: data[ALL_TABLES.COURSES.fields.cover_image] || '',
+  instructor_id: data[ALL_TABLES.COURSES.fields.instructor_id],
+  product_id: data[ALL_TABLES.COURSES.fields.product_id],
+  is_published: Boolean(data[ALL_TABLES.COURSES.fields.is_published]),
+  created_at: data[ALL_TABLES.COURSES.fields.created_at] || '',
+  updated_at: data[ALL_TABLES.COURSES.fields.updated_at] || '',
+});
 
 // Mapeia a resposta da API para a interface CourseModule
 const mapToModule = (data: any): CourseModule => ({
   id: data.id,
-  course_id: data[ALL_TABLES.COURSE_MODULES.fields.course_id],
-  title: data[ALL_TABLES.COURSE_MODULES.fields.title],
-  description: data[ALL_TABLES.COURSE_MODULES.fields.description],
-  order: Number(data[ALL_TABLES.COURSE_MODULES.fields.order]),
-  created_at: data[ALL_TABLES.COURSE_MODULES.fields.created_at],
-  updated_at: data[ALL_TABLES.COURSE_MODULES.fields.updated_at],
+  course_id: data[moduleFields.fields.course_id],
+  title: data[moduleFields.fields.title] || '',
+  description: data[moduleFields.fields.description] || '',
+  order: Number(data[moduleFields.fields.order]) || 1,
+  created_at: data[moduleFields.fields.created_at] || '',
+  updated_at: data[moduleFields.fields.updated_at] || '',
 });
 
 // Mapeia a resposta da API para a interface CourseLesson
 const mapToLesson = (data: any): CourseLesson => ({
   id: data.id,
-  module_id: data[ALL_TABLES.COURSE_LESSONS.fields.module_id],
-  title: data[ALL_TABLES.COURSE_LESSONS.fields.title],
-  content_type: data[ALL_TABLES.COURSE_LESSONS.fields.content_type],
-  video_url: data[ALL_TABLES.COURSE_LESSONS.fields.video_url],
-  pdf_file: data[ALL_TABLES.COURSE_LESSONS.fields.pdf_file],
-  text_content: data[ALL_TABLES.COURSE_LESSONS.fields.text_content],
-  quiz_data: data[ALL_TABLES.COURSE_LESSONS.fields.quiz_data],
-  order: Number(data[ALL_TABLES.COURSE_LESSONS.fields.order]),
-  is_free_preview: data[ALL_TABLES.COURSE_LESSONS.fields.is_free_preview],
-  created_at: data[ALL_TABLES.COURSE_LESSONS.fields.created_at],
-  updated_at: data[ALL_TABLES.COURSE_LESSONS.fields.updated_at],
+  module_id: data[lessonFields.fields.module_id],
+  title: data[lessonFields.fields.title] || '',
+  content_type: data[lessonFields.fields.content_type] || 'video',
+  video_url: data[lessonFields.fields.video_url] || '',
+  pdf_file: data[lessonFields.fields.pdf_file] || '',
+  text_content: data[lessonFields.fields.text_content] || '',
+  quiz_data: data[lessonFields.fields.quiz_data] || '',
+  order: Number(data[lessonFields.fields.order]) || 1,
+  is_free_preview: Boolean(data[lessonFields.fields.is_free_preview]),
+  created_at: data[lessonFields.fields.created_at] || '',
+  updated_at: data[lessonFields.fields.updated_at] || '',
+});
+
+// Mapeia a resposta da API para a interface LessonDoubt
+const mapToLessonDoubt = (data: any): LessonDoubt => ({
+  id: data.id,
+  lesson_id: data[lessonFields.fields.lesson_id],
+  user_id: data[lessonFields.fields.user_id],
+  doubt_text: data[lessonFields.fields.doubt_text] || '',
+  answer_text: data[lessonFields.fields.answer_text] || '',
+  answered_by_id: data[lessonFields.fields.answered_by_id],
+  is_resolved: Boolean(data[lessonFields.fields.is_resolved]),
+  created_at: data[lessonFields.fields.created_at] || '',
+  answered_at: data[lessonFields.fields.answered_at] || '',
 });
 
 /**
@@ -103,7 +128,7 @@ export const getAllCourses = async (): Promise<Course[]> => {
   try {
     console.log('🔍 Buscando todos os cursos...');
     console.log('🔍 Usando tabela ID:', COURSES_TABLE_ID);
-    console.log('🔍 Campos disponíveis:', fields);
+    console.log('🔍 Campos disponíveis:', ALL_TABLES.COURSES.fields);
     
     const response = await getBaserowRows<any>(COURSES_TABLE_ID);
     console.log('📊 Resposta completa da API de cursos:', response);
@@ -113,12 +138,12 @@ export const getAllCourses = async (): Promise<Course[]> => {
     response.results.forEach((item: any, index: number) => {
       console.log(`📋 Curso ${index}:`, {
         id: item.id,
-        title: item[fields.title],
-        description: item[fields.description],
-        cover_image: item[fields.cover_image],
-        instructor_id: item[fields.instructor_id],
-        product_id: item[fields.product_id],
-        is_published: item[fields.is_published]
+        title: item[ALL_TABLES.COURSES.fields.title],
+        description: item[ALL_TABLES.COURSES.fields.description],
+        cover_image: item[ALL_TABLES.COURSES.fields.cover_image],
+        instructor_id: item[ALL_TABLES.COURSES.fields.instructor_id],
+        product_id: item[ALL_TABLES.COURSES.fields.product_id],
+        is_published: item[ALL_TABLES.COURSES.fields.is_published]
       });
     });
     
@@ -158,7 +183,7 @@ export const getCourseModules = async (courseId: number): Promise<CourseModule[]
   try {
     console.log('🔍 Buscando módulos para curso ID:', courseId);
     console.log('🔍 Usando tabela ID:', MODULES_TABLE_ID);
-    console.log('🔍 Campo course_id:', ALL_TABLES.COURSE_MODULES.fields.course_id);
+    console.log('🔍 Campo course_id:', moduleFields.fields.course_id);
     
     console.log('📡 Fazendo requisição para getBaserowRows...');
     const response = await getBaserowRows<any>(MODULES_TABLE_ID);
@@ -169,25 +194,25 @@ export const getCourseModules = async (courseId: number): Promise<CourseModule[]
     response.results.forEach((item: any, index: number) => {
       console.log(`📋 Registro ${index}:`, {
         id: item.id,
-        course_id: item[ALL_TABLES.COURSE_MODULES.fields.course_id],
-        course_id_type: typeof item[ALL_TABLES.COURSE_MODULES.fields.course_id],
-        title: item[ALL_TABLES.COURSE_MODULES.fields.title],
-        description: item[ALL_TABLES.COURSE_MODULES.fields.description],
-        order: item[ALL_TABLES.COURSE_MODULES.fields.order]
+        course_id: item[moduleFields.fields.course_id],
+        course_id_type: typeof item[moduleFields.fields.course_id],
+        title: item[moduleFields.fields.title],
+        description: item[moduleFields.fields.description],
+        order: item[moduleFields.fields.order]
       });
     });
     
     console.log('🔍 Iniciando filtro...');
     const modules = response.results
       .filter((item: any) => {
-        const itemCourseId = item[ALL_TABLES.COURSE_MODULES.fields.course_id];
+        const itemCourseId = item[moduleFields.fields.course_id];
         // Converter para número para garantir comparação correta
         const itemCourseIdNum = parseInt(itemCourseId);
         console.log(`🔍 Comparando: item.course_id (${itemCourseId}, tipo: ${typeof itemCourseId}) === courseId (${courseId}, tipo: ${typeof courseId})`);
         console.log(`🔍 Após conversão: itemCourseIdNum (${itemCourseIdNum}) === courseId (${courseId})`);
         return itemCourseIdNum === courseId;
       })
-      .sort((a: any, b: any) => Number(a[ALL_TABLES.COURSE_MODULES.fields.order]) - Number(b[ALL_TABLES.COURSE_MODULES.fields.order]));
+      .sort((a: any, b: any) => Number(a[moduleFields.fields.order]) - Number(b[moduleFields.fields.order]));
     
     console.log('✅ Módulos filtrados:', modules.length);
     console.log('🔄 Aplicando mapToModule...');
@@ -207,13 +232,46 @@ export const getCourseModules = async (courseId: number): Promise<CourseModule[]
  */
 export const getModuleLessons = async (moduleId: number): Promise<CourseLesson[]> => {
   try {
+    console.log('🔍 Buscando aulas para módulo ID:', moduleId);
+    console.log('🔍 Usando tabela ID:', LESSONS_TABLE_ID);
+    console.log('🔍 Campo module_id:', lessonFields.fields.module_id);
+    
     const response = await getBaserowRows<any>(LESSONS_TABLE_ID);
+    console.log('📊 Resposta completa da API de aulas:', response);
+    console.log('📊 Total de registros:', response.results.length);
+    
+    // Log de todos os registros para debug
+    response.results.forEach((item: any, index: number) => {
+      console.log(`📋 Aula ${index}:`, {
+        id: item.id,
+        module_id: item[lessonFields.fields.module_id],
+        module_id_type: typeof item[lessonFields.fields.module_id],
+        title: item[lessonFields.fields.title],
+        content_type: item[lessonFields.fields.content_type],
+        order: item[lessonFields.fields.order]
+      });
+    });
+    
     const lessons = response.results
-      .filter((item: any) => item[ALL_TABLES.COURSE_LESSONS.fields.module_id] === moduleId)
-      .sort((a: any, b: any) => Number(a[ALL_TABLES.COURSE_LESSONS.fields.order]) - Number(b[ALL_TABLES.COURSE_LESSONS.fields.order]));
-    return lessons.map(mapToLesson);
+      .filter((item: any) => {
+        const itemModuleId = item[lessonFields.fields.module_id];
+        // Converter para número para garantir comparação correta
+        const itemModuleIdNum = parseInt(itemModuleId);
+        console.log(`🔍 Comparando: item.module_id (${itemModuleId}, tipo: ${typeof itemModuleId}) === moduleId (${moduleId}, tipo: ${typeof moduleId})`);
+        console.log(`🔍 Após conversão: itemModuleIdNum (${itemModuleIdNum}) === moduleId (${moduleId})`);
+        return itemModuleIdNum === moduleId;
+      })
+      .sort((a: any, b: any) => Number(a[lessonFields.fields.order]) - Number(b[lessonFields.fields.order]));
+    
+    console.log('✅ Aulas filtradas:', lessons.length);
+    console.log('🔄 Aplicando mapToLesson...');
+    const result = lessons.map(mapToLesson);
+    console.log('✅ Resultado final:', result);
+    
+    return result;
   } catch (error) {
-    console.error('Erro ao buscar aulas do módulo:', error);
+    console.error('❌ Erro detalhado ao buscar aulas do módulo:', error);
+    console.error('❌ Stack trace:', error instanceof Error ? error.stack : 'N/A');
     throw new Error('Não foi possível buscar as aulas.');
   }
 };
@@ -225,12 +283,12 @@ export const createCourse = async (courseData: Omit<Course, 'id' | 'created_at' 
   try {
     // Mapear os dados para os nomes dos campos do Baserow
     const baserowData = {
-      [fields.title]: courseData.title,
-      [fields.description]: courseData.description,
-      [fields.cover_image]: courseData.cover_image,
-      [fields.instructor_id]: courseData.instructor_id,
-      [fields.product_id]: courseData.product_id,
-      [fields.is_published]: courseData.is_published,
+      [ALL_TABLES.COURSES.fields.title]: courseData.title,
+      [ALL_TABLES.COURSES.fields.description]: courseData.description,
+      [ALL_TABLES.COURSES.fields.cover_image]: courseData.cover_image,
+      [ALL_TABLES.COURSES.fields.instructor_id]: courseData.instructor_id,
+      [ALL_TABLES.COURSES.fields.product_id]: courseData.product_id,
+      [ALL_TABLES.COURSES.fields.is_published]: courseData.is_published,
     };
     
     console.log('Enviando dados do curso para Baserow:', baserowData);
@@ -250,10 +308,10 @@ export const createModule = async (moduleData: Omit<CourseModule, 'id' | 'create
   try {
     // Mapear os dados para os nomes dos campos do Baserow
     const baserowData = {
-      [ALL_TABLES.COURSE_MODULES.fields.course_id]: moduleData.course_id,
-      [ALL_TABLES.COURSE_MODULES.fields.title]: moduleData.title,
-      [ALL_TABLES.COURSE_MODULES.fields.description]: moduleData.description,
-      [ALL_TABLES.COURSE_MODULES.fields.order]: moduleData.order,
+      [moduleFields.fields.course_id]: moduleData.course_id,
+      [moduleFields.fields.title]: moduleData.title,
+      [moduleFields.fields.description]: moduleData.description,
+      [moduleFields.fields.order]: moduleData.order,
     };
     
     console.log('Enviando dados do módulo para Baserow:', baserowData);
@@ -274,25 +332,54 @@ export const createLesson = async (lessonData: Omit<CourseLesson, 'id' | 'create
     console.log('🔍 Iniciando criação de aula...');
     console.log('🔍 Dados recebidos:', lessonData);
     console.log('🔍 LESSONS_TABLE_ID:', LESSONS_TABLE_ID);
-    console.log('🔍 Campos disponíveis:', ALL_TABLES.COURSE_LESSONS.fields);
+    console.log('🔍 Campos disponíveis:', lessonFields.fields);
     
     // Mapear os dados para os nomes dos campos do Baserow
-    const baserowData = {
-      [ALL_TABLES.COURSE_LESSONS.fields.module_id]: lessonData.module_id,
-      [ALL_TABLES.COURSE_LESSONS.fields.title]: lessonData.title,
-      [ALL_TABLES.COURSE_LESSONS.fields.content_type]: lessonData.content_type,
-      [ALL_TABLES.COURSE_LESSONS.fields.video_url]: lessonData.video_url,
-      [ALL_TABLES.COURSE_LESSONS.fields.pdf_file]: lessonData.pdf_file,
-      [ALL_TABLES.COURSE_LESSONS.fields.text_content]: lessonData.text_content,
-      [ALL_TABLES.COURSE_LESSONS.fields.quiz_data]: lessonData.quiz_data,
-      [ALL_TABLES.COURSE_LESSONS.fields.order]: lessonData.order,
-      [ALL_TABLES.COURSE_LESSONS.fields.is_free_preview]: lessonData.is_free_preview,
+    // Enviar apenas campos obrigatórios e campos com valor
+    const baserowData: Record<string, any> = {
+      [lessonFields.fields.module_id]: lessonData.module_id,
+      [lessonFields.fields.title]: lessonData.title,
+      [lessonFields.fields.content_type]: lessonData.content_type,
+      [lessonFields.fields.order]: lessonData.order,
+      // Garante que o valor enviado seja um booleano
+      [lessonFields.fields.is_free_preview]: Boolean(lessonData.is_free_preview),
     };
     
+    // Adicionar campos opcionais apenas se tiverem valor
+    if (lessonData.video_url && lessonData.video_url.trim() !== '') {
+      baserowData[lessonFields.fields.video_url] = lessonData.video_url;
+      console.log('✅ Adicionando video_url:', lessonData.video_url);
+    } else {
+      console.log('❌ video_url vazio ou não fornecido');
+    }
+    
+    if (lessonData.pdf_file && lessonData.pdf_file.trim() !== '') {
+      baserowData[lessonFields.fields.pdf_file] = lessonData.pdf_file;
+      console.log('✅ Adicionando pdf_file:', lessonData.pdf_file);
+    } else {
+      console.log('❌ pdf_file vazio ou não fornecido');
+    }
+    
+    if (lessonData.text_content && lessonData.text_content.trim() !== '') {
+      baserowData[lessonFields.fields.text_content] = lessonData.text_content;
+      console.log('✅ Adicionando text_content:', lessonData.text_content);
+    } else {
+      console.log('❌ text_content vazio ou não fornecido');
+    }
+    
+    if (lessonData.quiz_data && lessonData.quiz_data.trim() !== '') {
+      baserowData[lessonFields.fields.quiz_data] = lessonData.quiz_data;
+      console.log('✅ Adicionando quiz_data:', lessonData.quiz_data);
+    } else {
+      console.log('❌ quiz_data vazio ou não fornecido');
+    }
+    
     console.log('📤 Enviando dados da aula para Baserow:', baserowData);
+    console.log('📤 JSON stringify:', JSON.stringify(baserowData, null, 2));
     
     const response = await createBaserowRow<any>(LESSONS_TABLE_ID, baserowData);
     console.log('✅ Resposta do Baserow:', response);
+    console.log('✅ Resposta JSON:', JSON.stringify(response, null, 2));
     
     const mappedResponse = mapToLesson(response);
     console.log('✅ Aula mapeada:', mappedResponse);
@@ -306,6 +393,25 @@ export const createLesson = async (lessonData: Omit<CourseLesson, 'id' | 'create
 };
 
 /**
+ * Cria uma nova dúvida para uma aula.
+ */
+export const createLessonDoubt = async (doubtData: Omit<LessonDoubt, 'id' | 'created_at' | 'answered_at' | 'answer_text' | 'answered_by_id' | 'is_resolved'>): Promise<LessonDoubt> => {
+  try {
+    const baserowData = {
+      [lessonFields.fields.lesson_id]: doubtData.lesson_id,
+      [lessonFields.fields.user_id]: doubtData.user_id,
+      [lessonFields.fields.doubt_text]: doubtData.doubt_text,
+      [lessonFields.fields.is_resolved]: false,
+    };
+    const response = await createBaserowRow<any>(LESSONS_TABLE_ID, baserowData);
+    return mapToLessonDoubt(response);
+  } catch (error) {
+    console.error('Erro ao criar dúvida:', error);
+    throw new Error('Não foi possível criar a dúvida.');
+  }
+};
+
+/**
  * Atualiza um curso existente no Baserow.
  */
 export const updateCourse = async (id: number, courseData: Partial<Omit<Course, 'id' | 'created_at' | 'updated_at'>>): Promise<Course> => {
@@ -314,22 +420,22 @@ export const updateCourse = async (id: number, courseData: Partial<Omit<Course, 
     const baserowData: Record<string, any> = {};
     
     if (courseData.title !== undefined) {
-      baserowData[fields.title] = courseData.title;
+      baserowData[ALL_TABLES.COURSES.fields.title] = courseData.title;
     }
     if (courseData.description !== undefined) {
-      baserowData[fields.description] = courseData.description;
+      baserowData[ALL_TABLES.COURSES.fields.description] = courseData.description;
     }
     if (courseData.cover_image !== undefined) {
-      baserowData[fields.cover_image] = courseData.cover_image;
+      baserowData[ALL_TABLES.COURSES.fields.cover_image] = courseData.cover_image;
     }
     if (courseData.instructor_id !== undefined) {
-      baserowData[fields.instructor_id] = courseData.instructor_id;
+      baserowData[ALL_TABLES.COURSES.fields.instructor_id] = courseData.instructor_id;
     }
     if (courseData.product_id !== undefined) {
-      baserowData[fields.product_id] = courseData.product_id;
+      baserowData[ALL_TABLES.COURSES.fields.product_id] = courseData.product_id;
     }
     if (courseData.is_published !== undefined) {
-      baserowData[fields.is_published] = courseData.is_published;
+      baserowData[ALL_TABLES.COURSES.fields.is_published] = courseData.is_published;
     }
     
     console.log('Atualizando curso no Baserow:', baserowData);
@@ -350,16 +456,16 @@ export const updateModule = async (id: number, moduleData: Partial<Omit<CourseMo
     const baserowData: Record<string, any> = {};
     
     if (moduleData.course_id !== undefined) {
-      baserowData[ALL_TABLES.COURSE_MODULES.fields.course_id] = moduleData.course_id;
+      baserowData[moduleFields.fields.course_id] = moduleData.course_id;
     }
     if (moduleData.title !== undefined) {
-      baserowData[ALL_TABLES.COURSE_MODULES.fields.title] = moduleData.title;
+      baserowData[moduleFields.fields.title] = moduleData.title;
     }
     if (moduleData.description !== undefined) {
-      baserowData[ALL_TABLES.COURSE_MODULES.fields.description] = moduleData.description;
+      baserowData[moduleFields.fields.description] = moduleData.description;
     }
     if (moduleData.order !== undefined) {
-      baserowData[ALL_TABLES.COURSE_MODULES.fields.order] = moduleData.order;
+      baserowData[moduleFields.fields.order] = moduleData.order;
     }
     
     console.log('Atualizando módulo no Baserow:', baserowData);
@@ -379,32 +485,35 @@ export const updateLesson = async (id: number, lessonData: Partial<Omit<CourseLe
     // Mapear os dados para os nomes dos campos do Baserow
     const baserowData: Record<string, any> = {};
     
+    // Campos obrigatórios
     if (lessonData.module_id !== undefined) {
-      baserowData[ALL_TABLES.COURSE_LESSONS.fields.module_id] = lessonData.module_id;
+      baserowData[lessonFields.fields.module_id] = lessonData.module_id;
     }
     if (lessonData.title !== undefined) {
-      baserowData[ALL_TABLES.COURSE_LESSONS.fields.title] = lessonData.title;
+      baserowData[lessonFields.fields.title] = lessonData.title;
     }
     if (lessonData.content_type !== undefined) {
-      baserowData[ALL_TABLES.COURSE_LESSONS.fields.content_type] = lessonData.content_type;
-    }
-    if (lessonData.video_url !== undefined) {
-      baserowData[ALL_TABLES.COURSE_LESSONS.fields.video_url] = lessonData.video_url;
-    }
-    if (lessonData.pdf_file !== undefined) {
-      baserowData[ALL_TABLES.COURSE_LESSONS.fields.pdf_file] = lessonData.pdf_file;
-    }
-    if (lessonData.text_content !== undefined) {
-      baserowData[ALL_TABLES.COURSE_LESSONS.fields.text_content] = lessonData.text_content;
-    }
-    if (lessonData.quiz_data !== undefined) {
-      baserowData[ALL_TABLES.COURSE_LESSONS.fields.quiz_data] = lessonData.quiz_data;
+      baserowData[lessonFields.fields.content_type] = lessonData.content_type;
     }
     if (lessonData.order !== undefined) {
-      baserowData[ALL_TABLES.COURSE_LESSONS.fields.order] = lessonData.order;
+      baserowData[lessonFields.fields.order] = lessonData.order;
     }
     if (lessonData.is_free_preview !== undefined) {
-      baserowData[ALL_TABLES.COURSE_LESSONS.fields.is_free_preview] = lessonData.is_free_preview;
+      baserowData[lessonFields.fields.is_free_preview] = lessonData.is_free_preview;
+    }
+    
+    // Campos opcionais - apenas se tiverem valor
+    if (lessonData.video_url !== undefined && lessonData.video_url.trim() !== '') {
+      baserowData[lessonFields.fields.video_url] = lessonData.video_url;
+    }
+    if (lessonData.pdf_file !== undefined && lessonData.pdf_file.trim() !== '') {
+      baserowData[lessonFields.fields.pdf_file] = lessonData.pdf_file;
+    }
+    if (lessonData.text_content !== undefined && lessonData.text_content.trim() !== '') {
+      baserowData[lessonFields.fields.text_content] = lessonData.text_content;
+    }
+    if (lessonData.quiz_data !== undefined && lessonData.quiz_data.trim() !== '') {
+      baserowData[lessonFields.fields.quiz_data] = lessonData.quiz_data;
     }
     
     console.log('Atualizando aula no Baserow:', baserowData);
@@ -450,4 +559,19 @@ export const deleteLesson = async (id: number): Promise<void> => {
     console.error('Erro ao deletar aula:', error);
     throw new Error('Não foi possível deletar a aula.');
   }
-}; 
+};
+
+/**
+ * DEBUG: Busca os campos de uma tabela específica.
+ */
+export const debugGetTableFields = async (tableId: number): Promise<any[]> => {
+  try {
+    console.log(`[DEBUG] Buscando campos para a tabela ID: ${tableId}`);
+    const fields = await getBaserowFields(tableId);
+    console.log(`[DEBUG] Campos encontrados para a tabela ${tableId}:`, fields);
+    return fields;
+  } catch (error) {
+    console.error(`[DEBUG] Erro ao buscar campos para a tabela ${tableId}:`, error);
+    throw error;
+  }
+};
