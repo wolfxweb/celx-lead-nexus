@@ -357,33 +357,3 @@ export const debugGetTableFields = async (tableId: number): Promise<any[]> => {
     throw error;
   }
 };
-
-/**
- * Função de teste para debug dos módulos
- */
-export const debugModules = async (): Promise<void> => {
-  try {
-    console.log('🧪 Iniciando teste de debug dos módulos...');
-    console.log('🧪 MODULES_TABLE_ID:', MODULES_TABLE_ID);
-    
-    // Teste 1: Buscar todos os módulos
-    console.log('🧪 Teste 1: Buscando todos os módulos...');
-    const allModules = await getBaserowRows<any>(MODULES_TABLE_ID);
-    console.log('🧪 Todos os módulos:', allModules);
-    
-    // Teste 2: Buscar campos da tabela
-    console.log('🧪 Teste 2: Buscando campos da tabela...');
-    const fields = await getBaserowFields(MODULES_TABLE_ID);
-    console.log('🧪 Campos da tabela:', fields);
-    
-    // Teste 3: Tentar buscar com filtro específico
-    console.log('🧪 Teste 3: Buscando com filtro...');
-    const filteredModules = await getBaserowRows<any>(MODULES_TABLE_ID, {
-      filter: { course_id: 1 }
-    });
-    console.log('🧪 Módulos filtrados por course_id=1:', filteredModules);
-    
-  } catch (error) {
-    console.error('🧪 Erro no teste de debug:', error);
-  }
-};

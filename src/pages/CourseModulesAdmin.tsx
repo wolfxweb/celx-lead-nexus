@@ -26,7 +26,6 @@ import {
   createLesson, 
   updateLesson, 
   deleteLesson,
-  debugModules,
   type Course, 
   type CourseModule, 
   type CourseLesson 
@@ -255,42 +254,10 @@ const CourseModulesAdmin: React.FC = () => {
   const getContentTypeIcon = (type: string) => {
     switch (type) {
       case 'video': return <Video className="w-4 h-4" />;
-      case 'pdf': return <FileText className="w-4 h-4" />;
-      case 'text': return <File className="w-4 h-4" />;
-      case 'quiz': return <Play className="w-4 h-4" />;
+      case 'pdf': return <File className="w-4 h-4" />;
+      case 'text': return <FileText className="w-4 h-4" />;
+      case 'quiz': return <Search className="w-4 h-4" />;
       default: return <File className="w-4 h-4" />;
-    }
-  };
-
-  const testCreateLesson = async () => {
-    if (!selectedModuleId) {
-      toast({ title: "Selecione um módulo primeiro", variant: "destructive" });
-      return;
-    }
-
-    try {
-      console.log('🧪 Testando criação de aula...');
-      const testLessonData = {
-        module_id: selectedModuleId,
-        title: 'Aula de Teste',
-        content_type: 'text' as const,
-        video_url: '',
-        pdf_file: '',
-        text_content: 'Esta é uma aula de teste criada via botão de teste.',
-        quiz_data: '',
-        order: 1,
-        is_free_preview: false,
-      };
-
-      console.log('🧪 Dados de teste:', testLessonData);
-      const result = await createLesson(testLessonData);
-      console.log('🧪 Resultado:', result);
-      
-      toast({ title: "Aula de teste criada com sucesso!" });
-      await fetchCourseData();
-    } catch (error) {
-      console.error('🧪 Erro no teste:', error);
-      toast({ title: "Erro no teste de criação", variant: "destructive" });
     }
   };
 
@@ -474,13 +441,6 @@ const CourseModulesAdmin: React.FC = () => {
                 </div>
                 {modules.length > 0 && (
                   <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={testCreateLesson}
-                      disabled={!selectedModuleId}
-                    >
-                      🧪 Teste
-                    </Button>
                     <Dialog open={isLessonDialogOpen} onOpenChange={setIsLessonDialogOpen}>
                       <DialogTrigger asChild>
                         <Button>
@@ -615,18 +575,6 @@ const CourseModulesAdmin: React.FC = () => {
                         </form>
                       </DialogContent>
                     </Dialog>
-                    <Button 
-                      variant="outline" 
-                      onClick={async () => {
-                        try {
-                          toast({ title: 'Buscando campos...', description: 'Verifique o console do navegador.' });
-                          await getBaserowFields(ALL_TABLES.COURSE_LESSONS.id);
-                        } catch (e) {
-                          toast({ title: 'Erro no Debug', description: 'Não foi possível buscar os campos.', variant: 'destructive' });
-                        }
-                      }}>
-                      Debug Fields
-                    </Button>
                   </div>
                 )}
               </div>
