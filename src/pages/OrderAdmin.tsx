@@ -272,50 +272,98 @@ const OrderAdmin: React.FC = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <Package className="w-8 h-8 text-blue-600" />
+              <DollarSign className="w-6 h-6 text-green-600" />
               <div>
-                <p className="text-sm text-gray-600">Total de Pedidos</p>
-                <p className="text-2xl font-bold">{totalOrders}</p>
+                <p className="text-xs text-gray-600">Receita</p>
+                <p className="text-lg font-bold">{formatPrice(totalRevenue)}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <DollarSign className="w-8 h-8 text-green-600" />
+              <Package className="w-6 h-6 text-blue-600" />
               <div>
-                <p className="text-sm text-gray-600">Receita Total</p>
-                <p className="text-2xl font-bold">{formatPrice(totalRevenue)}</p>
+                <p className="text-xs text-gray-600">Total</p>
+                <p className="text-lg font-bold">{totalOrders}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <CheckCircle className="w-8 h-8 text-green-600" />
+              <Clock className="w-6 h-6 text-yellow-600" />
               <div>
-                <p className="text-sm text-gray-600">Pedidos Concluídos</p>
-                <p className="text-2xl font-bold">{completedOrders}</p>
+                <p className="text-xs text-gray-600">Pendentes</p>
+                <p className="text-lg font-bold">{pendingOrders}</p>
               </div>
             </div>
           </CardContent>
         </Card>
         
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <Clock className="w-8 h-8 text-yellow-600" />
+              <RefreshCw className="w-6 h-6 text-blue-600" />
               <div>
-                <p className="text-sm text-gray-600">Pedidos Pendentes</p>
-                <p className="text-2xl font-bold">{pendingOrders}</p>
+                <p className="text-xs text-gray-600">Processando</p>
+                <p className="text-lg font-bold">{orders.filter(order => order.status === 'processing').length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <CheckCircle className="w-6 h-6 text-green-600" />
+              <div>
+                <p className="text-xs text-gray-600">Concluídos</p>
+                <p className="text-lg font-bold">{completedOrders}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <XCircle className="w-6 h-6 text-red-600" />
+              <div>
+                <p className="text-xs text-gray-600">Cancelados</p>
+                <p className="text-lg font-bold">{orders.filter(order => order.status === 'cancelled').length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <Users className="w-6 h-6 text-purple-600" />
+              <div>
+                <p className="text-xs text-gray-600">Reembolsados</p>
+                <p className="text-lg font-bold">{orders.filter(order => order.status === 'refunded').length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <XCircle className="w-6 h-6 text-red-500" />
+              <div>
+                <p className="text-xs text-gray-600">Falharam</p>
+                <p className="text-lg font-bold">{orders.filter(order => order.payment_status === 'failed').length}</p>
               </div>
             </div>
           </CardContent>
