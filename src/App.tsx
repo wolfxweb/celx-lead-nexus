@@ -42,6 +42,7 @@ import WhatsAppSettings from '@/pages/WhatsAppSettings';
 import WhatsAppHistory from '@/pages/WhatsAppHistory';
 import WhatsAppReports from '@/pages/WhatsAppReports';
 import WhatsAppWebhooks from '@/pages/WhatsAppWebhooks';
+import WhatsAppLicenses from '@/pages/WhatsAppLicenses';
 import './index.css';
 
 // Componente para gerenciar pop-ups nas páginas públicas
@@ -242,6 +243,17 @@ function App() {
                 <ProtectedRoute allowedRoles={['admin']}>
                   <AdminLayout>
                     <WhatsAppInstances />
+                  </AdminLayout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/admin/whatsapp/licenses"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminLayout>
+                    <WhatsAppLicenses />
                   </AdminLayout>
                 </ProtectedRoute>
               }

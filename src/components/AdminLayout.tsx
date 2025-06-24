@@ -58,6 +58,12 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           description: 'Gerenciar instâncias do WhatsApp'
         },
         {
+          title: 'Licenças',
+          href: '/admin/whatsapp/licenses',
+          icon: Shield,
+          description: 'Gerenciar planos de licenças'
+        },
+        {
           title: 'Mensagens',
           href: '/admin/whatsapp/messages',
           icon: Send,

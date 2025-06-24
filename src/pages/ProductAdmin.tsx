@@ -34,6 +34,7 @@ import {
 } from '@/services/productService';
 
 import { getAllCourses, type Course } from '@/services/courseService';
+import { getWhatsAppLicenses, type WhatsAppLicense } from '@/services/whatsappService';
 
 const ProductAdmin: React.FC = () => {
   const [products, setProducts] = useState<BaserowProduct[]>([]);
@@ -60,6 +61,8 @@ const ProductAdmin: React.FC = () => {
   // --> NOVOS ESTADOS
   const [courses, setCourses] = useState<Course[]>([]);
   const [isLoadingCourses, setIsLoadingCourses] = useState(true);
+  const [whatsappLicenses, setWhatsappLicenses] = useState<WhatsAppLicense[]>([]);
+  const [isLoadingLicenses, setIsLoadingLicenses] = useState(true);
   // <-- FIM NOVOS ESTADOS
 
   const { toast } = useToast();
@@ -79,10 +82,9 @@ const ProductAdmin: React.FC = () => {
     fileType: '',
     isActive: 'true',
     isFeatured: 'false',
-    // --> NOVOS CAMPOS
     product_type: 'Download',
     linked_course_id: '',
-    // <-- FIM NOVOS CAMPOS
+    whatsapp_license_id: '',
   });
 
   useEffect(() => {
@@ -120,7 +122,18 @@ const ProductAdmin: React.FC = () => {
       setIsLoadingCourses(false);
     }
   };
-  // <-- FIM NOVA FUNÇÃO
+
+  const fetchLicenses = async () => {
+    try {
+      setIsLoadingLicenses(true);
+      const licenses = await getWhatsAppLicenses();
+      setWhatsappLicenses(licenses);
+    } catch (error) {
+      toast({ title: 'Erro ao buscar licenças WhatsApp', variant: 'destructive' });
+    } finally {
+      setIsLoadingLicenses(false);
+    }
+  };
 
   // Hook para buscar categorias do Baserow
   const fetchCategories = async () => {
@@ -143,6 +156,7 @@ const ProductAdmin: React.FC = () => {
     fetchCategories();
     fetchProducts();
     fetchCourses();
+    fetchLicenses();
   }, [toast]);
 
   const filterProducts = () => {
@@ -175,7 +189,7 @@ const ProductAdmin: React.FC = () => {
     e.preventDefault();
     
     try {
-      const productData: any = { // Usar 'any' temporariamente para flexibilidade
+      const productData: any = {
         name: formData.name,
         description: formData.description,
         short_description: formData.shortDescription,
@@ -191,18 +205,19 @@ const ProductAdmin: React.FC = () => {
         sales_count: editingProduct?.sales_count || '0',
         rating: editingProduct?.rating || '0',
         product_type: formData.product_type,
+        whatsapp_license_id: formData.product_type === 'Licença WhatsApp' ? formData.whatsapp_license_id : '',
       };
 
       if (formData.product_type === 'Curso') {
         productData.linked_course_id = formData.linked_course_id;
-        // Limpar campos de download se for curso
         productData.file_size = '';
         productData.file_type = '';
-      } else {
+        productData.whatsapp_license_id = '';
+      } else if (formData.product_type === 'Download') {
         productData.file_size = formData.fileSize;
         productData.file_type = formData.fileType;
-        // Limpar campo de curso se for download
         productData.linked_course_id = '';
+        productData.whatsapp_license_id = '';
       }
 
       if (editingProduct) {
@@ -241,9 +256,9 @@ const ProductAdmin: React.FC = () => {
       fileType: product.file_type || '',
       isActive: product.is_active || 'true',
       isFeatured: product.is_featured || 'false',
-      // --> NOVOS CAMPOS
       product_type: product.product_type || 'Download',
       linked_course_id: product.linked_course_id || '',
+      whatsapp_license_id: product.whatsapp_license_id || '',
     });
     setIsDialogOpen(true);
   };
@@ -277,9 +292,9 @@ const ProductAdmin: React.FC = () => {
       fileType: '',
       isActive: 'true',
       isFeatured: 'false',
-      // --> NOVOS CAMPOS
       product_type: 'Download',
       linked_course_id: '',
+      whatsapp_license_id: '',
     });
     setEditingProduct(null);
   };
@@ -465,6 +480,7 @@ const ProductAdmin: React.FC = () => {
                     <SelectContent>
                       <SelectItem value="Download">Produto Digital (Download)</SelectItem>
                       <SelectItem value="Curso">Curso Online</SelectItem>
+                      <SelectItem value="Licença WhatsApp">Licença WhatsApp</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -545,6 +561,34 @@ const ProductAdmin: React.FC = () => {
                       Nenhum curso encontrado. <a href="/admin/cursos" className="text-primary hover:underline">Criar um curso primeiro</a>.
                     </p>
                   )}
+                </div>
+              )}
+
+              {formData.product_type === 'Licença WhatsApp' && (
+                <div className="space-y-2">
+                  <Label htmlFor="whatsapp_license_id">Plano/Licença WhatsApp</Label>
+                  <Select
+                    value={formData.whatsapp_license_id}
+                    onValueChange={(value) => setFormData({ ...formData, whatsapp_license_id: value })}
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o plano/licença" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {isLoadingLicenses ? (
+                        <SelectItem value="loading" disabled>Carregando planos...</SelectItem>
+                      ) : whatsappLicenses.length === 0 ? (
+                        <SelectItem value="no-licenses" disabled>Nenhum plano disponível</SelectItem>
+                      ) : (
+                        whatsappLicenses.map(license => (
+                          <SelectItem key={license.id} value={license.id}>
+                            {license.name} - {license.price ? `R$ ${license.price}` : ''}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
 

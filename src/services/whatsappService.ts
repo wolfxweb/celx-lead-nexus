@@ -45,6 +45,26 @@ export interface WhatsAppSettings {
   updated_at: string;
 }
 
+export interface WhatsAppLicense {
+  id: string;
+  name: string;
+  description: string;
+  short_description: string;
+  price: string;
+  original_price?: string;
+  license_type: string;
+  instance_limit: string;
+  message_limit: string;
+  duration_days: string;
+  features: string;
+  is_active: boolean;
+  is_featured: boolean;
+  sales_count: string;
+  rating: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // Função auxiliar para obter o usuário logado
 const getCurrentUserId = (): number => {
   const userStr = localStorage.getItem('celx_user');
@@ -349,4 +369,46 @@ export const getWhatsAppReports = async (instanceId?: string, startDate?: string
   };
   
   return reports;
+};
+
+export const getWhatsAppLicenses = async (): Promise<WhatsAppLicense[]> => {
+  const tableId = BASEROW_TABLES.WHATSAPP_LICENSES.id;
+  const response = await baserowRequest<{ results: WhatsAppLicense[] }>(
+    `/database/rows/table/${tableId}/?user_field_names=true&filter__field_is_active__equal=true`
+  );
+  return response.results || [];
+};
+
+export const createWhatsAppLicense = async (licenseData: Partial<WhatsAppLicense>): Promise<WhatsAppLicense> => {
+  const tableId = BASEROW_TABLES.WHATSAPP_LICENSES.id;
+  const response = await baserowRequest<WhatsAppLicense>(
+    `/database/rows/table/${tableId}/?user_field_names=true`,
+    {
+      method: 'POST',
+      body: JSON.stringify(licenseData)
+    }
+  );
+  return response;
+};
+
+export const updateWhatsAppLicense = async (licenseId: string, licenseData: Partial<WhatsAppLicense>): Promise<WhatsAppLicense> => {
+  const tableId = BASEROW_TABLES.WHATSAPP_LICENSES.id;
+  const response = await baserowRequest<WhatsAppLicense>(
+    `/database/rows/table/${tableId}/${licenseId}/?user_field_names=true`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(licenseData)
+    }
+  );
+  return response;
+};
+
+export const deleteWhatsAppLicense = async (licenseId: string): Promise<void> => {
+  const tableId = BASEROW_TABLES.WHATSAPP_LICENSES.id;
+  await baserowRequest(
+    `/database/rows/table/${tableId}/${licenseId}/`,
+    {
+      method: 'DELETE'
+    }
+  );
 }; 

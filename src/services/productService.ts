@@ -33,6 +33,7 @@ export interface BaserowProduct {
   updated_at: string;
   product_type: string;
   linked_course_id: string;
+  whatsapp_license_id: string; // NOVO CAMPO
 }
 
 // Função para obter todos os produtos

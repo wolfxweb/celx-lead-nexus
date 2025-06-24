@@ -240,6 +240,48 @@ export const BASEROW_TABLES = {
       created_at: 'created_at',
       updated_at: 'updated_at',
     }
+  },
+
+  // Tabela de licenças do WhatsApp
+  WHATSAPP_LICENSES: {
+    id: parseInt(import.meta.env.VITE_BASEROW_WHATSAPP_LICENSES_TABLE_ID || '647'),
+    fields: {
+      id: 'id',
+      name: 'name',
+      description: 'description',
+      short_description: 'short_description',
+      price: 'price',
+      original_price: 'original_price',
+      license_type: 'license_type',
+      instance_limit: 'instance_limit',
+      message_limit: 'message_limit',
+      duration_days: 'duration_days',
+      features: 'features',
+      is_active: 'is_active',
+      is_featured: 'is_featured',
+      sales_count: 'sales_count',
+      rating: 'rating',
+      created_at: 'created_at',
+      updated_at: 'updated_at',
+    }
+  },
+
+  // Tabela de compras de licenças do WhatsApp
+  WHATSAPP_LICENSE_PURCHASES: {
+    id: parseInt(import.meta.env.VITE_BASEROW_WHATSAPP_LICENSE_PURCHASES_TABLE_ID || '648'),
+    fields: {
+      id: 'id',
+      user_id: 'user_id',
+      license_id: 'license_id',
+      purchase_date: 'purchase_date',
+      expiry_date: 'expiry_date',
+      status: 'status',
+      instances_created: 'instances_created',
+      messages_sent: 'messages_sent',
+      payment_status: 'payment_status',
+      created_at: 'created_at',
+      updated_at: 'updated_at',
+    }
   }
 };
 
