@@ -180,6 +180,66 @@ export const BASEROW_TABLES = {
       timestamp: 'timestamp',
       created_at: 'created_at',
     }
+  },
+
+  // Tabela de instâncias do WhatsApp
+  WHATSAPP_INSTANCES: {
+    id: parseInt(import.meta.env.VITE_BASEROW_WHATSAPP_INSTANCES_TABLE_ID || '643'),
+    fields: {
+      id: 'id',
+      name: 'name',
+      phone: 'phone',
+      status: 'status',
+      qr_code: 'qr_code',
+      user_id: 'user_id',
+      created_at: 'created_at',
+      updated_at: 'updated_at',
+    }
+  },
+
+  // Tabela de mensagens do WhatsApp
+  WHATSAPP_MESSAGES: {
+    id: parseInt(import.meta.env.VITE_BASEROW_WHATSAPP_MESSAGES_TABLE_ID || '644'),
+    fields: {
+      id: 'id',
+      instance_id: 'instance_id',
+      to: 'to',
+      message: 'message',
+      type: 'type',
+      status: 'status',
+      scheduled_at: 'scheduled_at',
+      sent_at: 'sent_at',
+      created_at: 'created_at',
+      user_id: 'user_id',
+    }
+  },
+
+  // Tabela de webhooks do WhatsApp
+  WHATSAPP_WEBHOOKS: {
+    id: parseInt(import.meta.env.VITE_BASEROW_WHATSAPP_WEBHOOKS_TABLE_ID || '645'),
+    fields: {
+      id: 'id',
+      instance_id: 'instance_id',
+      url: 'url',
+      events: 'events',
+      is_active: 'is_active',
+      created_at: 'created_at',
+      user_id: 'user_id',
+    }
+  },
+
+  // Tabela de configurações do WhatsApp
+  WHATSAPP_SETTINGS: {
+    id: parseInt(import.meta.env.VITE_BASEROW_WHATSAPP_SETTINGS_TABLE_ID || '646'),
+    fields: {
+      id: 'id',
+      user_id: 'user_id',
+      evolution_api_url: 'evolution_api_url',
+      evolution_api_key: 'evolution_api_key',
+      default_instance_id: 'default_instance_id',
+      created_at: 'created_at',
+      updated_at: 'updated_at',
+    }
   }
 };
 

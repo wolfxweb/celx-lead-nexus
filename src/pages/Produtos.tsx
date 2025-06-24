@@ -98,19 +98,29 @@ const Produtos = () => {
   const handleLeadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    toast({
-      title: "Lead enviado com sucesso!",
-      description: "Entraremos em contato em breve.",
-    });
+    try {
+      // Aqui você pode adicionar a lógica para salvar o lead
+      // await saveLead(leadForm);
+      
+      toast({
+        title: "Lead enviado com sucesso!",
+        description: "Entraremos em contato em breve.",
+      });
 
-    setLeadForm({
-      nome: '',
-      email: '',
-      empresa: '',
-      telefone: '',
-      produto: '',
-      mensagem: ''
-    });
+      setLeadForm({
+        nome: '',
+        email: '',
+        empresa: '',
+        telefone: '',
+        produto: '',
+        mensagem: ''
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao enviar lead",
+        description: "Tente novamente em alguns instantes.",
+      });
+    }
   };
 
   const handleLinkedInConnect = () => {

@@ -1,0 +1,4 @@
+id,name,phone,status,qr_code,user_id,created_at,updated_at
+1,"WhatsApp Principal","+5511999999999","disconnected","",1,"2024-01-15T10:00:00Z","2024-01-15T10:00:00Z"
+2,"WhatsApp Suporte","+5521988888888","connected","",1,"2024-01-16T14:30:00Z","2024-01-16T14:30:00Z"
+3,"WhatsApp Marketing","+5531997777777","disconnected","",2,"2024-01-17T09:15:00Z","2024-01-17T09:15:00Z" 

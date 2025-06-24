@@ -36,6 +36,12 @@ import CursoDetalhes from './pages/CursoDetalhes';
 import UserLayout from '@/components/UserLayout';
 import TestCourseAPI from '@/components/TestCourseAPI';
 import DebugFieldsPage from './pages/DebugFieldsPage';
+import WhatsAppInstances from '@/pages/WhatsAppInstances';
+import WhatsAppMessages from '@/pages/WhatsAppMessages';
+import WhatsAppSettings from '@/pages/WhatsAppSettings';
+import WhatsAppHistory from '@/pages/WhatsAppHistory';
+import WhatsAppReports from '@/pages/WhatsAppReports';
+import WhatsAppWebhooks from '@/pages/WhatsAppWebhooks';
 import './index.css';
 
 // Componente para gerenciar pop-ups nas páginas públicas
@@ -224,6 +230,73 @@ function App() {
                 <ProtectedRoute allowedRoles={['admin']}>
                   <AdminLayout>
                     <PopupAdmin />
+                  </AdminLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* WhatsApp Routes */}
+            <Route
+              path="/admin/whatsapp/instances"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminLayout>
+                    <WhatsAppInstances />
+                  </AdminLayout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/admin/whatsapp/messages"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminLayout>
+                    <WhatsAppMessages />
+                  </AdminLayout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/admin/whatsapp/settings"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminLayout>
+                    <WhatsAppSettings />
+                  </AdminLayout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/admin/whatsapp/history"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminLayout>
+                    <WhatsAppHistory />
+                  </AdminLayout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/admin/whatsapp/reports"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminLayout>
+                    <WhatsAppReports />
+                  </AdminLayout>
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/admin/whatsapp/webhooks"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminLayout>
+                    <WhatsAppWebhooks />
                   </AdminLayout>
                 </ProtectedRoute>
               }
