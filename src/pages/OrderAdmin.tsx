@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Search, Filter, Package, DollarSign, Users, Calendar, Eye, CheckCircle, XCircle, Clock } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Filter, Package, DollarSign, Users, Calendar, Eye, CheckCircle, XCircle, Clock, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -8,125 +8,184 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
-import { Order, OrderStatus, PaymentStatus } from '@/types/ecommerce';
+import { useToast } from '@/hooks/use-toast';
+import { BaserowOrder, BaserowOrderItem, createOrderItem, updateOrderStatus } from '@/services/orderService';
+import { getProduct } from '@/services/productService';
+import { getUserById } from '@/services/authService';
 
-// Mock orders data
-const mockOrders: Order[] = [
-  {
-    id: '1',
-    userId: 'user1',
-    userName: 'João Silva',
-    userEmail: 'joao@example.com',
-    items: [
-      {
-        productId: '1',
-        productName: 'Template de Landing Page Premium',
-        productImage: '/images/products/landing-template.jpg',
-        price: 97.00,
-        quantity: 1,
-        downloadUrl: 'https://example.com/downloads/landing-template.zip'
-      }
-    ],
-    total: 97.00,
-    status: 'completed',
-    paymentMethod: 'credit',
-    paymentStatus: 'paid',
-    createdAt: new Date('2024-12-15'),
-    updatedAt: new Date('2024-12-15'),
-    downloadLinks: [
-      {
-        productId: '1',
-        productName: 'Template de Landing Page Premium',
-        downloadUrl: 'https://example.com/downloads/landing-template.zip',
-        expiresAt: new Date('2025-12-15'),
-        downloadCount: 2
-      }
-    ]
-  },
-  {
-    id: '2',
-    userId: 'user2',
-    userName: 'Maria Santos',
-    userEmail: 'maria@example.com',
-    items: [
-      {
-        productId: '4',
-        productName: 'E-book: Guia de Vendas Online',
-        productImage: '/images/products/sales-ebook.jpg',
-        price: 37.00,
-        quantity: 1,
-        downloadUrl: 'https://example.com/downloads/sales-ebook.pdf'
-      },
-      {
-        productId: '5',
-        productName: 'Kit de Ícones Premium',
-        productImage: '/images/products/icon-kit.jpg',
-        price: 47.00,
-        quantity: 1,
-        downloadUrl: 'https://example.com/downloads/icon-kit.zip'
-      }
-    ],
-    total: 84.00,
-    status: 'processing',
-    paymentMethod: 'pix',
-    paymentStatus: 'paid',
-    createdAt: new Date('2024-12-16'),
-    updatedAt: new Date('2024-12-16'),
-    downloadLinks: [
-      {
-        productId: '4',
-        productName: 'E-book: Guia de Vendas Online',
-        downloadUrl: 'https://example.com/downloads/sales-ebook.pdf',
-        expiresAt: new Date('2025-12-16'),
-        downloadCount: 1
-      },
-      {
-        productId: '5',
-        productName: 'Kit de Ícones Premium',
-        downloadUrl: 'https://example.com/downloads/icon-kit.zip',
-        expiresAt: new Date('2025-12-16'),
-        downloadCount: 0
-      }
-    ]
-  },
-  {
-    id: '3',
-    userId: 'user3',
-    userName: 'Pedro Costa',
-    userEmail: 'pedro@example.com',
-    items: [
-      {
-        productId: '2',
-        productName: 'Curso de Marketing Digital',
-        productImage: '/images/products/marketing-course.jpg',
-        price: 297.00,
-        quantity: 1,
-        downloadUrl: 'https://example.com/downloads/marketing-course.zip'
-      }
-    ],
-    total: 297.00,
-    status: 'pending',
-    paymentMethod: 'boleto',
-    paymentStatus: 'pending',
-    createdAt: new Date('2024-12-17'),
-    updatedAt: new Date('2024-12-17'),
-    downloadLinks: []
-  }
-];
+// Interface para pedidos com informações completas
+interface OrderWithDetails extends BaserowOrder {
+  items: (BaserowOrderItem & {
+    productName: string;
+    productImage: string;
+  })[];
+  userName: string;
+  userEmail: string;
+}
 
 const OrderAdmin: React.FC = () => {
-  const [orders, setOrders] = useState<Order[]>(mockOrders);
+  const [orders, setOrders] = useState<OrderWithDetails[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedPaymentStatus, setSelectedPaymentStatus] = useState<string>('all');
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<OrderWithDetails | null>(null);
+  const { toast } = useToast();
+
+  // Função para tratar URLs de imagem (igual à página da loja)
+  const getImageUrl = (imageUrl: string) => {
+    if (!imageUrl || imageUrl.trim() === '') {
+      return 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=500&h=300&fit=crop';
+    }
+    
+    let processedUrl = imageUrl.trim();
+    
+    // Se a URL não tem protocolo, adicionar https://
+    if (!processedUrl.startsWith('http://') && !processedUrl.startsWith('https://')) {
+      processedUrl = `https://${processedUrl}`;
+    }
+    
+    // Verificar se é uma URL válida
+    try {
+      new URL(processedUrl);
+      return processedUrl;
+    } catch (error) {
+      return 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=500&h=300&fit=crop';
+    }
+  };
+
+  // Componente de imagem com fallback (igual à página da loja)
+  const ProductImage = ({ src, alt, className }: { src: string; alt: string; className: string }) => {
+    const [imageSrc, setImageSrc] = useState(src);
+    const [hasError, setHasError] = useState(false);
+
+    const fallbackImage = 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=500&h=300&fit=crop';
+
+    const handleError = () => {
+      if (!hasError) {
+        console.log('Erro ao carregar imagem:', src);
+        setImageSrc(fallbackImage);
+        setHasError(true);
+      }
+    };
+
+    return (
+      <img
+        src={imageSrc}
+        alt={alt}
+        className={className}
+        onError={handleError}
+        loading="lazy"
+      />
+    );
+  };
+
+  // Função para carregar todos os pedidos com detalhes
+  const loadOrders = async () => {
+    setLoading(true);
+    try {
+      // Buscar todos os pedidos
+      const response = await fetch(`${import.meta.env.VITE_BASEROW_API_URL}/database/rows/table/${import.meta.env.VITE_BASEROW_ORDERS_TABLE_ID}/?user_field_names=true&size=100&order_by=-created_at`, {
+        headers: {
+          'Authorization': `Token ${import.meta.env.VITE_BASEROW_TOKEN}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao buscar pedidos');
+      }
+
+      const ordersData = await response.json();
+      
+      // Para cada pedido, buscar itens e informações do usuário
+      const ordersWithDetails: OrderWithDetails[] = [];
+      
+      for (const order of ordersData.results) {
+        try {
+          // Buscar itens do pedido
+          const itemsResponse = await fetch(`${import.meta.env.VITE_BASEROW_API_URL}/database/rows/table/${import.meta.env.VITE_BASEROW_ORDER_ITEMS_TABLE_ID}/?user_field_names=true&filter__field_order_id__equal=${order.id}`, {
+            headers: {
+              'Authorization': `Token ${import.meta.env.VITE_BASEROW_TOKEN}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          let items: (BaserowOrderItem & { productName: string; productImage: string })[] = [];
+          
+          if (itemsResponse.ok) {
+            const itemsData = await itemsResponse.json();
+            
+            // Para cada item, buscar informações do produto
+            for (const item of itemsData.results) {
+              try {
+                const product = await getProduct(parseInt(item.product_id));
+                items.push({
+                  ...item,
+                  productName: product.name,
+                  productImage: getImageUrl(product.image) // Usar a função getImageUrl
+                });
+              } catch (error) {
+                console.error(`Erro ao buscar produto ${item.product_id}:`, error);
+                items.push({
+                  ...item,
+                  productName: `Produto ${item.product_id}`,
+                  productImage: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=500&h=300&fit=crop'
+                });
+              }
+            }
+          }
+
+          // Buscar informações do usuário se não for guest
+          let userName = order.guest_name || 'Cliente';
+          let userEmail = order.guest_email || 'N/A';
+          
+          if (order.user_id && order.user_id !== '') {
+            try {
+              const user = await getUserById(order.user_id);
+              if (user) {
+                userName = user.name || user.email || userName;
+                userEmail = user.email || userEmail;
+              }
+            } catch (error) {
+              console.error(`Erro ao buscar usuário ${order.user_id}:`, error);
+            }
+          }
+
+          ordersWithDetails.push({
+            ...order,
+            items,
+            userName,
+            userEmail
+          });
+        } catch (error) {
+          console.error(`Erro ao processar pedido ${order.id}:`, error);
+        }
+      }
+
+      setOrders(ordersWithDetails);
+    } catch (error) {
+      console.error('Erro ao carregar pedidos:', error);
+      toast({
+        title: "Erro ao carregar pedidos",
+        description: "Não foi possível carregar os pedidos. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadOrders();
+  }, []);
 
   const filteredOrders = orders.filter(order => {
     const matchesSearch = order.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          order.userEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.id.toLowerCase().includes(searchTerm.toLowerCase());
+                         order.id.toString().includes(searchTerm.toLowerCase());
     const matchesStatus = selectedStatus === 'all' || order.status === selectedStatus;
-    const matchesPaymentStatus = selectedPaymentStatus === 'all' || order.paymentStatus === selectedPaymentStatus;
+    const matchesPaymentStatus = selectedPaymentStatus === 'all' || order.payment_status === selectedPaymentStatus;
     return matchesSearch && matchesStatus && matchesPaymentStatus;
   });
 
@@ -137,47 +196,66 @@ const OrderAdmin: React.FC = () => {
     }).format(price);
   };
 
-  const formatDate = (date: Date) => {
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
     return date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   };
 
-  const getStatusBadge = (status: OrderStatus) => {
-    const statusConfig = {
+  const getStatusBadge = (status: string) => {
+    const statusConfig: Record<string, { label: string; className: string }> = {
       pending: { label: 'Pendente', className: 'bg-yellow-100 text-yellow-800' },
       processing: { label: 'Processando', className: 'bg-blue-100 text-blue-800' },
       completed: { label: 'Concluído', className: 'bg-green-100 text-green-800' },
       cancelled: { label: 'Cancelado', className: 'bg-red-100 text-red-800' },
-      refunded: { label: 'Reembolsado', className: 'bg-gray-100 text-gray-800' }
-    };
-    
-    const config = statusConfig[status];
-    return <Badge className={config.className}>{config.label}</Badge>;
-  };
-
-  const getPaymentStatusBadge = (status: PaymentStatus) => {
-    const statusConfig = {
-      pending: { label: 'Pendente', className: 'bg-yellow-100 text-yellow-800' },
+      refunded: { label: 'Reembolsado', className: 'bg-gray-100 text-gray-800' },
       paid: { label: 'Pago', className: 'bg-green-100 text-green-800' },
-      failed: { label: 'Falhou', className: 'bg-red-100 text-red-800' },
-      refunded: { label: 'Reembolsado', className: 'bg-gray-100 text-gray-800' }
+      failed: { label: 'Falhou', className: 'bg-red-100 text-red-800' }
     };
     
-    const config = statusConfig[status];
+    const config = statusConfig[status] || { label: status, className: 'bg-gray-100 text-gray-800' };
     return <Badge className={config.className}>{config.label}</Badge>;
   };
 
-  const handleStatusUpdate = (orderId: string, newStatus: OrderStatus) => {
-    setOrders(orders.map(order =>
-      order.id === orderId
-        ? { ...order, status: newStatus, updatedAt: new Date() }
-        : order
-    ));
+  const handleStatusUpdate = async (orderId: string, newStatus: string) => {
+    try {
+      await updateOrderStatus(orderId, newStatus);
+      
+      // Atualizar o estado local
+      setOrders(orders.map(order =>
+        order.id === parseInt(orderId)
+          ? { ...order, status: newStatus, updated_at: new Date().toISOString() }
+          : order
+      ));
+
+      toast({
+        title: "Status atualizado",
+        description: "O status do pedido foi atualizado com sucesso.",
+      });
+    } catch (error) {
+      console.error('Erro ao atualizar status:', error);
+      toast({
+        title: "Erro ao atualizar status",
+        description: "Não foi possível atualizar o status do pedido.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
+  const totalRevenue = orders.reduce((sum, order) => sum + parseFloat(order.total), 0);
   const totalOrders = orders.length;
   const completedOrders = orders.filter(order => order.status === 'completed').length;
   const pendingOrders = orders.filter(order => order.status === 'pending').length;
+
+  if (loading) {
+    return (
+      <div className="p-8 flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
+          <p className="text-gray-600">Carregando pedidos...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8">
@@ -187,6 +265,10 @@ const OrderAdmin: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900">Gestão de Pedidos</h1>
           <p className="text-gray-600 mt-2">Gerencie todos os pedidos da sua loja</p>
         </div>
+        <Button onClick={loadOrders} variant="outline">
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Atualizar
+        </Button>
       </div>
 
       {/* Stats */}
@@ -319,7 +401,7 @@ const OrderAdmin: React.FC = () => {
                     <div className="space-y-1">
                       {order.items.map((item, index) => (
                         <div key={index} className="flex items-center gap-2">
-                          <img
+                          <ProductImage
                             src={item.productImage}
                             alt={item.productName}
                             className="w-6 h-6 rounded object-cover"
@@ -333,14 +415,14 @@ const OrderAdmin: React.FC = () => {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <span className="font-medium">{formatPrice(order.total)}</span>
+                    <span className="font-medium">{formatPrice(parseFloat(order.total))}</span>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col gap-1">
                       {getStatusBadge(order.status)}
                       <Select
                         value={order.status}
-                        onValueChange={(value: OrderStatus) => handleStatusUpdate(order.id, value)}
+                        onValueChange={(value: string) => handleStatusUpdate(order.id.toString(), value)}
                       >
                         <SelectTrigger className="w-32">
                           <SelectValue />
@@ -357,15 +439,15 @@ const OrderAdmin: React.FC = () => {
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col gap-1">
-                      {getPaymentStatusBadge(order.paymentStatus)}
+                      {getStatusBadge(order.payment_status)}
                       <span className="text-xs text-gray-600 capitalize">
-                        {order.paymentMethod}
+                        {order.payment_method}
                       </span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="text-sm">
-                      <p>{formatDate(order.createdAt)}</p>
+                      <p>{formatDate(order.created_at)}</p>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -398,7 +480,7 @@ const OrderAdmin: React.FC = () => {
 };
 
 interface OrderDetailsProps {
-  order: Order | null;
+  order: OrderWithDetails | null;
 }
 
 const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
@@ -411,8 +493,35 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
     }).format(price);
   };
 
-  const formatDate = (date: Date) => {
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
     return date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  // Componente de imagem com fallback para os detalhes
+  const ProductImage = ({ src, alt, className }: { src: string; alt: string; className: string }) => {
+    const [imageSrc, setImageSrc] = useState(src);
+    const [hasError, setHasError] = useState(false);
+
+    const fallbackImage = 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=500&h=300&fit=crop';
+
+    const handleError = () => {
+      if (!hasError) {
+        console.log('Erro ao carregar imagem:', src);
+        setImageSrc(fallbackImage);
+        setHasError(true);
+      }
+    };
+
+    return (
+      <img
+        src={imageSrc}
+        alt={alt}
+        className={className}
+        onError={handleError}
+        loading="lazy"
+      />
+    );
   };
 
   return (
@@ -442,7 +551,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
         <div className="space-y-3">
           {order.items.map((item, index) => (
             <div key={index} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-              <img
+              <ProductImage
                 src={item.productImage}
                 alt={item.productName}
                 className="w-12 h-12 rounded object-cover"
@@ -452,8 +561,8 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                 <p className="text-sm text-gray-600">Quantidade: {item.quantity}</p>
               </div>
               <div className="text-right">
-                <p className="font-medium">{formatPrice(item.price * item.quantity)}</p>
-                <p className="text-sm text-gray-600">{formatPrice(item.price)} cada</p>
+                <p className="font-medium">{formatPrice(parseFloat(item.price) * parseInt(item.quantity))}</p>
+                <p className="text-sm text-gray-600">{formatPrice(parseFloat(item.price))} cada</p>
               </div>
             </div>
           ))}
@@ -469,7 +578,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
           <div className="space-y-2">
             <div className="flex justify-between">
               <span>Subtotal:</span>
-              <span>{formatPrice(order.total)}</span>
+              <span>{formatPrice(parseFloat(order.total))}</span>
             </div>
             <div className="flex justify-between">
               <span>Taxa de processamento:</span>
@@ -478,7 +587,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
             <Separator />
             <div className="flex justify-between font-semibold">
               <span>Total:</span>
-              <span>{formatPrice(order.total)}</span>
+              <span>{formatPrice(parseFloat(order.total))}</span>
             </div>
           </div>
         </div>
@@ -496,39 +605,27 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
           </div>
           <div>
             <p className="text-sm text-gray-600">Status do Pagamento</p>
-            <p className="font-medium capitalize">{order.paymentStatus}</p>
+            <p className="font-medium capitalize">{order.payment_status}</p>
           </div>
           <div>
             <p className="text-sm text-gray-600">Método de Pagamento</p>
-            <p className="font-medium capitalize">{order.paymentMethod}</p>
+            <p className="font-medium capitalize">{order.payment_method}</p>
           </div>
           <div>
             <p className="text-sm text-gray-600">Data do Pedido</p>
-            <p className="font-medium">{formatDate(order.createdAt)}</p>
+            <p className="font-medium">{formatDate(order.created_at)}</p>
           </div>
         </div>
       </div>
 
-      {/* Download Links */}
-      {order.downloadLinks.length > 0 && (
+      {/* Notes */}
+      {order.notes && (
         <>
           <Separator />
           <div>
-            <h3 className="font-semibold mb-3">Links de Download</h3>
-            <div className="space-y-2">
-              {order.downloadLinks.map((link, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                  <div>
-                    <p className="font-medium">{link.productName}</p>
-                    <p className="text-sm text-gray-600">
-                      Downloads: {link.downloadCount} | Expira: {link.expiresAt.toLocaleDateString('pt-BR')}
-                    </p>
-                  </div>
-                  <Button size="sm" variant="outline">
-                    Ver Link
-                  </Button>
-                </div>
-              ))}
+            <h3 className="font-semibold mb-3">Observações</h3>
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-sm">{order.notes}</p>
             </div>
           </div>
         </>

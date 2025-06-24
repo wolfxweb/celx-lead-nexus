@@ -18,7 +18,8 @@ import {
   Database,
   Shield,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Home
 } from 'lucide-react';
 
 const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -208,6 +209,16 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
           {/* User Menu */}
           <div className="p-4 border-t border-gray-200">
+            <Button
+              variant="ghost"
+              asChild
+              className="w-full justify-start text-gray-600 hover:text-gray-900 mb-2"
+            >
+              <Link to="/">
+                <Home className="w-5 h-5 mr-3" />
+                Voltar para o Site
+              </Link>
+            </Button>
             <Button
               variant="ghost"
               onClick={logout}
