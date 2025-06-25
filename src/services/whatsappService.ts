@@ -504,39 +504,45 @@ export const deleteWhatsAppInstanceAsAdmin = async (instanceId: string): Promise
   }
 };
 
-export const connectWhatsAppInstance = async (instanceId: string): Promise<{ qr_code?: string; status: string }> => {
+export const connectWhatsAppInstance = async (instanceId: string): Promise<{ qr_code?: string; status?: string }> => {
   const userId = getCurrentUserId();
   const tableId = BASEROW_TABLES.WHATSAPP_INSTANCES.id;
-  
-  // Primeiro verifica se a instância pertence ao usuário
+
+  // Verifica se a instância pertence ao usuário
   const instance = await baserowRequest<WhatsAppInstance>(`/database/rows/table/${tableId}/${instanceId}/?user_field_names=true`);
   if (String(instance.user_id) !== String(userId)) {
     throw new Error('Acesso negado: instância não pertence ao usuário');
   }
-  
+
   // Buscar configurações da Evolution API do usuário
   const { url, key } = await getEvolutionAPIConfig();
-  
+
+  // Buscar QR code e status via GET
   try {
-    const response = await fetch(`${url}/instance/connect/${instanceId}`, {
-      method: 'POST',
+    const response = await fetch(`${url}/instance/connect/${instance.name}`, {
+      method: 'GET',
       headers: {
         'Content-Type': 'application/json',
         'apikey': key
       }
     });
-    
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Erro na Evolution API:', response.status, errorText);
-      throw new Error(`Falha ao conectar instância: ${response.status} ${response.statusText}`);
+      throw new Error(`Erro ao buscar QR code: ${response.status} ${errorText}`);
     }
-    
     const data = await response.json();
-    return data;
+    console.log('Resposta da Evolution API:', data);
+    
+    // A Evolution API retorna o QR code no campo 'base64' como data:image/png;base64,...
+    const qrCode = data.base64 || data.qrcode || data.qr_code;
+    
+    return {
+      qr_code: qrCode,
+      status: data.status || data.connectionStatus || 'connecting'
+    };
   } catch (error) {
-    console.error('Erro ao conectar com a Evolution API:', error);
-    throw new Error(`Erro ao conectar com a Evolution API: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+    console.error('Erro ao buscar QR code na Evolution API:', error);
+    throw new Error(`Erro ao buscar QR code na Evolution API: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
   }
 };
 
@@ -814,9 +820,23 @@ export const updateWhatsAppInstanceStatus = async (instanceId: string, status: s
   
   // Primeiro verifica se a instância pertence ao usuário
   const instance = await baserowRequest<WhatsAppInstance>(`/database/rows/table/${tableId}/${instanceId}/?user_field_names=true`);
-  if (instance.user_id !== userId) {
+  if (String(instance.user_id) !== String(userId)) {
     throw new Error('Acesso negado: instância não pertence ao usuário');
   }
+  
+  const response = await baserowRequest<WhatsAppInstance>(`/database/rows/table/${tableId}/${instanceId}/?user_field_names=true`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      status: status,
+      updated_at: new Date().toISOString()
+    })
+  });
+  return response;
+};
+
+// Função para admin atualizar status de qualquer instância (usada na sincronização)
+export const updateWhatsAppInstanceStatusAsAdmin = async (instanceId: string, status: string): Promise<WhatsAppInstance> => {
+  const tableId = BASEROW_TABLES.WHATSAPP_INSTANCES.id;
   
   const response = await baserowRequest<WhatsAppInstance>(`/database/rows/table/${tableId}/${instanceId}/?user_field_names=true`, {
     method: 'PATCH',
@@ -920,4 +940,590 @@ const deleteFromEvolutionAPIById = async (instanceId: string): Promise<boolean> 
     console.warn('Erro ao conectar com Evolution API por ID:', evolutionError);
     return false;
   }
+};
+
+// Função para buscar todas as instâncias da Evolution API
+export const getEvolutionAPIInstances = async (): Promise<any[]> => {
+  const { url, key } = await getEvolutionAPIConfig();
+  
+  try {
+    const response = await fetch(`${url}/instance/fetchInstances`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': key
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Erro ao buscar instâncias da Evolution API: ${response.status}`);
+    }
+    
+    const instances = await response.json();
+    return instances || [];
+  } catch (error) {
+    console.error('Erro ao buscar instâncias da Evolution API:', error);
+    throw new Error(`Erro ao buscar instâncias da Evolution API: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+  }
+};
+
+// Função para conectar uma instância específica da Evolution API
+export const connectEvolutionAPIInstance = async (evolutionInstanceId: string): Promise<{ qr_code?: string; status: string }> => {
+  const { url, key } = await getEvolutionAPIConfig();
+  
+  try {
+    console.log('Conectando instância da Evolution API:', evolutionInstanceId);
+    
+    // Primeiro, buscar a instância para obter mais informações
+    const instances = await getEvolutionAPIInstances();
+    const instance = instances.find((inst: any) => inst.id === evolutionInstanceId);
+    
+    if (!instance) {
+      throw new Error('Instância não encontrada na Evolution API');
+    }
+    
+    console.log('Instância encontrada:', instance);
+    
+    // Tentar diferentes endpoints para conectar
+    let response;
+    let connected = false;
+    
+    // Tentativa 1: Endpoint padrão POST
+    try {
+      response = await fetch(`${url}/instance/connect/${evolutionInstanceId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': key
+        }
+      });
+      if (response.ok) {
+        connected = true;
+      }
+    } catch (e) {
+      console.log('Tentativa 1 falhou, tentando alternativa...');
+    }
+    
+    // Tentativa 2: Endpoint GET para obter QR code
+    if (!connected) {
+      try {
+        response = await fetch(`${url}/instance/connect/${evolutionInstanceId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': key
+          }
+        });
+        if (response.ok) {
+          connected = true;
+        }
+      } catch (e) {
+        console.log('Tentativa 2 falhou, tentando alternativa...');
+      }
+    }
+    
+    // Tentativa 3: Endpoint alternativo com nome
+    if (!connected) {
+      try {
+        response = await fetch(`${url}/instance/connect/${instance.name}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': key
+          }
+        });
+        if (response.ok) {
+          connected = true;
+        }
+      } catch (e) {
+        console.log('Tentativa 3 falhou, tentando alternativa...');
+      }
+    }
+    
+    // Tentativa 4: Endpoint GET com nome
+    if (!connected) {
+      try {
+        response = await fetch(`${url}/instance/connect/${instance.name}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': key
+          }
+        });
+        if (response.ok) {
+          connected = true;
+        }
+      } catch (e) {
+        console.log('Tentativa 4 falhou, tentando alternativa...');
+      }
+    }
+    
+    // Tentativa 5: Endpoint alternativo /instance/{id}/connect
+    if (!connected) {
+      try {
+        response = await fetch(`${url}/instance/${instance.id}/connect`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': key
+          }
+        });
+        if (response.ok) {
+          connected = true;
+        }
+      } catch (e) {
+        console.log('Tentativa 5 falhou, tentando alternativa...');
+      }
+    }
+    
+    // Tentativa 6: Endpoint GET /instance/{id}/connect
+    if (!connected) {
+      try {
+        response = await fetch(`${url}/instance/${instance.id}/connect`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': key
+          }
+        });
+        if (response.ok) {
+          connected = true;
+        }
+      } catch (e) {
+        console.log('Tentativa 6 falhou, tentando alternativa...');
+      }
+    }
+    
+    // Tentativa 7: Endpoint alternativo /instance/{name}/connect
+    if (!connected) {
+      try {
+        response = await fetch(`${url}/instance/${instance.name}/connect`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': key
+          }
+        });
+        if (response.ok) {
+          connected = true;
+        }
+      } catch (e) {
+        console.log('Tentativa 7 falhou, tentando alternativa...');
+      }
+    }
+    
+    // Tentativa 8: Endpoint GET /instance/{name}/connect
+    if (!connected) {
+      try {
+        response = await fetch(`${url}/instance/${instance.name}/connect`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': key
+          }
+        });
+        if (response.ok) {
+          connected = true;
+        }
+      } catch (e) {
+        console.log('Tentativa 8 falhou, tentando alternativa...');
+      }
+    }
+    
+    // Tentativa 9: Endpoint alternativo /connect
+    if (!connected) {
+      try {
+        response = await fetch(`${url}/connect`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': key
+          },
+          body: JSON.stringify({
+            instanceName: instance.name || instance.instanceName,
+            number: instance.number || ''
+          })
+        });
+        if (response.ok) {
+          connected = true;
+        }
+      } catch (e) {
+        console.log('Tentativa 9 falhou, tentando alternativa...');
+      }
+    }
+    
+    if (!connected) {
+      const errorText = await response?.text() || 'Endpoint não encontrado';
+      console.error('Todas as tentativas de conexão falharam. Última resposta:', response?.status, errorText);
+      console.error('Endpoints testados:');
+      console.error('- POST /instance/connect/{id}');
+      console.error('- GET /instance/connect/{id}');
+      console.error('- POST /instance/connect/{name}');
+      console.error('- GET /instance/connect/{name}');
+      console.error('- POST /instance/{id}/connect');
+      console.error('- GET /instance/{id}/connect');
+      console.error('- POST /instance/{name}/connect');
+      console.error('- GET /instance/{name}/connect');
+      console.error('- POST /connect');
+      throw new Error(`Falha ao conectar instância: ${response?.status || '404'} ${errorText}`);
+    }
+    
+    const data = await response.json();
+    console.log('Resposta da conexão:', data);
+    
+    const status = data.status || data.connectionStatus || 'connecting';
+    
+    return {
+      qr_code: data.qrcode,
+      status: status
+    };
+  } catch (error) {
+    console.error('Erro ao conectar instância da Evolution API:', error);
+    throw new Error(`Erro ao conectar instância da Evolution API: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+  }
+};
+
+// Função para testar conectividade da Evolution API e descobrir endpoints
+export const testEvolutionAPIConnectivity = async (): Promise<{ available: boolean; endpoints: string[]; error?: string }> => {
+  const { url, key } = await getEvolutionAPIConfig();
+  
+  const endpoints = [
+    '/instance/fetchInstances',
+    '/instance/connect',
+    '/connect',
+    '/health',
+    '/status'
+  ];
+  
+  const availableEndpoints: string[] = [];
+  
+  try {
+    // Testar endpoint básico primeiro
+    const testResponse = await fetch(`${url}/instance/fetchInstances`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': key
+      }
+    });
+    
+    if (!testResponse.ok) {
+      return {
+        available: false,
+        endpoints: [],
+        error: `Erro ao conectar com Evolution API: ${testResponse.status} ${testResponse.statusText}`
+      };
+    }
+    
+    // Testar outros endpoints
+    for (const endpoint of endpoints) {
+      try {
+        const response = await fetch(`${url}${endpoint}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': key
+          }
+        });
+        
+        if (response.status !== 404) {
+          availableEndpoints.push(endpoint);
+        }
+      } catch (e) {
+        // Endpoint não disponível
+      }
+    }
+    
+    return {
+      available: true,
+      endpoints: availableEndpoints
+    };
+  } catch (error) {
+    return {
+      available: false,
+      endpoints: [],
+      error: `Erro ao testar Evolution API: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+    };
+  }
+};
+
+// Função para descobrir endpoints disponíveis na Evolution API
+export const discoverEvolutionAPIEndpoints = async (): Promise<{ available: boolean; endpoints: string[]; error?: string }> => {
+  const { url, key } = await getEvolutionAPIConfig();
+  
+  const endpointPatterns = [
+    '/instance/fetchInstances',
+    '/instance/connect',
+    '/instance/connect/{id}',
+    '/instance/connect/{name}',
+    '/instance/{id}/connect',
+    '/instance/{name}/connect',
+    '/instance/{id}/qr',
+    '/instance/{name}/qr',
+    '/instance/{id}/start',
+    '/instance/{name}/start',
+    '/qr/{id}',
+    '/qr/{name}',
+    '/connect',
+    '/health',
+    '/status',
+    '/api/instance/fetchInstances',
+    '/api/instance/connect',
+    '/api/connect',
+    '/api/health',
+    '/api/status'
+  ];
+  
+  const availableEndpoints: string[] = [];
+  
+  try {
+    // Primeiro, buscar uma instância para usar nos testes
+    const instancesResponse = await fetch(`${url}/instance/fetchInstances`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': key
+      }
+    });
+    
+    if (!instancesResponse.ok) {
+      return {
+        available: false,
+        endpoints: [],
+        error: `Erro ao conectar com Evolution API: ${instancesResponse.status} ${instancesResponse.statusText}`
+      };
+    }
+    
+    const instances = await instancesResponse.json();
+    const testInstance = instances[0];
+    
+    if (!testInstance) {
+      return {
+        available: true,
+        endpoints: ['/instance/fetchInstances'],
+        error: 'Nenhuma instância encontrada para testar endpoints'
+      };
+    }
+    
+    console.log('Testando endpoints com instância:', testInstance);
+    
+    // Testar endpoints específicos com dados reais
+    const specificEndpoints = [
+      `/instance/connect/${testInstance.id}`,
+      `/instance/connect/${testInstance.name}`,
+      `/instance/${testInstance.id}/connect`,
+      `/instance/${testInstance.name}/connect`,
+      `/instance/${testInstance.id}/qr`,
+      `/instance/${testInstance.name}/qr`,
+      `/instance/${testInstance.id}/start`,
+      `/instance/${testInstance.name}/start`,
+      `/qr/${testInstance.id}`,
+      `/qr/${testInstance.name}`,
+      `/connect`,
+      `/health`,
+      `/status`
+    ];
+    
+    for (const endpoint of specificEndpoints) {
+      try {
+        const response = await fetch(`${url}${endpoint}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': key
+          }
+        });
+        
+        console.log(`Endpoint ${endpoint}: ${response.status}`);
+        
+        if (response.status !== 404) {
+          availableEndpoints.push(endpoint);
+        }
+      } catch (e) {
+        console.log(`Endpoint ${endpoint}: erro`);
+      }
+    }
+    
+    // Adicionar endpoint básico que sabemos que funciona
+    availableEndpoints.push('/instance/fetchInstances');
+    
+    return {
+      available: true,
+      endpoints: [...new Set(availableEndpoints)] // Remove duplicatas
+    };
+  } catch (error) {
+    return {
+      available: false,
+      endpoints: [],
+      error: `Erro ao descobrir endpoints: ${error instanceof Error ? error.message : 'Erro desconhecido'}`
+    };
+  }
+};
+
+// Função para conectar a instância 'carlos' especificamente
+export const connectCarlosInstance = async (): Promise<{ qr_code?: string; status: string }> => {
+  const { url, key } = await getEvolutionAPIConfig();
+  
+  try {
+    console.log('Conectando instância carlos especificamente...');
+    
+    // Tentar diferentes endpoints para conectar a instância 'carlos'
+    let response;
+    let connected = false;
+    
+    // Tentativa 1: Endpoint com nome 'carlos'
+    try {
+      response = await fetch(`${url}/instance/connect/carlos`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': key
+        }
+      });
+      if (response.ok) {
+        connected = true;
+        console.log('Conectado usando POST /instance/connect/carlos');
+      }
+    } catch (e) {
+      console.log('Tentativa 1 falhou, tentando alternativa...');
+    }
+    
+    // Tentativa 2: Endpoint GET com nome 'carlos'
+    if (!connected) {
+      try {
+        response = await fetch(`${url}/instance/connect/carlos`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': key
+          }
+        });
+        if (response.ok) {
+          connected = true;
+          console.log('Conectado usando GET /instance/connect/carlos');
+        }
+      } catch (e) {
+        console.log('Tentativa 2 falhou, tentando alternativa...');
+      }
+    }
+    
+    // Tentativa 3: Endpoint alternativo /instance/carlos/connect
+    if (!connected) {
+      try {
+        response = await fetch(`${url}/instance/carlos/connect`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': key
+          }
+        });
+        if (response.ok) {
+          connected = true;
+          console.log('Conectado usando POST /instance/carlos/connect');
+        }
+      } catch (e) {
+        console.log('Tentativa 3 falhou, tentando alternativa...');
+      }
+    }
+    
+    // Tentativa 4: Endpoint GET /instance/carlos/connect
+    if (!connected) {
+      try {
+        response = await fetch(`${url}/instance/carlos/connect`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': key
+          }
+        });
+        if (response.ok) {
+          connected = true;
+          console.log('Conectado usando GET /instance/carlos/connect');
+        }
+      } catch (e) {
+        console.log('Tentativa 4 falhou, tentando alternativa...');
+      }
+    }
+    
+    // Tentativa 5: Endpoint /instance/carlos/qr
+    if (!connected) {
+      try {
+        response = await fetch(`${url}/instance/carlos/qr`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': key
+          }
+        });
+        if (response.ok) {
+          connected = true;
+          console.log('Conectado usando GET /instance/carlos/qr');
+        }
+      } catch (e) {
+        console.log('Tentativa 5 falhou, tentando alternativa...');
+      }
+    }
+    
+    // Tentativa 6: Endpoint /instance/carlos/start
+    if (!connected) {
+      try {
+        response = await fetch(`${url}/instance/carlos/start`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': key
+          }
+        });
+        if (response.ok) {
+          connected = true;
+          console.log('Conectado usando POST /instance/carlos/start');
+        }
+      } catch (e) {
+        console.log('Tentativa 6 falhou...');
+      }
+    }
+    
+    if (!connected) {
+      const errorText = await response?.text() || 'Endpoint não encontrado';
+      console.error('Todas as tentativas de conexão falharam para instância carlos. Última resposta:', response?.status, errorText);
+      throw new Error(`Falha ao conectar instância carlos: ${response?.status || '404'} ${errorText}`);
+    }
+    
+    const data = await response.json();
+    console.log('Resposta da conexão carlos:', data);
+    
+    const status = data.status || data.connectionStatus || 'connecting';
+    
+    return {
+      qr_code: data.qrcode,
+      status: status
+    };
+  } catch (error) {
+    console.error('Erro ao conectar instância carlos:', error);
+    throw new Error(`Erro ao conectar instância carlos: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+  }
+};
+
+// Função para buscar o QR code de uma instância pelo nome
+export const fetchQRCodeForInstance = async (instanceName: string): Promise<{ qr_code?: string; status?: string }> => {
+  const { url, key } = await getEvolutionAPIConfig();
+  const response = await fetch(`${url}/instance/connect/${instanceName}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': key
+    }
+  });
+  if (!response.ok) {
+    throw new Error(`Erro ao buscar QR code: ${response.status}`);
+  }
+  const data = await response.json();
+  
+  // A Evolution API retorna o QR code no campo 'base64' como data:image/png;base64,...
+  const qrCode = data.base64 || data.qrcode || data.qr_code;
+  
+  return {
+    qr_code: qrCode,
+    status: data.status || data.connectionStatus || 'connecting'
+  };
 }; 

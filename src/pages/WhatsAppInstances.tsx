@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,7 +17,14 @@ import {
   connectWhatsAppInstance,
   getWhatsAppSettings,
   updateWhatsAppInstanceStatus,
-  WhatsAppInstance 
+  updateWhatsAppInstanceStatusAsAdmin,
+  WhatsAppInstance,
+  getEvolutionAPIInstances,
+  connectEvolutionAPIInstance,
+  testEvolutionAPIConnectivity,
+  discoverEvolutionAPIEndpoints,
+  connectCarlosInstance,
+  fetchQRCodeForInstance
 } from '@/services/whatsappService';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -39,59 +46,108 @@ const WhatsAppInstances: React.FC = () => {
   const [deletingInstance, setDeletingInstance] = useState<string | null>(null);
   const [creatingInstance, setCreatingInstance] = useState(false);
   const [qrCode, setQrCode] = useState<string | null>(null);
+  const [checkingConnection, setCheckingConnection] = useState(false);
   const [apiSettings, setApiSettings] = useState<{ evolution_api_url: string; evolution_api_key: string } | null>(null);
+  const [isInstanceSelectionOpen, setIsInstanceSelectionOpen] = useState(false);
+  const [evolutionInstances, setEvolutionInstances] = useState<any[]>([]);
+  const [selectedEvolutionInstance, setSelectedEvolutionInstance] = useState<any>(null);
 
   useEffect(() => {
     loadData();
   }, []);
 
-  // Sincronização automática a cada 30 segundos
+  // Verificar status da conexão quando QR code é mostrado
   useEffect(() => {
-    if (apiSettings && instances.length > 0) {
-      const interval = setInterval(() => {
-        syncStatusWithEvolutionAPI();
-      }, 30000); // 30 segundos
+    if (qrCode && connectingInstance) {
+      setCheckingConnection(true);
+      
+      const checkConnectionStatus = async () => {
+        try {
+          // Buscar status atual da instância
+          const response = await fetch(`${apiSettings?.evolution_api_url}/instance/fetchInstances`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': apiSettings?.evolution_api_key || ''
+            }
+          });
 
-      return () => clearInterval(interval);
+          if (response.ok) {
+            const evolutionInstances = await response.json();
+            const currentInstance = evolutionInstances.find((evInstance: any) => 
+              evInstance.id === connectingInstance || evInstance.instanceName === instances.find(i => i.id === connectingInstance)?.name
+            );
+            
+            if (currentInstance) {
+              const newStatus = currentInstance.connectionStatus === 'open' ? 'connected' : 
+                               currentInstance.connectionStatus === 'close' ? 'disconnected' : 
+                               currentInstance.connectionStatus || 'connecting';
+              
+              // Atualizar status da instância
+              setInstances(prev => prev.map(instance => 
+                instance.id === connectingInstance 
+                  ? { ...instance, status: newStatus as any }
+                  : instance
+              ));
+              
+              // Se conectou, fechar modal e mostrar sucesso
+              if (newStatus === 'connected') {
+                setQrCode(null);
+                setConnectingInstance(null);
+                setCheckingConnection(false);
+                toast.success('WhatsApp conectado com sucesso!');
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Erro ao verificar status da conexão:', error);
+        }
+      };
+
+      // Verificar a cada 3 segundos
+      const interval = setInterval(checkConnectionStatus, 3000);
+      
+      return () => {
+        clearInterval(interval);
+        setCheckingConnection(false);
+      };
     }
-  }, [apiSettings, instances]);
+  }, [qrCode, connectingInstance, apiSettings, instances]);
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      
-      // Usar função de admin se o usuário for admin
-      let instancesData;
-      if (user?.role === 'admin') {
-        console.log('Usuário é admin, buscando todas as instâncias');
-        instancesData = await getAllWhatsAppInstances();
-      } else {
-        console.log('Usuário não é admin, buscando apenas instâncias próprias');
-        instancesData = await getWhatsAppInstances();
+  // Adicionar useEffect para buscar QR code automaticamente quando houver instância em 'connecting'
+  useEffect(() => {
+    const connecting = instances.find((i) => i.status === 'connecting');
+    if (connecting && connecting.name) {
+      // Só busca se não estiver já mostrando o QR code
+      if (!qrCode) {
+        fetchQRCodeForInstance(connecting.name)
+          .then((result) => {
+            if (result.qr_code) {
+              setQrCode(result.qr_code);
+              toast.success('QR Code gerado automaticamente! Escaneie com seu WhatsApp.');
+            }
+          })
+          .catch((err) => {
+            console.error('Erro ao buscar QR code automaticamente:', err);
+          });
       }
-      
-      const settingsData = await getWhatsAppSettings();
-      
-      setInstances(instancesData);
-      if (settingsData) {
-        setApiSettings({
-          evolution_api_url: settingsData.evolution_api_url,
-          evolution_api_key: settingsData.evolution_api_key
-        });
-      }
-    } catch (error) {
-      toast.error('Erro ao carregar dados');
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [instances, qrCode]);
 
-  const syncStatusWithEvolutionAPI = async () => {
+  const syncStatusWithEvolutionAPI = useCallback(async () => {
+    console.log('syncStatusWithEvolutionAPI chamada com:', { 
+      hasApiSettings: !!apiSettings, 
+      instancesCount: instances.length, 
+      userId: user?.id
+    });
+    
     if (!apiSettings?.evolution_api_url || !apiSettings?.evolution_api_key) {
       return;
     }
 
     try {
+      console.log('Sincronizando status com Evolution API...');
+      
       // Buscar status atual das instâncias na Evolution API
       const response = await fetch(`${apiSettings.evolution_api_url}/instance/fetchInstances`, {
         method: 'GET',
@@ -103,35 +159,98 @@ const WhatsAppInstances: React.FC = () => {
 
       if (response.ok) {
         const evolutionInstances = await response.json();
+        console.log('Instâncias na Evolution API:', evolutionInstances);
         
         if (Array.isArray(evolutionInstances)) {
+          // Filtrar apenas instâncias que pertencem ao usuário atual
+          const userInstances = instances.filter(instance => 
+            String(instance.user_id) === String(user?.id)
+          );
+          
+          console.log(`Sincronizando ${userInstances.length} instâncias do usuário`);
+          
           // Atualizar status das instâncias locais
-          for (const evInstance of evolutionInstances) {
-            const localInstance = instances.find(i => i.id === evInstance.id);
-            if (localInstance) {
+          for (const localInstance of userInstances) {
+            // Buscar a instância na Evolution API pelo nome
+            const evInstance = evolutionInstances.find((ev: any) => 
+              ev.instanceName === localInstance.name ||
+              ev.name === localInstance.name
+            );
+            
+            if (evInstance) {
+              console.log(`Encontrada instância ${localInstance.name} na Evolution API:`, evInstance);
+              
               const newStatus = evInstance.connectionStatus === 'open' ? 'connected' : 
                                evInstance.connectionStatus === 'close' ? 'disconnected' : 
                                evInstance.connectionStatus || 'unknown';
               
+              console.log(`Status da instância ${localInstance.name}: ${localInstance.status} -> ${newStatus}`);
+              
               if (localInstance.status !== newStatus) {
                 try {
-                  await updateWhatsAppInstanceStatus(evInstance.id, newStatus);
-                  // Atualizar estado local
+                  // Atualizar apenas o estado local, sem fazer PATCH no Baserow
                   setInstances(prev => prev.map(instance => 
-                    instance.id === evInstance.id 
+                    instance.id === localInstance.id 
                       ? { ...instance, status: newStatus as any }
                       : instance
                   ));
+                  console.log(`Status atualizado para ${localInstance.name}: ${newStatus}`);
                 } catch (error) {
-                  console.error('Erro ao atualizar status da instância:', evInstance.id, error);
+                  console.error('Erro ao atualizar status da instância:', localInstance.id, error);
                 }
               }
+            } else {
+              console.log(`Instância ${localInstance.name} não encontrada na Evolution API`);
             }
           }
         }
+      } else {
+        console.error('Erro ao buscar instâncias da Evolution API:', response.status);
       }
     } catch (error) {
       console.error('Erro na sincronização automática:', error);
+    }
+  }, [apiSettings, instances, user?.id]);
+
+  // Sincronizar status das instâncias com a Evolution API periodicamente
+  useEffect(() => {
+    if (!apiSettings?.evolution_api_url || !apiSettings?.evolution_api_key || instances.length === 0) {
+      return;
+    }
+
+    const syncInterval = setInterval(() => {
+      syncStatusWithEvolutionAPI();
+    }, 10000); // Sincronizar a cada 10 segundos
+
+    return () => clearInterval(syncInterval);
+  }, [apiSettings, instances, syncStatusWithEvolutionAPI]);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      
+      // Sempre buscar apenas instâncias do usuário atual
+      console.log('Buscando instâncias do usuário atual');
+      const instancesData = await getWhatsAppInstances();
+      
+      const settingsData = await getWhatsAppSettings();
+      
+      setInstances(instancesData);
+      if (settingsData) {
+        setApiSettings({
+          evolution_api_url: settingsData.evolution_api_url,
+          evolution_api_key: settingsData.evolution_api_key
+        });
+        
+        // Sincronizar status com a Evolution API após carregar os dados
+        setTimeout(() => {
+          syncStatusWithEvolutionAPI();
+        }, 1000);
+      }
+    } catch (error) {
+      toast.error('Erro ao carregar dados');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -181,6 +300,20 @@ const WhatsAppInstances: React.FC = () => {
           errorMessage = 'Instância removida com sucesso da Evolution API (não existia no banco local)';
         } else if (error.message.includes('Erro ao criar instância:')) {
           errorMessage = error.message.replace('Erro ao criar instância: ', '');
+        } else if (error.message.includes('Uma instância com este nome já existe na Evolution API')) {
+          errorMessage = 'Uma instância com este nome já existe na Evolution API. Use um nome diferente.';
+        } else if (error.message.includes('Falha ao criar instância na Evolution API')) {
+          errorMessage = 'Erro ao criar instância na Evolution API. Verifique as configurações.';
+        } else if (error.message.includes('Uma instância com este nome já existe na Evolution API, mas não foi possível encontrá-la para conectar.')) {
+          // Abrir modal para selecionar instância existente
+          try {
+            const instances = await getEvolutionAPIInstances();
+            setEvolutionInstances(instances);
+            setIsInstanceSelectionOpen(true);
+            return; // Não mostrar erro, pois vamos abrir o modal
+          } catch (fetchError) {
+            errorMessage = 'Erro ao buscar instâncias da Evolution API. Tente novamente.';
+          }
         }
       }
       
@@ -208,14 +341,8 @@ const WhatsAppInstances: React.FC = () => {
       const instanceExists = instances.find(i => String(i.id) === String(instanceId));
       console.log('Instância encontrada no estado local:', instanceExists);
       
-      // Usar função de admin se o usuário for admin
-      if (user?.role === 'admin') {
-        console.log('Usuário é admin, usando função de admin para deletar');
-        await deleteWhatsAppInstanceAsAdmin(instanceId);
-      } else {
-        console.log('Usuário não é admin, usando função normal para deletar');
-        await deleteWhatsAppInstance(instanceId);
-      }
+      // Usar função normal, já que só mostramos instâncias do usuário
+      await deleteWhatsAppInstance(instanceId);
       
       // Atualizar estado local
       setInstances(prev => {
@@ -241,7 +368,7 @@ const WhatsAppInstances: React.FC = () => {
         } else if (error.message.includes('não encontrada')) {
           errorMessage = 'Instância não encontrada';
         } else if (error.message.includes('Erro ao deletar instância:')) {
-          errorMessage = error.message;
+          errorMessage = error.message.replace('Erro ao deletar instância: ', '');
         }
       }
       
@@ -254,11 +381,13 @@ const WhatsAppInstances: React.FC = () => {
   const handleConnectInstance = async (instanceId: string) => {
     try {
       setConnectingInstance(instanceId);
-      const result = await connectWhatsAppInstance(instanceId);
+      console.log('Iniciando conexão da instância:', instanceId);
       
-      if (result.qr_code) {
-        setQrCode(result.qr_code);
-      }
+      // Mostrar toast informativo sobre criação automática
+      toast.info('Verificando instância na Evolution API...');
+      
+      const result = await connectWhatsAppInstance(instanceId);
+      console.log('Resultado da conexão:', result);
       
       // Atualizar status da instância
       setInstances(prev => prev.map(instance => 
@@ -267,7 +396,17 @@ const WhatsAppInstances: React.FC = () => {
           : instance
       ));
       
-      toast.success('Instância conectada com sucesso!');
+      // Se temos QR code, mostrar o modal
+      if (result.qr_code) {
+        setQrCode(result.qr_code);
+        toast.success('QR Code gerado! Escaneie com seu WhatsApp.');
+      } else if (result.status === 'connected') {
+        toast.success('Instância já está conectada!');
+      } else if (result.status === 'connecting') {
+        toast.info('Instância está conectando... Aguarde a confirmação.');
+      } else {
+        toast.success('Instância conectada com sucesso!');
+      }
     } catch (error) {
       console.error('Erro ao conectar instância:', error);
       
@@ -278,10 +417,18 @@ const WhatsAppInstances: React.FC = () => {
           errorMessage = 'Configure a Evolution API em Configurações primeiro';
         } else if (error.message.includes('Acesso negado')) {
           errorMessage = 'Você não tem permissão para conectar esta instância';
+        } else if (error.message.includes('Instância não encontrada na Evolution API')) {
+          errorMessage = 'Instância não encontrada na Evolution API. Tentando criar automaticamente...';
+        } else if (error.message.includes('Falha ao criar instância na Evolution API')) {
+          errorMessage = 'Erro ao criar instância na Evolution API. Verifique as configurações.';
+        } else if (error.message.includes('Chave da API inválida')) {
+          errorMessage = 'Chave da API inválida. Verifique as configurações.';
         } else if (error.message.includes('Falha ao conectar instância:')) {
           errorMessage = error.message;
         } else if (error.message.includes('Erro ao conectar com a Evolution API:')) {
           errorMessage = error.message;
+        } else if (error.message.includes('Uma instância com este nome já existe na Evolution API')) {
+          errorMessage = 'Uma instância com este nome já existe na Evolution API. Use um nome diferente.';
         }
       }
       
@@ -429,6 +576,107 @@ const WhatsAppInstances: React.FC = () => {
     setInstanceToDelete(null);
   };
 
+  const handleConnectSelectedInstance = async () => {
+    if (!selectedEvolutionInstance) {
+      toast.error('Selecione uma instância primeiro');
+      return;
+    }
+    
+    try {
+      setConnectingInstance(selectedEvolutionInstance.id);
+      console.log('Conectando instância selecionada:', selectedEvolutionInstance);
+      
+      const result = await connectEvolutionAPIInstance(selectedEvolutionInstance.id);
+      console.log('Resultado da conexão:', result);
+      
+      // Se temos QR code, mostrar o modal
+      if (result.qr_code) {
+        setQrCode(result.qr_code);
+        toast.success('QR Code gerado! Escaneie com seu WhatsApp.');
+      } else if (result.status === 'connected') {
+        toast.success('Instância já está conectada!');
+      } else if (result.status === 'connecting') {
+        toast.info('Instância está conectando... Aguarde a confirmação.');
+      } else {
+        toast.success('Instância conectada com sucesso!');
+      }
+      
+      // Fechar modal de seleção
+      setIsInstanceSelectionOpen(false);
+      setSelectedEvolutionInstance(null);
+    } catch (error) {
+      console.error('Erro ao conectar instância selecionada:', error);
+      toast.error(`Erro ao conectar instância: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+    } finally {
+      setConnectingInstance(null);
+    }
+  };
+
+  const handleTestEvolutionAPI = async () => {
+    try {
+      toast.info('Testando conectividade da Evolution API...');
+      
+      const result = await testEvolutionAPIConnectivity();
+      
+      if (result.available) {
+        console.log('Evolution API disponível. Endpoints:', result.endpoints);
+        toast.success(`Evolution API conectada! Endpoints disponíveis: ${result.endpoints.join(', ')}`);
+      } else {
+        console.error('Evolution API não disponível:', result.error);
+        toast.error(`Evolution API não disponível: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Erro ao testar Evolution API:', error);
+      toast.error(`Erro ao testar Evolution API: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+    }
+  };
+
+  const handleDiscoverEndpoints = async () => {
+    try {
+      toast.info('Descobrindo endpoints da Evolution API...');
+      
+      const result = await discoverEvolutionAPIEndpoints();
+      
+      if (result.available) {
+        console.log('Endpoints descobertos:', result.endpoints);
+        toast.success(`Endpoints descobertos: ${result.endpoints.join(', ')}`);
+      } else {
+        console.error('Erro ao descobrir endpoints:', result.error);
+        toast.error(`Erro ao descobrir endpoints: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Erro ao descobrir endpoints:', error);
+      toast.error(`Erro ao descobrir endpoints: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+    }
+  };
+
+  const handleConnectCarlos = async () => {
+    try {
+      setConnectingInstance('carlos');
+      console.log('Conectando instância carlos especificamente...');
+      
+      const result = await connectCarlosInstance();
+      console.log('Resultado da conexão carlos:', result);
+      
+      // Se temos QR code, mostrar o modal
+      if (result.qr_code) {
+        setQrCode(result.qr_code);
+        toast.success('QR Code gerado! Escaneie com seu WhatsApp.');
+      } else if (result.status === 'connected') {
+        toast.success('Instância carlos já está conectada!');
+      } else if (result.status === 'connecting') {
+        toast.info('Instância carlos está conectando... Aguarde a confirmação.');
+      } else {
+        toast.success('Instância carlos conectada com sucesso!');
+      }
+    } catch (error) {
+      console.error('Erro ao conectar instância carlos:', error);
+      toast.error(`Erro ao conectar instância carlos: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+    } finally {
+      setConnectingInstance(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -499,6 +747,44 @@ const WhatsAppInstances: React.FC = () => {
               </div>
             </DialogContent>
           </Dialog>
+          
+          <Button
+            onClick={handleTestEvolutionAPI}
+            variant="outline"
+            size="sm"
+          >
+            <Settings className="w-4 h-4 mr-2" />
+            Testar Evolution API
+          </Button>
+          
+          <Button
+            onClick={handleDiscoverEndpoints}
+            variant="outline"
+            size="sm"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Descobrir Endpoints
+          </Button>
+          
+          <Button
+            onClick={handleConnectCarlos}
+            variant="outline"
+            size="sm"
+            className="bg-green-600 hover:bg-green-700 text-white"
+          >
+            <Wifi className="w-4 h-4 mr-2" />
+            Conectar Carlos
+          </Button>
+          
+          <Button
+            onClick={syncStatusWithEvolutionAPI}
+            variant="outline"
+            size="sm"
+            disabled={syncing}
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+            {syncing ? 'Sincronizando...' : 'Sincronizar Status'}
+          </Button>
         </div>
       </div>
 
@@ -528,7 +814,7 @@ const WhatsAppInstances: React.FC = () => {
               <div>
                 <p className="font-medium text-blue-800">Sincronização Automática Ativa</p>
                 <p className="text-sm text-blue-700">
-                  O status das instâncias é atualizado automaticamente a cada 30 segundos.
+                  O status das instâncias é atualizado automaticamente a cada 10 segundos.
                 </p>
               </div>
             </div>
@@ -655,15 +941,82 @@ const WhatsAppInstances: React.FC = () => {
       {/* QR Code Modal */}
       {qrCode && (
         <Dialog open={!!qrCode} onOpenChange={() => setQrCode(null)}>
-          <DialogContent>
+          <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Conectar WhatsApp</DialogTitle>
+              <DialogTitle className="flex items-center space-x-2">
+                <QrCode className="w-5 h-5 text-green-600" />
+                <span>Conectar WhatsApp</span>
+              </DialogTitle>
               <DialogDescription>
                 Escaneie o QR Code com seu WhatsApp para conectar a instância.
               </DialogDescription>
             </DialogHeader>
-            <div className="flex justify-center">
-              <img src={qrCode} alt="QR Code" className="w-64 h-64" />
+            
+            <div className="space-y-4">
+              {/* Instruções */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="text-sm text-blue-800">
+                  <p className="font-medium mb-2">Como conectar:</p>
+                  <ol className="list-decimal list-inside space-y-1">
+                    <li>Abra o WhatsApp no seu celular</li>
+                    <li>Toque em <strong>Menu</strong> → <strong>WhatsApp Web</strong></li>
+                    <li>Aponte a câmera para o QR Code</li>
+                    <li>Aguarde a confirmação de conexão</li>
+                  </ol>
+                </div>
+              </div>
+              
+              {/* QR Code */}
+              <div className="flex justify-center">
+                <div className="border-2 border-gray-200 rounded-lg p-4 bg-white">
+                  <img src={qrCode} alt="QR Code" className="w-48 h-48" />
+                </div>
+              </div>
+              
+              {/* Status e Ações */}
+              <div className="text-center space-y-3">
+                <div className="flex items-center justify-center space-x-2">
+                  {checkingConnection ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 text-blue-600 animate-spin" />
+                      <span className="text-sm text-blue-600">Verificando conexão...</span>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                      <span className="text-sm text-gray-600">Aguardando conexão...</span>
+                    </>
+                  )}
+                </div>
+                
+                <div className="flex justify-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      // Recarregar QR code
+                      if (connectingInstance) {
+                        handleConnectInstance(connectingInstance);
+                      }
+                    }}
+                    disabled={checkingConnection}
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Recarregar QR Code
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setQrCode(null);
+                      setConnectingInstance(null);
+                      setCheckingConnection(false);
+                    }}
+                  >
+                    Fechar
+                  </Button>
+                </div>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
@@ -778,6 +1131,94 @@ const WhatsAppInstances: React.FC = () => {
                 <>
                   <Download className="w-4 h-4 mr-2" />
                   Sincronizar
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Instance Selection Modal */}
+      <Dialog open={isInstanceSelectionOpen} onOpenChange={setIsInstanceSelectionOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <Settings className="w-5 h-5 text-blue-600" />
+              <span>Selecionar Instância da Evolution API</span>
+            </DialogTitle>
+            <DialogDescription>
+              Uma instância com este nome já existe na Evolution API. Selecione a instância que deseja conectar:
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="max-h-64 overflow-y-auto">
+              {evolutionInstances.length > 0 ? (
+                <div className="grid gap-3">
+                  {evolutionInstances.map((instance) => (
+                    <div
+                      key={instance.id}
+                      className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                        selectedEvolutionInstance?.id === instance.id
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      onClick={() => setSelectedEvolutionInstance(instance)}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-medium text-gray-900">
+                            {instance.instanceName || instance.name || 'Sem nome'}
+                          </h4>
+                          <p className="text-sm text-gray-600">
+                            ID: {instance.id} | Status: {instance.connectionStatus || 'desconhecido'}
+                          </p>
+                          {instance.number && (
+                            <p className="text-sm text-gray-600">Número: {instance.number}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          {selectedEvolutionInstance?.id === instance.id && (
+                            <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                              <div className="w-2 h-2 bg-white rounded-full"></div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">Nenhuma instância encontrada na Evolution API</p>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div className="flex justify-end space-x-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsInstanceSelectionOpen(false);
+                setSelectedEvolutionInstance(null);
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleConnectSelectedInstance}
+              disabled={!selectedEvolutionInstance || connectingInstance === selectedEvolutionInstance?.id}
+            >
+              {connectingInstance === selectedEvolutionInstance?.id ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Conectando...
+                </>
+              ) : (
+                <>
+                  <Wifi className="w-4 h-4 mr-2" />
+                  Conectar Instância
                 </>
               )}
             </Button>
