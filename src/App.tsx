@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import { AuthProvider } from '@/contexts/AuthContext';
 import { CartProvider } from '@/contexts/CartContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import AdminLayout from '@/components/AdminLayout';
 import Header from '@/components/Header';
 import WhatsAppButton from '@/components/WhatsAppButton';
@@ -142,205 +143,207 @@ function App() {
   return (
     <AuthProvider>
       <CartProvider>
-        <Router>
-          <Routes>
-            {/* Adicionar a Rota de Debug */}
-            <Route path="/debug-fields" element={<DebugFieldsPage />} />
+        <ErrorBoundary>
+          <Router>
+            <Routes>
+              {/* Adicionar a Rota de Debug */}
+              <Route path="/debug-fields" element={<DebugFieldsPage />} />
 
-            {/* Admin Routes with AdminLayout */}
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <AdminLayout>
-                    <AdminDashboard />
-                  </AdminLayout>
-                </ProtectedRoute>
-              }
-            />
-            
-            <Route
-              path="/admin/produtos"
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <AdminLayout>
-                    <ProductAdmin />
-                  </AdminLayout>
-                </ProtectedRoute>
-              }
-            />
-            
-            <Route
-              path="/admin/cursos"
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <AdminLayout>
-                    <CourseAdmin />
-                  </AdminLayout>
-                </ProtectedRoute>
-              }
-            />
-            
-            <Route
-              path="/admin/cursos/:courseId/modulos"
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <AdminLayout>
-                    <CourseModulesAdmin />
-                  </AdminLayout>
-                </ProtectedRoute>
-              }
-            />
-            
-            <Route
-              path="/admin/pedidos"
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <AdminLayout>
-                    <OrderAdmin />
-                  </AdminLayout>
-                </ProtectedRoute>
-              }
-            />
-            
-            <Route
-              path="/admin/usuarios"
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <AdminLayout>
-                    <UserAdmin />
-                  </AdminLayout>
-                </ProtectedRoute>
-              }
-            />
-            
-            <Route
-              path="/blog-admin"
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <AdminLayout>
-                    <BlogAdmin />
-                  </AdminLayout>
-                </ProtectedRoute>
-              }
-            />
+              {/* Admin Routes with AdminLayout */}
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout>
+                      <AdminDashboard />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                }
+              />
+              
+              <Route
+                path="/admin/produtos"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout>
+                      <ProductAdmin />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                }
+              />
+              
+              <Route
+                path="/admin/cursos"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout>
+                      <CourseAdmin />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                }
+              />
+              
+              <Route
+                path="/admin/cursos/:courseId/modulos"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout>
+                      <CourseModulesAdmin />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                }
+              />
+              
+              <Route
+                path="/admin/pedidos"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout>
+                      <OrderAdmin />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                }
+              />
+              
+              <Route
+                path="/admin/usuarios"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout>
+                      <UserAdmin />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                }
+              />
+              
+              <Route
+                path="/blog-admin"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout>
+                      <BlogAdmin />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/admin/popups"
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <AdminLayout>
-                    <PopupAdmin />
-                  </AdminLayout>
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/admin/popups"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout>
+                      <PopupAdmin />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* WhatsApp Routes */}
-            <Route
-              path="/admin/whatsapp/instances"
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <AdminLayout>
-                    <WhatsAppInstances />
-                  </AdminLayout>
-                </ProtectedRoute>
-              }
-            />
-            
-            <Route
-              path="/admin/whatsapp/licenses"
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <AdminLayout>
-                    <WhatsAppLicenses />
-                  </AdminLayout>
-                </ProtectedRoute>
-              }
-            />
-            
-            <Route
-              path="/admin/whatsapp/messages"
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <AdminLayout>
-                    <WhatsAppMessages />
-                  </AdminLayout>
-                </ProtectedRoute>
-              }
-            />
-            
-            <Route
-              path="/admin/whatsapp/settings"
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <AdminLayout>
-                    <WhatsAppSettings />
-                  </AdminLayout>
-                </ProtectedRoute>
-              }
-            />
-            
-            <Route
-              path="/admin/whatsapp/history"
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <AdminLayout>
-                    <WhatsAppHistory />
-                  </AdminLayout>
-                </ProtectedRoute>
-              }
-            />
-            
-            <Route
-              path="/admin/whatsapp/reports"
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <AdminLayout>
-                    <WhatsAppReports />
-                  </AdminLayout>
-                </ProtectedRoute>
-              }
-            />
-            
-            <Route
-              path="/admin/whatsapp/webhooks"
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <AdminLayout>
-                    <WhatsAppWebhooks />
-                  </AdminLayout>
-                </ProtectedRoute>
-              }
-            />
+              {/* WhatsApp Routes */}
+              <Route
+                path="/admin/whatsapp/instances"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout>
+                      <WhatsAppInstances />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                }
+              />
+              
+              <Route
+                path="/admin/whatsapp/licenses"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout>
+                      <WhatsAppLicenses />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                }
+              />
+              
+              <Route
+                path="/admin/whatsapp/messages"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout>
+                      <WhatsAppMessages />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                }
+              />
+              
+              <Route
+                path="/admin/whatsapp/settings"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout>
+                      <WhatsAppSettings />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                }
+              />
+              
+              <Route
+                path="/admin/whatsapp/history"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout>
+                      <WhatsAppHistory />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                }
+              />
+              
+              <Route
+                path="/admin/whatsapp/reports"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout>
+                      <WhatsAppReports />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                }
+              />
+              
+              <Route
+                path="/admin/whatsapp/webhooks"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout>
+                      <WhatsAppWebhooks />
+                    </AdminLayout>
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Rotas de Cursos Protegidas */}
-            <Route
-              path="/meus-cursos"
-              element={
-                <ProtectedRoute allowedRoles={['user', 'admin']}>
-                  <UserLayout>
-                    <MeusCursos />
-                  </UserLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/curso/:cursoId"
-              element={
-                <ProtectedRoute allowedRoles={['user', 'admin']}>
-                  <CursoDetalhes />
-                </ProtectedRoute>
-              }
-            />
+              {/* Rotas de Cursos Protegidas */}
+              <Route
+                path="/meus-cursos"
+                element={
+                  <ProtectedRoute allowedRoles={['user', 'admin']}>
+                    <UserLayout>
+                      <MeusCursos />
+                    </UserLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/curso/:cursoId"
+                element={
+                  <ProtectedRoute allowedRoles={['user', 'admin']}>
+                    <CursoDetalhes />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Rota temporária para teste da API */}
-            <Route path="/test-course-api" element={<TestCourseAPI />} />
+              {/* Rota temporária para teste da API */}
+              <Route path="/test-course-api" element={<TestCourseAPI />} />
 
-            {/* Public Routes with Header */}
-            <Route path="/*" element={<PublicLayout />} />
-          </Routes>
-        </Router>
+              {/* Public Routes with Header */}
+              <Route path="/*" element={<PublicLayout />} />
+            </Routes>
+          </Router>
+        </ErrorBoundary>
       </CartProvider>
     </AuthProvider>
   );

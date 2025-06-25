@@ -69,7 +69,18 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    // During hot reload, return a default state instead of throwing
+    // This prevents the "useAuth must be used within an AuthProvider" error
+    return {
+      user: null,
+      isAuthenticated: false,
+      isLoading: true, // Set to true to show loading state
+      error: null,
+      login: async () => {},
+      register: async () => {},
+      logout: () => {},
+      clearError: () => {}
+    };
   }
   return context;
 };

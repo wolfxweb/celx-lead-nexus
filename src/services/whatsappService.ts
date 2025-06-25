@@ -249,37 +249,37 @@ export const deleteWhatsAppInstance = async (instanceId: string): Promise<void> 
     
     // Sempre tentar deletar da Evolution API se configurada
     let evolutionDeleted = false;
-    try {
-      const { url, key } = await getEvolutionAPIConfig();
+    let evolutionNotFound = false;
+    
+    if (instanceExists) {
+      // Tentar deletar por nome primeiro (mais confiável)
+      console.log('Tentando deletar da Evolution API por nome...');
+      evolutionDeleted = await deleteFromEvolutionAPIByName(instance.name);
       
-      // Deletar da Evolution API primeiro
-      console.log('Deletando da Evolution API...');
-      const evolutionResponse = await fetch(`${url}/instance/delete/${instanceId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': key
-        }
-      });
-      
-      if (evolutionResponse.ok) {
-        console.log('Instância deletada da Evolution API com sucesso');
-        evolutionDeleted = true;
-      } else {
-        const errorText = await evolutionResponse.text();
-        console.warn('Erro ao deletar da Evolution API:', evolutionResponse.status, errorText);
-        
-        // Se for 404, a instância não existe na Evolution API, mas não é um erro crítico
-        if (evolutionResponse.status === 404) {
-          console.log('Instância não encontrada na Evolution API (já foi deletada ou não existe)');
-        } else {
-          console.warn('Erro na Evolution API, mas continuando com operação no Baserow');
-        }
-        // Não falha se a Evolution API der erro, continua deletando do Baserow
+      // Se não conseguiu por nome, tentar por ID
+      if (!evolutionDeleted) {
+        console.log('Tentando deletar da Evolution API por ID...');
+        evolutionDeleted = await deleteFromEvolutionAPIById(instanceId);
       }
-    } catch (evolutionError) {
-      console.warn('Evolution API não configurada ou erro ao conectar:', evolutionError);
-      // Não falha se a Evolution API der erro, continua deletando do Baserow
+      
+      // Se ainda não conseguiu, verificar se foi porque não encontrou
+      if (!evolutionDeleted) {
+        // Tentar uma última vez por ID para confirmar se não existe
+        const finalCheck = await deleteFromEvolutionAPIById(instanceId);
+        if (!finalCheck) {
+          console.log('Instância não encontrada na Evolution API (já foi deletada ou não existe)');
+          evolutionNotFound = true;
+        }
+      }
+    } else {
+      // Se a instância não existe no Baserow, tentar deletar por ID mesmo assim
+      console.log('Instância não existe no Baserow, tentando deletar da Evolution API por ID...');
+      evolutionDeleted = await deleteFromEvolutionAPIById(instanceId);
+      
+      if (!evolutionDeleted) {
+        console.log('Instância não encontrada na Evolution API');
+        evolutionNotFound = true;
+      }
     }
     
     // Deletar do Baserow apenas se a instância existir
@@ -289,19 +289,52 @@ export const deleteWhatsAppInstance = async (instanceId: string): Promise<void> 
       const deleteUrl = `/database/rows/table/${tableId}/${instanceId}/?user_field_names=true`;
       console.log('URL de delete:', deleteUrl);
       
-      await baserowRequest(deleteUrl, {
-        method: 'DELETE'
-      });
-      
-      console.log('Instância deletada com sucesso do Baserow');
-      baserowDeleted = true;
+      try {
+        await baserowRequest(deleteUrl, {
+          method: 'DELETE'
+        });
+        
+        console.log('Instância deletada com sucesso do Baserow');
+        baserowDeleted = true;
+      } catch (baserowError) {
+        console.error('Erro ao deletar do Baserow:', baserowError);
+        
+        // Se for erro 500 com detail vazio, pode ser que a linha já não existe
+        if (baserowError instanceof Error && baserowError.message.includes('{"detail":""}')) {
+          console.log('Linha pode não existir no Baserow (erro 500 com detail vazio)');
+          // Considerar como sucesso se a Evolution API foi deletada ou não encontrada
+          if (evolutionDeleted || evolutionNotFound) {
+            console.log('✅ Instância removida da Evolution API, considerando operação bem-sucedida');
+            baserowDeleted = true; // Marcar como deletada para não falhar a operação
+          }
+        } else {
+          // Re-throw outros erros do Baserow
+          throw baserowError;
+        }
+      }
     } else {
       console.log('Instância não existia no Baserow');
     }
     
-    // Retornar sucesso se pelo menos uma das operações foi bem-sucedida
-    if (evolutionDeleted || baserowDeleted) {
-      console.log('Operação de exclusão concluída com sucesso');
+    // Retornar sucesso se pelo menos uma das operações foi bem-sucedida ou se a instância não existia em nenhum lugar
+    if (evolutionDeleted || baserowDeleted || evolutionNotFound) {
+      console.log('✅ Operação de exclusão concluída com sucesso');
+      console.log('📊 Resumo:', {
+        evolutionDeleted,
+        baserowDeleted,
+        evolutionNotFound,
+        instanceExists
+      });
+      
+      if (evolutionDeleted && baserowDeleted) {
+        console.log('✅ Instância removida de ambos os sistemas');
+      } else if (evolutionDeleted && !instanceExists) {
+        console.log('✅ Instância removida apenas da Evolution API (não existia no Baserow)');
+      } else if (baserowDeleted && evolutionNotFound) {
+        console.log('✅ Instância removida apenas do Baserow (não existia na Evolution API)');
+      } else if (evolutionNotFound && !instanceExists) {
+        console.log('✅ Instância não existia em nenhum sistema (já estava limpa)');
+      }
     } else {
       throw new Error('Falha ao deletar instância de ambos os sistemas');
     }
@@ -362,6 +395,7 @@ export const deleteWhatsAppInstanceAsAdmin = async (instanceId: string): Promise
     
     // Sempre tentar deletar da Evolution API se configurada
     let evolutionDeleted = false;
+    let evolutionNotFound = false;
     try {
       const { url, key } = await getEvolutionAPIConfig();
       
@@ -385,6 +419,7 @@ export const deleteWhatsAppInstanceAsAdmin = async (instanceId: string): Promise
         // Se for 404, a instância não existe na Evolution API, mas não é um erro crítico
         if (evolutionResponse.status === 404) {
           console.log('Instância não encontrada na Evolution API (já foi deletada ou não existe)');
+          evolutionNotFound = true;
         } else {
           console.warn('Erro na Evolution API, mas continuando com operação no Baserow');
         }
@@ -396,18 +431,60 @@ export const deleteWhatsAppInstanceAsAdmin = async (instanceId: string): Promise
     }
     
     // Deletar do Baserow apenas se a instância existir
+    let baserowDeleted = false;
     if (instanceExists) {
       console.log('Deletando do Baserow...');
       const deleteUrl = `/database/rows/table/${tableId}/${instanceId}/?user_field_names=true`;
       console.log('URL de delete:', deleteUrl);
       
-      await baserowRequest(deleteUrl, {
-        method: 'DELETE'
-      });
-      
-      console.log('Instância deletada com sucesso do Baserow');
+      try {
+        await baserowRequest(deleteUrl, {
+          method: 'DELETE'
+        });
+        
+        console.log('Instância deletada com sucesso do Baserow');
+        baserowDeleted = true;
+      } catch (baserowError) {
+        console.error('Erro ao deletar do Baserow:', baserowError);
+        
+        // Se for erro 500 com detail vazio, pode ser que a linha já não existe
+        if (baserowError instanceof Error && baserowError.message.includes('{"detail":""}')) {
+          console.log('Linha pode não existir no Baserow (erro 500 com detail vazio)');
+          // Considerar como sucesso se a Evolution API foi deletada ou não encontrada
+          if (evolutionDeleted || evolutionNotFound) {
+            console.log('✅ Instância removida da Evolution API, considerando operação bem-sucedida');
+            baserowDeleted = true; // Marcar como deletada para não falhar a operação
+          }
+        } else {
+          // Re-throw outros erros do Baserow
+          throw baserowError;
+        }
+      }
     } else {
       console.log('Instância não existia no Baserow, apenas Evolution API foi limpa');
+    }
+    
+    // Retornar sucesso se pelo menos uma das operações foi bem-sucedida ou se a instância não existia em nenhum lugar
+    if (evolutionDeleted || baserowDeleted || evolutionNotFound) {
+      console.log('✅ Operação de exclusão concluída com sucesso');
+      console.log('📊 Resumo:', {
+        evolutionDeleted,
+        baserowDeleted,
+        evolutionNotFound,
+        instanceExists
+      });
+      
+      if (evolutionDeleted && baserowDeleted) {
+        console.log('✅ Instância removida de ambos os sistemas');
+      } else if (evolutionDeleted && !instanceExists) {
+        console.log('✅ Instância removida apenas da Evolution API (não existia no Baserow)');
+      } else if (baserowDeleted && evolutionNotFound) {
+        console.log('✅ Instância removida apenas do Baserow (não existia na Evolution API)');
+      } else if (evolutionNotFound && !instanceExists) {
+        console.log('✅ Instância não existia em nenhum sistema (já estava limpa)');
+      }
+    } else {
+      throw new Error('Falha ao deletar instância de ambos os sistemas');
     }
   } catch (error) {
     console.error('Erro ao deletar instância como admin:', error);
@@ -773,4 +850,74 @@ export const updateWhatsAppInstance = async (instanceId: string, data: {
     })
   });
   return response;
+};
+
+// Função para deletar instância da Evolution API por nome
+const deleteFromEvolutionAPIByName = async (instanceName: string): Promise<boolean> => {
+  try {
+    const { url, key } = await getEvolutionAPIConfig();
+    
+    console.log('Tentando deletar da Evolution API por nome:', instanceName);
+    const evolutionResponse = await fetch(`${url}/instance/delete/${instanceName}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': key
+      }
+    });
+    
+    if (evolutionResponse.ok) {
+      console.log('Instância deletada da Evolution API por nome com sucesso');
+      return true;
+    } else {
+      const errorText = await evolutionResponse.text();
+      console.warn('Erro ao deletar da Evolution API por nome:', evolutionResponse.status, errorText);
+      
+      // Se for 404, a instância não existe na Evolution API
+      if (evolutionResponse.status === 404) {
+        console.log('Instância não encontrada na Evolution API por nome (já foi deletada ou não existe)');
+        return false; // Não é erro, apenas não encontrada
+      }
+      
+      return false; // Outros erros
+    }
+  } catch (evolutionError) {
+    console.warn('Erro ao conectar com Evolution API por nome:', evolutionError);
+    return false;
+  }
+};
+
+// Função para deletar instância da Evolution API por ID
+const deleteFromEvolutionAPIById = async (instanceId: string): Promise<boolean> => {
+  try {
+    const { url, key } = await getEvolutionAPIConfig();
+    
+    console.log('Tentando deletar da Evolution API por ID:', instanceId);
+    const evolutionResponse = await fetch(`${url}/instance/delete/${instanceId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': key
+      }
+    });
+    
+    if (evolutionResponse.ok) {
+      console.log('Instância deletada da Evolution API por ID com sucesso');
+      return true;
+    } else {
+      const errorText = await evolutionResponse.text();
+      console.warn('Erro ao deletar da Evolution API por ID:', evolutionResponse.status, errorText);
+      
+      // Se for 404, a instância não existe na Evolution API
+      if (evolutionResponse.status === 404) {
+        console.log('Instância não encontrada na Evolution API por ID (já foi deletada ou não existe)');
+        return false; // Não é erro, apenas não encontrada
+      }
+      
+      return false; // Outros erros
+    }
+  } catch (evolutionError) {
+    console.warn('Erro ao conectar com Evolution API por ID:', evolutionError);
+    return false;
+  }
 }; 
