@@ -732,7 +732,7 @@ const ProductAdmin: React.FC = () => {
             Produtos
           </TabsTrigger>
           <TabsTrigger value="categories" className="flex items-center gap-2">
-            <Badge className="h-4 w-4" />
+            <Package className="h-4 w-4" />
             Categorias
           </TabsTrigger>
         </TabsList>

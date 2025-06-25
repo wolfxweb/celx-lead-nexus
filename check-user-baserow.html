@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificar Usuário e Baserow</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .log { background: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; margin-top: 20px; border-radius: 4px; max-height: 600px; overflow-y: auto; }
+        .error { color: red; }
+        .success { color: green; }
+        .warning { color: orange; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .user-info { background: #e3f2fd; padding: 10px; border-radius: 4px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Verificar Usuário e Baserow</h1>
+    
+    <button onclick="checkUserAndBaserow()">Verificar Usuário e Baserow</button>
+    <button onclick="clearLog()">Limpar Log</button>
+    
+    <div id="log" class="log"></div>
+
+    <script>
+        const BASEROW_CONFIG = {
+            API_URL: 'https://master-baserow.219u5p.easypanel.host/api',
+            TOKEN: 'jrHE9jWKMz9i79Bh7ZszvQo81LThqOSx'
+        };
+
+        const TABLE_ID = 644; // WhatsApp Settings
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : '';
+            logDiv.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        async function checkUserAndBaserow() {
+            log('=== Verificando ID do usuário e dados do Baserow ===');
+            
+            // 1. Verificar localStorage
+            log('1. Verificando localStorage...');
+            const userStr = localStorage.getItem('celx_user');
+            if (userStr) {
+                try {
+                    const user = JSON.parse(userStr);
+                    log(`Usuário encontrado: ${JSON.stringify(user, null, 2)}`, 'success');
+                    log(`ID do usuário logado: ${user.id} (tipo: ${typeof user.id})`, 'success');
+                    
+                    // Exibir informações do usuário
+                    const userInfo = document.createElement('div');
+                    userInfo.className = 'user-info';
+                    userInfo.innerHTML = `
+                        <h3>Usuário Logado:</h3>
+                        <p><strong>ID:</strong> ${user.id}</p>
+                        <p><strong>Nome:</strong> ${user.name}</p>
+                        <p><strong>Email:</strong> ${user.email}</p>
+                        <p><strong>Tipo do ID:</strong> ${typeof user.id}</p>
+                    `;
+                    document.body.insertBefore(userInfo, document.getElementById('log'));
+                    
+                } catch (error) {
+                    log(`Erro ao fazer parse do usuário: ${error.message}`, 'error');
+                    return;
+                }
+            } else {
+                log('Nenhum usuário encontrado no localStorage', 'error');
+                return;
+            }
+            
+            // 2. Buscar todas as configurações no Baserow
+            log('2. Buscando todas as configurações no Baserow...');
+            try {
+                const response = await fetch(`${BASEROW_CONFIG.API_URL}/database/rows/table/${TABLE_ID}/?user_field_names=true`, {
+                    headers: {
+                        'Authorization': `Token ${BASEROW_CONFIG.TOKEN}`,
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                if (!response.ok) {
+                    log(`Erro ao buscar configurações: ${response.status} ${response.statusText}`, 'error');
+                    return;
+                }
+                
+                const result = await response.json();
+                log(`Total de configurações encontradas: ${result.results ? result.results.length : 0}`, 'success');
+                
+                if (result.results && result.results.length > 0) {
+                    log('3. Detalhes de cada configuração:', 'info');
+                    
+                    const user = JSON.parse(localStorage.getItem('celx_user'));
+                    let foundUserConfig = false;
+                    
+                    result.results.forEach((config, index) => {
+                        const isCurrentUser = Number(config.user_id) === Number(user.id);
+                        const status = isCurrentUser ? 'success' : 'warning';
+                        
+                        log(`\nConfiguração ${index + 1}:`, 'info');
+                        log(`  ID da linha: ${config.id}`, status);
+                        log(`  user_id: ${config.user_id} (tipo: ${typeof config.user_id})`, status);
+                        log(`  evolution_api_url: ${config.evolution_api_url || 'não definida'}`, status);
+                        log(`  evolution_api_key: ${config.evolution_api_key ? '***' : 'não definida'}`, status);
+                        
+                        if (isCurrentUser) {
+                            log(`  ✅ PERTENCE ao usuário logado`, 'success');
+                            foundUserConfig = true;
+                        } else {
+                            log(`  ❌ NÃO pertence ao usuário logado`, 'warning');
+                        }
+                    });
+                    
+                    if (!foundUserConfig) {
+                        log('\n⚠️ NENHUMA configuração encontrada para o usuário logado!', 'warning');
+                        log('Isso explica por que está dando erro de "acesso negado"', 'warning');
+                    } else {
+                        log('\n✅ Configuração do usuário logado encontrada!', 'success');
+                    }
+                    
+                } else {
+                    log('Nenhuma configuração encontrada no Baserow', 'warning');
+                }
+                
+            } catch (error) {
+                log(`Erro ao buscar configurações: ${error.message}`, 'error');
+            }
+        }
+
+        // Verificar ao carregar a página
+        window.onload = function() {
+            log('Página carregada. Clique em "Verificar Usuário e Baserow" para começar.');
+        };
+    </script>
+</body>
+</html> 

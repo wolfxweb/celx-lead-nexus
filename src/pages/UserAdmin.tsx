@@ -96,7 +96,16 @@ const UserAdmin = () => {
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = filterRole === 'all' || user.role === filterRole;
+    
+    // Lidar com objetos de role do Baserow
+    let userRole: string;
+    if (typeof user.role === 'object' && user.role !== null) {
+      userRole = (user.role as any).value || (user.role as any).id || 'user';
+    } else {
+      userRole = user.role as string;
+    }
+    
+    const matchesRole = filterRole === 'all' || userRole === filterRole;
     const matchesStatus = filterStatus === 'all' || user.status === filterStatus;
     return matchesSearch && matchesRole && matchesStatus;
   });
@@ -166,7 +175,15 @@ const UserAdmin = () => {
   };
 
   const getRoleBadgeColor = (role: UserRole) => {
-    switch (role) {
+    // Lidar com objetos que podem vir do Baserow (campos de seleção)
+    let roleValue: string;
+    if (typeof role === 'object' && role !== null) {
+      roleValue = (role as any).value || (role as any).id || 'user';
+    } else {
+      roleValue = role as string;
+    }
+
+    switch (roleValue) {
       case 'admin': return 'bg-red-100 text-red-800';
       case 'user': return 'bg-blue-100 text-blue-800';
       default: return 'bg-gray-100 text-gray-800';
@@ -332,7 +349,15 @@ const UserAdmin = () => {
                         {user.name}
                       </h3>
                       <Badge className={getRoleBadgeColor(user.role)}>
-                        {user.role === 'admin' ? 'Admin' : 'Usuário'}
+                        {(() => {
+                          let roleValue: string;
+                          if (typeof user.role === 'object' && user.role !== null) {
+                            roleValue = (user.role as any).value || (user.role as any).id || 'user';
+                          } else {
+                            roleValue = user.role as string;
+                          }
+                          return roleValue === 'admin' ? 'Admin' : 'Usuário';
+                        })()}
                       </Badge>
                       <Badge className={getStatusBadgeColor(user.status)}>
                         {user.status === 'active' ? 'Ativo' : 'Inativo'}
@@ -463,13 +488,25 @@ const UserAdmin = () => {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={() => handleStatusToggle(user.id)}
-                        disabled={user.role === 'admin'}
+                        disabled={(() => {
+                          if (typeof user.role === 'object' && user.role !== null) {
+                            const roleValue = (user.role as any).value || (user.role as any).id || 'user';
+                            return roleValue === 'admin';
+                          }
+                          return user.role === 'admin';
+                        })()}
                       >
                         {user.status === 'active' ? 'Desativar' : 'Ativar'}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => handleDeleteUser(user.id)}
-                        disabled={user.role === 'admin'}
+                        disabled={(() => {
+                          if (typeof user.role === 'object' && user.role !== null) {
+                            const roleValue = (user.role as any).value || (user.role as any).id || 'user';
+                            return roleValue === 'admin';
+                          }
+                          return user.role === 'admin';
+                        })()}
                         className="text-red-600"
                       >
                         <Trash2 className="h-4 w-4 mr-2" />

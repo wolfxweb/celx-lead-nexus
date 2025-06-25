@@ -29,8 +29,18 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to={fallbackPath} state={{ from: location }} replace />;
   }
 
-  if (user && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/unauthorized" replace />;
+  if (user) {
+    // Lidar com objetos de role do Baserow
+    let userRole: string;
+    if (typeof user.role === 'object' && user.role !== null) {
+      userRole = (user.role as any).value || (user.role as any).id || 'user';
+    } else {
+      userRole = user.role as string;
+    }
+
+    if (!allowedRoles.includes(userRole as UserRole)) {
+      return <Navigate to="/unauthorized" replace />;
+    }
   }
 
   return <>{children}</>;

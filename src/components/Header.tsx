@@ -27,16 +27,28 @@ const Header = () => {
   const { itemCount } = useCart();
 
   const navigation = [
-    { name: 'Home', href: '/' },
-    { name: 'Loja', href: '/loja' },
+    { name: 'Início', href: '/' },
+    { name: 'Produtos', href: '/produtos' },
     { name: 'Blog', href: '/blog' },
     { name: 'Sobre', href: '/sobre' },
+    { name: 'Contato', href: '/contato' },
   ];
 
   const handleLogout = () => {
     logout();
     setIsOpen(false);
   };
+
+  // Função para extrair o valor da role (lidar com objetos do Baserow)
+  const getRoleValue = (role: any): string => {
+    if (!role) return 'user';
+    if (typeof role === 'object' && role !== null) {
+      return (role as any).value || (role as any).id || 'user';
+    }
+    return role as string;
+  };
+
+  const userRole = getRoleValue(user?.role);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
@@ -100,7 +112,7 @@ const Header = () => {
                     <div className="flex items-center mt-1">
                       <Shield className="h-3 w-3 mr-1" />
                       <span className="text-xs text-muted-foreground capitalize">
-                        {user?.role}
+                        {userRole}
                       </span>
                     </div>
                   </div>
@@ -112,36 +124,31 @@ const Header = () => {
                     <span>Minha Conta</span>
                   </Link>
                 </DropdownMenuItem>
-                {user?.role === 'admin' && (
+                {userRole === 'admin' && (
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <Link to="/admin" className="cursor-pointer">
-                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                      <Link to="/admin">
                         <span>Painel Admin</span>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/admin/produtos" className="cursor-pointer">
-                        <Settings className="mr-2 h-4 w-4" />
+                      <Link to="/admin/produtos">
                         <span>Gerenciar Produtos</span>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/admin/pedidos" className="cursor-pointer">
-                        <ShoppingCart className="mr-2 h-4 w-4" />
+                      <Link to="/admin/pedidos">
                         <span>Gerenciar Pedidos</span>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/admin/usuarios" className="cursor-pointer">
-                        <Users className="mr-2 h-4 w-4" />
+                      <Link to="/admin/usuarios">
                         <span>Gerenciar Usuários</span>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/blog-admin" className="cursor-pointer">
-                        <Settings className="mr-2 h-4 w-4" />
+                      <Link to="/blog-admin">
                         <span>Gerenciar Posts</span>
                       </Link>
                     </DropdownMenuItem>
@@ -205,7 +212,7 @@ const Header = () => {
                 )}
               </Link>
               
-              {isAuthenticated && user?.role === 'admin' && (
+              {isAuthenticated && userRole === 'admin' && (
                 <>
                   <Link
                     to="/admin"
@@ -264,7 +271,7 @@ const Header = () => {
                           {user?.name}
                         </p>
                         <p className="text-xs text-gray-500 capitalize">
-                          {user?.role}
+                          {userRole}
                         </p>
                       </div>
                     </div>

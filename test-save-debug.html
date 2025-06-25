@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Gravação - WhatsApp Settings</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="password"] { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .log { background: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; margin-top: 20px; border-radius: 4px; max-height: 400px; overflow-y: auto; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Teste de Gravação - WhatsApp Settings</h1>
+    
+    <div class="form-group">
+        <label for="apiUrl">URL da Evolution API:</label>
+        <input type="text" id="apiUrl" value="https://automacao-evolution-api.219u5p.easypanel.host">
+    </div>
+    
+    <div class="form-group">
+        <label for="apiKey">Chave da API:</label>
+        <input type="password" id="apiKey" placeholder="Digite sua chave da API">
+    </div>
+    
+    <button onclick="testSave()">Testar Gravação</button>
+    <button onclick="checkAuth()">Verificar Autenticação</button>
+    <button onclick="clearLog()">Limpar Log</button>
+    
+    <div id="log" class="log"></div>
+
+    <script>
+        const BASEROW_CONFIG = {
+            API_URL: 'https://api.baserow.io',
+            TOKEN: 'YOUR_BASEROW_TOKEN_HERE' // Substitua pelo seu token
+        };
+
+        const BASEROW_TABLES = {
+            WHATSAPP_SETTINGS: { id: 644 }
+        };
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : '';
+            logDiv.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        function checkAuth() {
+            log('=== Verificando Autenticação ===');
+            
+            const userStr = localStorage.getItem('celx_user');
+            const token = localStorage.getItem('celx_token');
+            
+            log(`localStorage celx_user: ${userStr ? 'Presente' : 'Ausente'}`);
+            log(`localStorage celx_token: ${token ? 'Presente' : 'Ausente'}`);
+            
+            if (userStr) {
+                try {
+                    const user = JSON.parse(userStr);
+                    log(`Usuário parseado: ${JSON.stringify(user, null, 2)}`);
+                    log(`ID do usuário: ${user.id}`);
+                } catch (error) {
+                    log(`Erro ao fazer parse do usuário: ${error.message}`, 'error');
+                }
+            }
+            
+            if (token) {
+                log(`Token: ${token.substring(0, 20)}...`);
+            }
+        }
+
+        async function testSave() {
+            log('=== Iniciando Teste de Gravação ===');
+            
+            const apiUrl = document.getElementById('apiUrl').value;
+            const apiKey = document.getElementById('apiKey').value;
+            
+            if (!apiUrl || !apiKey) {
+                log('Por favor, preencha a URL e a chave da API', 'error');
+                return;
+            }
+            
+            // Verificar autenticação primeiro
+            const userStr = localStorage.getItem('celx_user');
+            if (!userStr) {
+                log('Usuário não autenticado. Faça login primeiro.', 'error');
+                return;
+            }
+            
+            try {
+                const user = JSON.parse(userStr);
+                const userId = Number(user.id);
+                
+                log(`Usuário ID: ${userId}`);
+                log(`URL da API: ${apiUrl}`);
+                log(`Chave da API: ${apiKey.substring(0, 10)}...`);
+                
+                const testData = {
+                    user_id: userId,
+                    evolution_api_url: apiUrl,
+                    evolution_api_key: apiKey
+                };
+                
+                log('Dados a serem enviados:', 'info');
+                log(JSON.stringify(testData, null, 2), 'info');
+                
+                const response = await fetch(`${BASEROW_CONFIG.API_URL}/database/rows/table/${BASEROW_TABLES.WHATSAPP_SETTINGS.id}/?user_field_names=true`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Token ${BASEROW_CONFIG.TOKEN}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                log(`Status da resposta: ${response.status} ${response.statusText}`);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    log(`Erro na resposta: ${errorText}`, 'error');
+                    return;
+                }
+                
+                const result = await response.json();
+                log('Resposta de sucesso:', 'success');
+                log(JSON.stringify(result, null, 2), 'success');
+                
+                // Verificar se os dados foram salvos
+                log('Verificando se os dados foram salvos...', 'info');
+                const verifyResponse = await fetch(`${BASEROW_CONFIG.API_URL}/database/rows/table/${BASEROW_TABLES.WHATSAPP_SETTINGS.id}/?user_field_names=true&filter__field_user_id__equal=${userId}`, {
+                    headers: {
+                        'Authorization': `Token ${BASEROW_CONFIG.TOKEN}`,
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                if (verifyResponse.ok) {
+                    const verifyResult = await verifyResponse.json();
+                    log('Dados salvos encontrados:', 'success');
+                    log(JSON.stringify(verifyResult, null, 2), 'success');
+                } else {
+                    const errorText = await verifyResponse.text();
+                    log(`Erro ao verificar dados salvos: ${errorText}`, 'error');
+                }
+                
+            } catch (error) {
+                log(`Erro ao testar gravação: ${error.message}`, 'error');
+            }
+        }
+
+        // Verificar autenticação ao carregar a página
+        window.onload = function() {
+            log('Página carregada. Verificando autenticação...');
+            checkAuth();
+        };
+    </script>
+</body>
+</html> 

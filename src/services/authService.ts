@@ -8,7 +8,7 @@ export interface BaserowUser {
   name: string;
   email: string;
   password_hash: string; // Corrigido de 'password' para 'password_hash'
-  role: 'admin' | 'user';
+  role: 'admin' | 'user' | { id: number; value: string; color?: string }; // Pode ser string ou objeto (campo de seleção)
   avatar?: string;
   created_at: string;
   updated_at: string;
@@ -27,27 +27,45 @@ export interface BaserowAuthResponse {
   };
 }
 
-// Função para autenticar usuário
+// Função para autenticar usuário (MODIFICADA para autenticação local)
 export const authenticateUser = async (credentials: LoginCredentials): Promise<BaserowAuthResponse> => {
   try {
-    const response = await fetch(`${BASEROW_CONFIG.API_URL}/user/token-auth/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: credentials.email,
-        password: credentials.password,
-      }),
-    });
-
-    if (!response.ok) {
+    // Buscar usuário por email na tabela de usuários
+    const user = await getUserByEmail(credentials.email);
+    
+    if (!user) {
       throw new Error('Email ou senha inválidos');
     }
 
-    return response.json();
+    // Verificar se o usuário está ativo
+    if (user.is_active === false) {
+      throw new Error('Conta desativada');
+    }
+
+    // Verificar senha
+    const isPasswordValid = await verifyPassword(credentials.password, user.password_hash);
+    if (!isPasswordValid) {
+      throw new Error('Email ou senha inválidos');
+    }
+
+    // Atualizar último login
+    await updateLastLogin(user.id);
+
+    // Gerar token simulado (em produção, use JWT)
+    const token = btoa(`${user.id}:${user.email}:${Date.now()}`);
+    
+    // Retornar resposta no formato esperado
+    return {
+      token: token,
+      user: {
+        id: user.id,
+        username: user.name,
+        email: user.email
+      }
+    };
   } catch (error) {
-    throw new Error('Falha na autenticação');
+    console.error('Erro na autenticação:', error);
+    throw error;
   }
 };
 
@@ -55,9 +73,10 @@ export const authenticateUser = async (credentials: LoginCredentials): Promise<B
 export const getUserByEmail = async (email: string): Promise<BaserowUser | null> => {
   try {
     const tableId = getTableId('USERS');
-    const filter = createFieldFilter('USERS', 'email', 'equal', email);
     
-    const response = await getBaserowRows<BaserowUser>(tableId, { filter });
+    const response = await getBaserowRows<BaserowUser>(tableId, { 
+      filter: { email: email }
+    });
 
     if (response.results.length > 0) {
       return response.results[0];
@@ -262,11 +281,20 @@ const verifyPassword = async (password: string, hashedPassword: string): Promise
 
 // Função para converter BaserowUser para User
 export const convertBaserowUserToUser = (baserowUser: BaserowUser): User => {
+  // Lidar com campos de seleção do Baserow que retornam objetos
+  let role: string;
+  if (typeof baserowUser.role === 'object' && baserowUser.role !== null) {
+    // Se role é um objeto (campo de seleção do Baserow), extrair o valor
+    role = (baserowUser.role as any).value || (baserowUser.role as any).id || 'user';
+  } else {
+    role = baserowUser.role as string;
+  }
+
   return {
     id: baserowUser.id.toString(),
     name: baserowUser.name,
     email: baserowUser.email,
-    role: baserowUser.role,
+    role: role as 'admin' | 'user',
     avatar: baserowUser.avatar,
     createdAt: new Date(baserowUser.created_at),
     lastLogin: baserowUser.last_login ? new Date(baserowUser.last_login) : undefined,

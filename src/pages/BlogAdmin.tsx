@@ -373,7 +373,7 @@ const BlogAdmin = () => {
             <span className="sm:hidden">Posts</span>
           </TabsTrigger>
           <TabsTrigger value="categories" className="flex items-center gap-2">
-            <Badge className="h-4 w-4" />
+            <FileText className="h-4 w-4" />
             <span className="hidden sm:inline">Categorias</span>
             <span className="sm:hidden">Cats</span>
           </TabsTrigger>
@@ -836,7 +836,7 @@ const BlogAdmin = () => {
             <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
               <CardHeader className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-t-lg">
                 <CardTitle className="flex items-center gap-2">
-                  <Badge className="h-5 w-5" />
+                  <FileText className="h-5 w-5" />
                   Categorias Existentes
                 </CardTitle>
                 <CardDescription className="text-green-100">
@@ -892,7 +892,7 @@ const BlogAdmin = () => {
                   
                   {categories.length === 0 && (
                     <div className="text-center py-12">
-                      <Badge className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                       <p className="text-gray-500">Nenhuma categoria criada ainda.</p>
                     </div>
                   )}

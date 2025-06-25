@@ -83,7 +83,13 @@ const AuthTest: React.FC = () => {
                     <span className="font-medium">Email:</span> {user.email}
                   </p>
                   <p className="text-sm text-green-700">
-                    <span className="font-medium">Role:</span> {user.role}
+                    <span className="font-medium">Role:</span> {(() => {
+                      if (!user?.role) return 'user';
+                      if (typeof user.role === 'object' && user.role !== null) {
+                        return (user.role as any).value || (user.role as any).id || 'user';
+                      }
+                      return user.role as string;
+                    })()}
                   </p>
                   <p className="text-sm text-green-700">
                     <span className="font-medium">Avatar:</span> {user.avatar}

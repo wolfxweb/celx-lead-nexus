@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { Toaster } from 'sonner';
 import { 
   LayoutDashboard, 
   Package, 
@@ -235,6 +236,9 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <main className="ml-64 p-8">
         {children}
       </main>
+      
+      {/* Toaster para notificações */}
+      <Toaster position="top-right" richColors />
     </div>
   );
 };

@@ -199,7 +199,7 @@ export const BASEROW_TABLES = {
 
   // Tabela de mensagens do WhatsApp
   WHATSAPP_MESSAGES: {
-    id: parseInt(import.meta.env.VITE_BASEROW_WHATSAPP_MESSAGES_TABLE_ID || '644'),
+    id: parseInt(import.meta.env.VITE_BASEROW_WHATSAPP_MESSAGES_TABLE_ID || '645'),
     fields: {
       id: 'id',
       instance_id: 'instance_id',
@@ -216,7 +216,7 @@ export const BASEROW_TABLES = {
 
   // Tabela de webhooks do WhatsApp
   WHATSAPP_WEBHOOKS: {
-    id: parseInt(import.meta.env.VITE_BASEROW_WHATSAPP_WEBHOOKS_TABLE_ID || '645'),
+    id: parseInt(import.meta.env.VITE_BASEROW_WHATSAPP_WEBHOOKS_TABLE_ID || '646'),
     fields: {
       id: 'id',
       instance_id: 'instance_id',
@@ -230,7 +230,7 @@ export const BASEROW_TABLES = {
 
   // Tabela de configurações do WhatsApp
   WHATSAPP_SETTINGS: {
-    id: parseInt(import.meta.env.VITE_BASEROW_WHATSAPP_SETTINGS_TABLE_ID || '646'),
+    id: parseInt(import.meta.env.VITE_BASEROW_WHATSAPP_SETTINGS_TABLE_ID || '644'),
     fields: {
       id: 'id',
       user_id: 'user_id',
@@ -377,4 +377,11 @@ export const createFieldFilter = (
 ): string => {
   const fieldId = getFieldId(tableName, fieldName);
   return `filter__${fieldId}__${operator}=${encodeURIComponent(value.toString())}`;
-}; 
+};
+
+// Log das tabelas carregadas
+console.log('BASEROW_TABLES carregadas:');
+console.log('WHATSAPP_SETTINGS ID:', BASEROW_TABLES.WHATSAPP_SETTINGS.id);
+console.log('WHATSAPP_INSTANCES ID:', BASEROW_TABLES.WHATSAPP_INSTANCES.id);
+console.log('WHATSAPP_MESSAGES ID:', BASEROW_TABLES.WHATSAPP_MESSAGES.id);
+console.log('WHATSAPP_WEBHOOKS ID:', BASEROW_TABLES.WHATSAPP_WEBHOOKS.id); 
