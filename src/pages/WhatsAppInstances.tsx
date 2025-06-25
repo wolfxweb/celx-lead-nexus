@@ -135,19 +135,11 @@ const WhatsAppInstances: React.FC = () => {
   }, [instances, qrCode]);
 
   const syncStatusWithEvolutionAPI = useCallback(async () => {
-    console.log('syncStatusWithEvolutionAPI chamada com:', { 
-      hasApiSettings: !!apiSettings, 
-      instancesCount: instances.length, 
-      userId: user?.id
-    });
-    
     if (!apiSettings?.evolution_api_url || !apiSettings?.evolution_api_key) {
       return;
     }
 
     try {
-      console.log('Sincronizando status com Evolution API...');
-      
       // Buscar status atual das instâncias na Evolution API
       const response = await fetch(`${apiSettings.evolution_api_url}/instance/fetchInstances`, {
         method: 'GET',
@@ -159,15 +151,12 @@ const WhatsAppInstances: React.FC = () => {
 
       if (response.ok) {
         const evolutionInstances = await response.json();
-        console.log('Instâncias na Evolution API:', evolutionInstances);
         
         if (Array.isArray(evolutionInstances)) {
           // Filtrar apenas instâncias que pertencem ao usuário atual
           const userInstances = instances.filter(instance => 
             String(instance.user_id) === String(user?.id)
           );
-          
-          console.log(`Sincronizando ${userInstances.length} instâncias do usuário`);
           
           // Atualizar status das instâncias locais
           for (const localInstance of userInstances) {
@@ -178,13 +167,9 @@ const WhatsAppInstances: React.FC = () => {
             );
             
             if (evInstance) {
-              console.log(`Encontrada instância ${localInstance.name} na Evolution API:`, evInstance);
-              
               const newStatus = evInstance.connectionStatus === 'open' ? 'connected' : 
                                evInstance.connectionStatus === 'close' ? 'disconnected' : 
                                evInstance.connectionStatus || 'unknown';
-              
-              console.log(`Status da instância ${localInstance.name}: ${localInstance.status} -> ${newStatus}`);
               
               if (localInstance.status !== newStatus) {
                 try {
@@ -194,13 +179,10 @@ const WhatsAppInstances: React.FC = () => {
                       ? { ...instance, status: newStatus as any }
                       : instance
                   ));
-                  console.log(`Status atualizado para ${localInstance.name}: ${newStatus}`);
                 } catch (error) {
                   console.error('Erro ao atualizar status da instância:', localInstance.id, error);
                 }
               }
-            } else {
-              console.log(`Instância ${localInstance.name} não encontrada na Evolution API`);
             }
           }
         }
@@ -230,7 +212,6 @@ const WhatsAppInstances: React.FC = () => {
       setLoading(true);
       
       // Sempre buscar apenas instâncias do usuário atual
-      console.log('Buscando instâncias do usuário atual');
       const instancesData = await getWhatsAppInstances();
       
       const settingsData = await getWhatsAppSettings();
@@ -264,14 +245,11 @@ const WhatsAppInstances: React.FC = () => {
 
     try {
       setCreatingInstance(true);
-      console.log('Iniciando criação de instância:', newInstance);
       
       const instance = await createWhatsAppInstance({
         name: newInstance.name.trim(),
         phone: newInstance.phone.trim()
       });
-      
-      console.log('Instância criada com sucesso:', instance);
       
       setInstances(prev => [...prev, instance]);
       setNewInstance({ name: '', phone: '' });
@@ -317,8 +295,6 @@ const WhatsAppInstances: React.FC = () => {
         }
       }
       
-      console.log('Exibindo toast de erro:', errorMessage);
-      
       // Garantir que o toast apareça
       setTimeout(() => {
         toast.error(errorMessage);
@@ -331,15 +307,8 @@ const WhatsAppInstances: React.FC = () => {
   };
 
   const handleDeleteInstance = async (instanceId: string) => {
-    console.log('Iniciando processo de exclusão da instância:', instanceId, 'Tipo:', typeof instanceId);
-    console.log('Usuário atual:', user);
-
     try {
       setDeletingInstance(instanceId);
-      
-      // Verificar se a instância existe antes de tentar deletar
-      const instanceExists = instances.find(i => String(i.id) === String(instanceId));
-      console.log('Instância encontrada no estado local:', instanceExists);
       
       // Usar função normal, já que só mostramos instâncias do usuário
       await deleteWhatsAppInstance(instanceId);
@@ -347,16 +316,10 @@ const WhatsAppInstances: React.FC = () => {
       // Atualizar estado local
       setInstances(prev => {
         const filtered = prev.filter(instance => String(instance.id) !== String(instanceId));
-        console.log('Estado local atualizado:', { 
-          antes: prev.length, 
-          depois: filtered.length, 
-          removido: instanceId 
-        });
         return filtered;
       });
       
       toast.success('Instância removida com sucesso!');
-      console.log('Instância removida da lista local');
     } catch (error) {
       console.error('Erro no handleDeleteInstance:', error);
       
@@ -488,7 +451,6 @@ const WhatsAppInstances: React.FC = () => {
           try {
             // Validar se a instância tem dados mínimos necessários
             if (!evInstance.id || !evInstance.name) {
-              console.warn('Instância ignorada - dados insuficientes:', evInstance);
               skippedCount++;
               continue;
             }
@@ -500,8 +462,6 @@ const WhatsAppInstances: React.FC = () => {
             
             setInstances(prev => [...prev, newInstance]);
             importedCount++;
-            
-            console.log('Instância importada com sucesso:', newInstance);
           } catch (error) {
             console.error('Erro ao importar instância:', evInstance.id, error);
             skippedCount++;
@@ -584,94 +544,23 @@ const WhatsAppInstances: React.FC = () => {
     
     try {
       setConnectingInstance(selectedEvolutionInstance.id);
-      console.log('Conectando instância selecionada:', selectedEvolutionInstance);
       
       const result = await connectEvolutionAPIInstance(selectedEvolutionInstance.id);
-      console.log('Resultado da conexão:', result);
       
-      // Se temos QR code, mostrar o modal
       if (result.qr_code) {
         setQrCode(result.qr_code);
         toast.success('QR Code gerado! Escaneie com seu WhatsApp.');
       } else if (result.status === 'connected') {
         toast.success('Instância já está conectada!');
-      } else if (result.status === 'connecting') {
-        toast.info('Instância está conectando... Aguarde a confirmação.');
       } else {
         toast.success('Instância conectada com sucesso!');
       }
       
-      // Fechar modal de seleção
       setIsInstanceSelectionOpen(false);
       setSelectedEvolutionInstance(null);
     } catch (error) {
       console.error('Erro ao conectar instância selecionada:', error);
-      toast.error(`Erro ao conectar instância: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
-    } finally {
-      setConnectingInstance(null);
-    }
-  };
-
-  const handleTestEvolutionAPI = async () => {
-    try {
-      toast.info('Testando conectividade da Evolution API...');
-      
-      const result = await testEvolutionAPIConnectivity();
-      
-      if (result.available) {
-        console.log('Evolution API disponível. Endpoints:', result.endpoints);
-        toast.success(`Evolution API conectada! Endpoints disponíveis: ${result.endpoints.join(', ')}`);
-      } else {
-        console.error('Evolution API não disponível:', result.error);
-        toast.error(`Evolution API não disponível: ${result.error}`);
-      }
-    } catch (error) {
-      console.error('Erro ao testar Evolution API:', error);
-      toast.error(`Erro ao testar Evolution API: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
-    }
-  };
-
-  const handleDiscoverEndpoints = async () => {
-    try {
-      toast.info('Descobrindo endpoints da Evolution API...');
-      
-      const result = await discoverEvolutionAPIEndpoints();
-      
-      if (result.available) {
-        console.log('Endpoints descobertos:', result.endpoints);
-        toast.success(`Endpoints descobertos: ${result.endpoints.join(', ')}`);
-      } else {
-        console.error('Erro ao descobrir endpoints:', result.error);
-        toast.error(`Erro ao descobrir endpoints: ${result.error}`);
-      }
-    } catch (error) {
-      console.error('Erro ao descobrir endpoints:', error);
-      toast.error(`Erro ao descobrir endpoints: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
-    }
-  };
-
-  const handleConnectCarlos = async () => {
-    try {
-      setConnectingInstance('carlos');
-      console.log('Conectando instância carlos especificamente...');
-      
-      const result = await connectCarlosInstance();
-      console.log('Resultado da conexão carlos:', result);
-      
-      // Se temos QR code, mostrar o modal
-      if (result.qr_code) {
-        setQrCode(result.qr_code);
-        toast.success('QR Code gerado! Escaneie com seu WhatsApp.');
-      } else if (result.status === 'connected') {
-        toast.success('Instância carlos já está conectada!');
-      } else if (result.status === 'connecting') {
-        toast.info('Instância carlos está conectando... Aguarde a confirmação.');
-      } else {
-        toast.success('Instância carlos conectada com sucesso!');
-      }
-    } catch (error) {
-      console.error('Erro ao conectar instância carlos:', error);
-      toast.error(`Erro ao conectar instância carlos: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      toast.error('Erro ao conectar instância');
     } finally {
       setConnectingInstance(null);
     }
@@ -747,44 +636,6 @@ const WhatsAppInstances: React.FC = () => {
               </div>
             </DialogContent>
           </Dialog>
-          
-          <Button
-            onClick={handleTestEvolutionAPI}
-            variant="outline"
-            size="sm"
-          >
-            <Settings className="w-4 h-4 mr-2" />
-            Testar Evolution API
-          </Button>
-          
-          <Button
-            onClick={handleDiscoverEndpoints}
-            variant="outline"
-            size="sm"
-          >
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Descobrir Endpoints
-          </Button>
-          
-          <Button
-            onClick={handleConnectCarlos}
-            variant="outline"
-            size="sm"
-            className="bg-green-600 hover:bg-green-700 text-white"
-          >
-            <Wifi className="w-4 h-4 mr-2" />
-            Conectar Carlos
-          </Button>
-          
-          <Button
-            onClick={syncStatusWithEvolutionAPI}
-            variant="outline"
-            size="sm"
-            disabled={syncing}
-          >
-            <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
-            {syncing ? 'Sincronizando...' : 'Sincronizar Status'}
-          </Button>
         </div>
       </div>
 
